@@ -1,0 +1,6 @@
+data/*
+.vscode/
+__pycache__/
+.temp/
+test.py
+pyproject.toml
