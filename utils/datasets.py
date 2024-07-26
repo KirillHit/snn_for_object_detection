@@ -102,11 +102,37 @@ class BananasDataset(DataModule):
             # lower-right x, lower-right y), where all the images have the same
             # banana class (index 0)
         if is_train:
-            self._train_dataset = CustomDataset((images, torch.tensor(targets).unsqueeze(1) / 256))
+            self._train_dataset = CustomDataset(
+                (images, torch.tensor(targets).unsqueeze(1) / 256)
+            )
         else:
-            self._val_dataset = CustomDataset((images, torch.tensor(targets).unsqueeze(1) / 256))
+            self._val_dataset = CustomDataset(
+                (images, torch.tensor(targets).unsqueeze(1) / 256)
+            )
         print(
             "Read "
             + str(len(targets))
             + (" training examples" if is_train else " validation examples")
         )
+
+    def get_test_img(self, num: int, is_train=False):
+        data_dir = download_extract("banana-detection", folder=self._root)
+        csv_fname = os.path.join(
+            data_dir, "bananas_train" if is_train else "bananas_val", "label.csv"
+        )
+        csv_data = pd.read_csv(csv_fname)
+        csv_data = csv_data.set_index("img_name")
+        images, tensors, targets = [], [], []
+        for img_name, target in csv_data.sample(n=num).iterrows():
+            img = PIL.Image.open(
+                os.path.join(
+                    data_dir,
+                    "bananas_train" if is_train else "bananas_val",
+                    "images",
+                    f"{img_name}",
+                )
+            )
+            images.append(torchvision.transforms.functional.pil_to_tensor(img))
+            tensors.append(self.transform(img))
+            targets.append(list(target))
+        return torch.stack(images), torch.stack(tensors), torch.tensor(targets).unsqueeze(1) / 256

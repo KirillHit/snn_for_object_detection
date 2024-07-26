@@ -24,7 +24,7 @@ class Module(nn.Module):
     def configure_optimizers(self):
         raise NotImplementedError
     
-    def predict(self, X):
+    def predict(self, X, threshold=0.8):
         raise NotImplementedError
     
     def save_params(self, name: str = ""):

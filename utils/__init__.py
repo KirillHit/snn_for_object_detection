@@ -1,5 +1,5 @@
 from .datasets import BananasDataset, Cifar10Dataset, ImagenetteDataset
 from .plots import ProgressBoard
-from .display import display
+from .plotter import Plotter
 
-__all__ = "BananasDataset", "ProgressBoard", "display", "Cifar10Dataset", "ImagenetteDataset"
+__all__ = "BananasDataset", "ProgressBoard", "Plotter", "Cifar10Dataset", "ImagenetteDataset"

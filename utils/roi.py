@@ -5,7 +5,7 @@ from tqdm import tqdm
 class RoI:
     """Label anchor boxes using ground-truth bounding boxes."""
 
-    def __init__(self, iou_threshold=0.3) -> None:
+    def __init__(self, iou_threshold=0.5) -> None:
         """
         Args:
             iou_threshold (float): Minimum acceptable iou. TODO
