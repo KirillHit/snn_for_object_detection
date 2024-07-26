@@ -50,6 +50,9 @@ class DataModule():
     
     def get_name(self, idx: int):
         return "None"
+    
+    def get_test_img(self, num: int, is_train=False):
+        raise NotImplementedError
 
 
 class CustomDataset(Dataset):

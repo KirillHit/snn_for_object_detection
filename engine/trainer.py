@@ -3,6 +3,7 @@ from engine.data import DataModule
 from engine.model import Module
 import utils.devices as devices
 from utils.plots import ProgressBoard
+from utils.plotter import Plotter
 from tqdm import tqdm
 
 
@@ -80,3 +81,15 @@ class Trainer:
                 val_loss = self.model.validation_step(self.prepare_batch(batch))
                 self.plot(val_loss, is_train=False)
             self.val_batch_idx += 1
+
+    def test_model(
+        self, data: DataModule, plotter: Plotter, is_train=False, threshold=0.8
+    ):
+        images, tensors, target = data.get_test_img(
+            plotter.rows * plotter.columns, is_train
+        )
+        if self.gpus:
+            tensors = tensors.to(self.gpus[0])
+        predictions = self.model.predict(tensors, threshold).to(devices.cpu())
+        # predictions is array of tensor [num_pred, 6] - [class, roi, luw, luh, rdw, rdh]
+        plotter.display(images, predictions, target)

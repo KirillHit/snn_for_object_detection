@@ -16,22 +16,21 @@ if __name__ == "__main__":
             torchvision.transforms.ToTensor(), 
             torchvision.transforms.RandomHorizontalFlip(),
             torchvision.transforms.RandomVerticalFlip(),
+            torchvision.transforms.Normalize((0.0, 0.0, 0.0), (0.004, 0.004, 0.004))
         ]
     )
     data = utils.BananasDataset(batch_size=32, transform=transform)
 
-    
     model = models.YOLO(num_classes=1)
     model.to(utils.devices.gpu())
-    #model.load_params()
-    trainer = engine.Trainer(max_epochs=10, num_gpus=1, display=True, every_n=2)
-    trainer.fit(model, data)
-    model.save_params()
+    model.load_params()
 
-    X = data[12][0]
-    img = X.squeeze(0).permute(1, 2, 0).long()
-    output = model.predict(X.to(utils.devices.gpu()))
-    utils.display(img, output.cpu(), threshold=0.5)
+    trainer = engine.Trainer(max_epochs=0, num_gpus=1, display=True, every_n=2)
+    trainer.fit(model, data)
+
+    #model.save_params()
+    plotter = utils.Plotter(threshold=0.01, rows=2, columns=3)
+    trainer.test_model(data, plotter, threshold=0.8)
 
     plt.ioff()
     plt.show()

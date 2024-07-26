@@ -9,21 +9,19 @@ import utils.box as box
 
 
 class YOLO(Module):
-    """Simple Single Shot Multibox Detection
-
-    see https://d2l.ai/chapter_computer-vision/ssd.html"""
+    """Simple Single Shot Multibox Detection"""
 
     def __init__(self, num_classes):
         super().__init__()
         self.base_net = CNN()
         self.fpn_blk = FPN(num_classes)
-        self.roi_blk = RoI()
+        self.roi_blk = RoI(iou_threshold=0.5)
 
         self.cls_loss = nn.CrossEntropyLoss(reduction="none")
         self.box_loss = nn.L1Loss(reduction="none")
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.002)
+        return torch.optim.SGD(self.parameters(), lr=0.2, weight_decay=5e-4)
 
     def loss(self, y_hat, y):
         """
@@ -67,13 +65,12 @@ class YOLO(Module):
         Y = self.base_net(X)
         return self.fpn_blk(Y)
 
-    def predict(self, X):
+    def predict(self, X, threshold):
         self.eval()
         anchors, cls_preds, bbox_preds = self(X)
         cls_probs = F.softmax(cls_preds, dim=2).permute(0, 2, 1)
         output = box.multibox_detection(cls_probs, bbox_preds, anchors)
-        idx = [i for i, row in enumerate(output[0]) if row[0] != -1]
-        return output[0, idx]
+        return output
 
 
 class DownSampleBlk(nn.Module):
@@ -108,23 +105,21 @@ class FPN(nn.Module):
         self.low_conv = nn.Conv2d(128, 64, kernel_size=1)
         self.mid_conv = nn.Conv2d(128, 64, kernel_size=1)
         self.high_conv = nn.Conv2d(128, 64, kernel_size=1)
-
-        # self.low_upsample = nn.Upsample(scale_factor=2, mode="nearest")
-        self.mid_upsample = nn.Upsample(scale_factor=2, mode="nearest")
-        self.high_upsample = nn.Upsample(scale_factor=2, mode="nearest")
         
-        sizes = ((0.06, 0.18, 0.6), (0.36, 0.42, 0.56), (0.64, 0.74, 0.82))
+        sizes = ((0.038, 0.039, 0.40)), (0.041, 0.042, 0.43), (0.044, 0.045, 0.46)
         ratios = (0.7, 1, 1.5)
         self.low_anchors = AnchorGenerator(sizes=sizes[0], ratios=ratios)
         self.mid_anchors = AnchorGenerator(sizes=sizes[1], ratios=ratios)
         self.high_anchors = AnchorGenerator(sizes=sizes[2], ratios=ratios)
 
         num_anchors = len(sizes[0]) + len(ratios) - 1
+        
         num_class_out = num_anchors * (self.num_classes + 1)
-        num_box_out = num_anchors * 4
         self.low_class_pred = nn.Conv2d(64, num_class_out, kernel_size=3, padding=1)
         self.mid_class_pred = nn.Conv2d(64, num_class_out, kernel_size=3, padding=1)
         self.high_class_pred = nn.Conv2d(64, num_class_out, kernel_size=3, padding=1)
+
+        num_box_out = num_anchors * 4
         self.low_box_pred = nn.Conv2d(64, num_box_out, kernel_size=3, padding=1)
         self.mid_box_pred = nn.Conv2d(64, num_box_out, kernel_size=3, padding=1)
         self.high_box_pred = nn.Conv2d(64, num_box_out, kernel_size=3, padding=1)
@@ -146,13 +141,6 @@ class FPN(nn.Module):
         low_feature_map = self.low_conv(low_feature_map)
         mid_feature_map = self.mid_conv(mid_feature_map)
         high_feature_map = self.high_conv(high_feature_map)
-
-        mid_feature_map[:] = torch.add(
-            mid_feature_map, self.high_upsample(high_feature_map)
-        )
-        low_feature_map[:] = torch.add(
-            low_feature_map, self.mid_upsample(mid_feature_map)
-        )
 
         anchors, cls_preds, bbox_preds = [], [], []
 
