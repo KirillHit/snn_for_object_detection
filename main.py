@@ -15,21 +15,21 @@ if __name__ == "__main__":
     transform = torchvision.transforms.Compose(
         [
             torchvision.transforms.ToTensor(),
-            #torchvision.transforms.Normalize((0.0, 0.0, 0.0), (0.004, 0.004, 0.004))
+            torchvision.transforms.Normalize((0.23, 0.23, 0.23), (0.12, 0.12, 0.12))
         ]
     )
-    data = utils.BananasDataset(batch_size=32, transform=transform)
+    data = utils.BananasDataset(batch_size=16, transform=transform)
 
-    model = models.YOLO(num_classes=1)
+    model = models.SpikeYOLO(num_classes=1)
     model.to(utils.devices.gpu())
     #make_dot(model(torch.unsqueeze(data[0][0].to("cuda"), dim=0)), params=dict(model.named_parameters())).render("rnn_torchviz2", format="png")
     model.load_params()
 
-    trainer = engine.Trainer(max_epochs=5, num_gpus=1, display=True, every_n=2)
+    trainer = engine.Trainer(max_epochs=0, num_gpus=1, display=True, every_n=1)
     trainer.fit(model, data)
-    model.save_params()
+    #model.save_params()
     
-    plotter = utils.Plotter(threshold=0.1, rows=3, columns=6, labels=data.get_names())
+    plotter = utils.Plotter(threshold=0.001, rows=2, columns=4, labels=data.get_names())
     trainer.test_model(data, plotter, is_train=False)
 
     plt.ioff()
