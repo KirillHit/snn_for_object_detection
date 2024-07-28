@@ -14,6 +14,9 @@ class Trainer:
         self.max_epochs, self.display, self.every_n = max_epochs, display, every_n
         self.gpus = [devices.gpu(i) for i in range(min(num_gpus, devices.num_gpus()))]
         self.board = ProgressBoard(yscale="log", display=self.display)
+        self.train_batch_idx = 0
+        self.val_batch_idx = 0
+        self.epoch = 0
 
     def prepare_data(self, data: DataModule):
         self.train_dataloader = data.train_dataloader()
@@ -35,9 +38,6 @@ class Trainer:
         self.prepare_data(data)
         self.prepare_model(model)
         self.optim = model.configure_optimizers()
-        self.epoch = 0
-        self.train_batch_idx = 0
-        self.val_batch_idx = 0
         for self.epoch in tqdm(range(self.max_epochs), leave=False, desc="Epoch"):
             self.fit_epoch()
 
