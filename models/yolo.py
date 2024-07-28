@@ -21,6 +21,7 @@ class YOLO(Module):
         self.box_loss = nn.L1Loss(reduction="none")
 
     def configure_optimizers(self):
+        # return torch.optim.Adam(self.parameters(), lr=0.002)
         return torch.optim.SGD(self.parameters(), lr=0.2, weight_decay=5e-4)
 
     def loss(self, y_hat, y):
@@ -65,10 +66,18 @@ class YOLO(Module):
         Y = self.base_net(X)
         return self.fpn_blk(Y)
 
-    def predict(self, X, threshold):
+    def predict(self, X: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+            X (torch.Tensor): img batch
+            threshold (_type_): TODO
+
+        Returns:
+            torch.Tensor: [class, roi, luw, luh, rdw, rdh]
+        """
         self.eval()
         anchors, cls_preds, bbox_preds = self(X)
-        cls_probs = F.softmax(cls_preds, dim=2).permute(0, 2, 1)
+        cls_probs = F.softmax(cls_preds, dim=2)
         output = box.multibox_detection(cls_probs, bbox_preds, anchors)
         return output
 
@@ -84,11 +93,11 @@ class DownSampleBlk(nn.Module):
             blk.append(nn.BatchNorm2d(out_channels))
             blk.append(nn.ReLU())
             in_channels = out_channels
-        blk.append(nn.MaxPool2d(2))
-        self.net = nn.Sequential(*blk)
+        blk.append(nn.MaxPool2d(kernel_size=2, stride=2))
+        self.dsb_net = nn.Sequential(*blk)
 
     def forward(self, X):
-        return self.net(X)
+        return self.dsb_net(X)
 
 
 class FPN(nn.Module):
@@ -102,27 +111,26 @@ class FPN(nn.Module):
         self.mid_layer = DownSampleBlk(128, 128)
         self.high_layer = DownSampleBlk(128, 128)
 
-        self.low_conv = nn.Conv2d(128, 64, kernel_size=1)
-        self.mid_conv = nn.Conv2d(128, 64, kernel_size=1)
-        self.high_conv = nn.Conv2d(128, 64, kernel_size=1)
-        
-        sizes = ((0.038, 0.039, 0.40)), (0.041, 0.042, 0.43), (0.044, 0.045, 0.46)
-        ratios = (0.7, 1, 1.5)
-        self.low_anchors = AnchorGenerator(sizes=sizes[0], ratios=ratios)
-        self.mid_anchors = AnchorGenerator(sizes=sizes[1], ratios=ratios)
-        self.high_anchors = AnchorGenerator(sizes=sizes[2], ratios=ratios)
+        sizes = ([0.2, 0.272], [0.37, 0.447], [0.54, 0.619], [0.71, 0.79],)
+        ratios = (0.5, 1, 1.5)
+        self.base_anchors = AnchorGenerator(sizes=sizes[0], ratios=ratios)
+        self.low_anchors = AnchorGenerator(sizes=sizes[1], ratios=ratios)
+        self.mid_anchors = AnchorGenerator(sizes=sizes[2], ratios=ratios)
+        self.high_anchors = AnchorGenerator(sizes=sizes[3], ratios=ratios)
 
         num_anchors = len(sizes[0]) + len(ratios) - 1
-        
+
         num_class_out = num_anchors * (self.num_classes + 1)
-        self.low_class_pred = nn.Conv2d(64, num_class_out, kernel_size=3, padding=1)
-        self.mid_class_pred = nn.Conv2d(64, num_class_out, kernel_size=3, padding=1)
-        self.high_class_pred = nn.Conv2d(64, num_class_out, kernel_size=3, padding=1)
+        self.base_class_pred = nn.Conv2d(64, num_class_out, kernel_size=3, padding=1)
+        self.low_class_pred = nn.Conv2d(128, num_class_out, kernel_size=3, padding=1)
+        self.mid_class_pred = nn.Conv2d(128, num_class_out, kernel_size=3, padding=1)
+        self.high_class_pred = nn.Conv2d(128, num_class_out, kernel_size=3, padding=1)
 
         num_box_out = num_anchors * 4
-        self.low_box_pred = nn.Conv2d(64, num_box_out, kernel_size=3, padding=1)
-        self.mid_box_pred = nn.Conv2d(64, num_box_out, kernel_size=3, padding=1)
-        self.high_box_pred = nn.Conv2d(64, num_box_out, kernel_size=3, padding=1)
+        self.base_box_pred = nn.Conv2d(64, num_box_out, kernel_size=3, padding=1)
+        self.low_box_pred = nn.Conv2d(128, num_box_out, kernel_size=3, padding=1)
+        self.mid_box_pred = nn.Conv2d(128, num_box_out, kernel_size=3, padding=1)
+        self.high_box_pred = nn.Conv2d(128, num_box_out, kernel_size=3, padding=1)
 
     def forward(self, X):
         """
@@ -138,11 +146,11 @@ class FPN(nn.Module):
         mid_feature_map = self.mid_layer(low_feature_map)
         high_feature_map = self.high_layer(mid_feature_map)
 
-        low_feature_map = self.low_conv(low_feature_map)
-        mid_feature_map = self.mid_conv(mid_feature_map)
-        high_feature_map = self.high_conv(high_feature_map)
-
         anchors, cls_preds, bbox_preds = [], [], []
+
+        anchors.append(self.base_anchors(X))
+        cls_preds.append(self.base_class_pred(X))
+        bbox_preds.append(self.base_box_pred(X))
 
         anchors.append(self.low_anchors(low_feature_map))
         cls_preds.append(self.low_class_pred(low_feature_map))
@@ -181,7 +189,7 @@ class CNN(nn.Module):
         num_filters = [3, 16, 32, 64]
         for i in range(len(num_filters) - 1):
             blk.append(DownSampleBlk(num_filters[i], num_filters[i + 1]))
-        self.net = nn.Sequential(*blk)
+        self.cnn_net = nn.Sequential(*blk)
 
     def forward(self, X):
-        return self.net(X)
+        return self.cnn_net(X)

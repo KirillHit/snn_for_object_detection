@@ -48,8 +48,8 @@ class DataModule():
             self.read_data(is_train=False)
         return self._val_dataset[idx]
     
-    def get_name(self, idx: int):
-        return "None"
+    def get_names(self):
+        return []
     
     def get_test_img(self, num: int, is_train=False):
         raise NotImplementedError

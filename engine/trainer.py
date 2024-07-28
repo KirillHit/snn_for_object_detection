@@ -82,14 +82,12 @@ class Trainer:
                 self.plot(val_loss, is_train=False)
             self.val_batch_idx += 1
 
-    def test_model(
-        self, data: DataModule, plotter: Plotter, is_train=False, threshold=0.8
-    ):
+    def test_model(self, data: DataModule, plotter: Plotter, is_train=False):
         images, tensors, target = data.get_test_img(
             plotter.rows * plotter.columns, is_train
         )
         if self.gpus:
             tensors = tensors.to(self.gpus[0])
-        predictions = self.model.predict(tensors, threshold).to(devices.cpu())
+        predictions = self.model.predict(tensors).to(devices.cpu())
         # predictions is array of tensor [num_pred, 6] - [class, roi, luw, luh, rdw, rdh]
         plotter.display(images, predictions, target)
