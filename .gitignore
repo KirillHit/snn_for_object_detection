@@ -4,3 +4,4 @@ __pycache__/
 .temp/
 test.py
 pyproject.toml
+.conda
