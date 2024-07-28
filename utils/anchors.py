@@ -41,64 +41,39 @@ class AnchorGenerator(nn.Module):
         Args:
             X (torch.Tensor): Img tensor
         """
-        img_h, img_w = X.shape[-2:]
-        device = X.device
+        """Generate anchor boxes with different shapes centered on each pixel."""
+        in_height, in_width = X.shape[-2:]
+        device, num_sizes, num_ratios = X.device, len(self.sizes), len(self.ratios)
+        boxes_per_pixel = (num_sizes + num_ratios - 1)
+        size_tensor = torch.tensor(self.sizes, device=device)
+        ratio_tensor = torch.tensor(self.ratios, device=device)
+        # Offsets are required to move the anchor to the center of a pixel. Since
+        # a pixel has height=1 and width=1, we choose to offset our centers by 0.5
+        offset_h, offset_w = 0.5, 0.5
+        steps_h = 1.0 / in_height  # Scaled steps in y axis
+        steps_w = 1.0 / in_width  # Scaled steps in x axis
 
-        sizes = torch.tensor(self.sizes, device=device, dtype=torch.float)
-        ratios = torch.tensor(self.ratios, device=device, dtype=torch.float)
-        steps_w = 1.0 / img_w  # Scaled steps in x axis
-        steps_h = 1.0 / img_h  # Scaled steps in y axis
+        # Generate all center points for the anchor boxes
+        center_h = (torch.arange(in_height, device=device) + offset_h) * steps_h
+        center_w = (torch.arange(in_width, device=device) + offset_w) * steps_w
+        shift_y, shift_x = torch.meshgrid(center_h, center_w, indexing='ij')
+        shift_y, shift_x = shift_y.reshape(-1), shift_x.reshape(-1)
 
-        # Calculation of displacements
-        # (s_0, r_j), (s_i, r_0)
-        # w'/w = sqrt(s*h*r/w)
-        # h'/h = sqrt(s*w/(h*r))
-        box_w_h = torch.sqrt(
-            torch.stack(
-                (
-                    torch.cat(
-                        (
-                            sizes[0] * ratios * img_h / img_w,
-                            sizes[1:] * ratios[0] * img_h / img_w,
-                        )
-                    ),  # dw boxs
-                    torch.cat(
-                        (
-                            sizes[0] * img_w / (ratios * img_h),
-                            sizes[1:] * img_w / (ratios[0] * img_h),
-                        )
-                    ),  # dh boxs
-                ),
-                dim=1,
-            )
-        )
-        # The anchor cannot be larger than the frame
-        box_w_h[:] = torch.clamp(box_w_h, max=1.0)
+        # Generate `boxes_per_pixel` number of heights and widths that are later
+        # used to create anchor box corner coordinates (xmin, xmax, ymin, ymax)
+        w = torch.cat((size_tensor * torch.sqrt(ratio_tensor[0]),
+                    self.sizes[0] * torch.sqrt(ratio_tensor[1:])))\
+                    * in_height / in_width  # Handle rectangular inputs
+        h = torch.cat((size_tensor / torch.sqrt(ratio_tensor[0]),
+                    self.sizes[0] / torch.sqrt(ratio_tensor[1:])))
+        # Divide by 2 to get half height and half width
+        anchor_manipulations = torch.stack((-w, -h, w, h)).T.repeat(
+                                            in_height * in_width, 1) / 2
 
-        grid = torch.stack(
-            torch.meshgrid(
-                (torch.arange(0, img_w, self.step, device=device) + 0.5) * steps_w,
-                (torch.arange(0, img_h, self.step, device=device) + 0.5) * steps_h,
-                indexing="ij",
-            ),
-            dim=2,
-        ).reshape(-1, 2)
+        # Each center point will have `boxes_per_pixel` number of anchor boxes, so
+        # generate a grid of all anchor box centers with `boxes_per_pixel` repeats
+        out_grid = torch.stack([shift_x, shift_y, shift_x, shift_y],
+                    dim=1).repeat_interleave(boxes_per_pixel, dim=0)
+        output = out_grid + anchor_manipulations
 
-        # Prepare the grid
-        grid = torch.unsqueeze(grid, dim=1).repeat(1, len(box_w_h), 1)
-
-        # Add offset and combine
-        left_up = torch.reshape(grid[:] - (box_w_h / 2), (-1, 2))
-        right_down = torch.reshape(grid[:] + (box_w_h / 2), (-1, 2))
-        boxes = torch.cat((left_up, right_down), dim=1)
-
-        # remove boxes that go outside the border
-        """ threshold_w = (self.step + 8) / img_w
-        threshold_h = (self.step + 8) / img_h
-        mask = (
-            (boxes[:, 0] >= (0.0 - threshold_w))
-            & (boxes[:, 1] >= (0.0 - threshold_h))
-            & (boxes[:, 2] <= (1.0 + threshold_w))
-            & (boxes[:, 3] <= (1.0 + threshold_h))
-        ) """
-        self.anchors = boxes  # [mask]
+        self.anchors = output

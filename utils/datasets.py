@@ -28,7 +28,7 @@ class ImagenetteDataset(DataModule):
         else:
             self._val_dataset = data
 
-    def get_name(self, idx: int):
+    def get_names(self):
         names = (
             "tench",
             "English" "springer",
@@ -41,7 +41,7 @@ class ImagenetteDataset(DataModule):
             "golf ball",
             "parachute",
         )
-        return names[idx]
+        return names
 
 
 class Cifar10Dataset(DataModule):
@@ -57,7 +57,7 @@ class Cifar10Dataset(DataModule):
         else:
             self._val_dataset = data
 
-    def get_name(self, idx: int):
+    def get_names(self):
         names = (
             "airplanes",
             "cars",
@@ -70,7 +70,7 @@ class Cifar10Dataset(DataModule):
             "ships",
             "trucks",
         )
-        return names[idx]
+        return names
 
 
 class BananasDataset(DataModule):
@@ -136,3 +136,9 @@ class BananasDataset(DataModule):
             tensors.append(self.transform(img))
             targets.append(list(target))
         return torch.stack(images), torch.stack(tensors), torch.tensor(targets).unsqueeze(1) / 256
+    
+    def get_names(self):
+        names = (
+            "bananas",
+        )
+        return names

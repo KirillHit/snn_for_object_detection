@@ -9,9 +9,9 @@ class Plotter:
         self.columns = columns
         self.threshold = threshold
         self.labels = labels
-        self.colors = ["b", "g", "r", "m", "c"]
+        self.colors = ["g", "b", "r", "m", "c"]
 
-    def display(self, images, predictions, target):
+    def display(self, images, predictions, target=None):
         num_img, _, h, w = images.shape
         predictions[:, :, 2] *= w
         predictions[:, :, 4] *= w
@@ -20,10 +20,11 @@ class Plotter:
         fig = plt.figure(figsize=(h, w))
         images = images.permute(0, 2, 3, 1)
         ax = []
-        for i in range(num_img):
+        for i in range(min(self.rows * self.columns, num_img)):
             ax.append(fig.add_subplot(self.rows, self.columns, i + 1))
             plt.imshow(images[i])
-            self.show_bboxes(ax[-1], predictions[i])
+            if predictions.shape[0] > i:
+                self.show_bboxes(ax[-1], predictions[i])
 
     def show_bboxes(self, axes, bboxes):
         """Show bounding boxes."""
@@ -38,7 +39,9 @@ class Plotter:
             axes.text(
                 bbox[2],
                 bbox[3],
-                f"{bbox[1]:.2f}",
+                self.labels[int(bbox[0])] + f": {bbox[1]:.2f}" if self.labels is not None else f"{bbox[1]:.2f}",
                 horizontalalignment="left",
                 verticalalignment="bottom",
+                color="r",
+                size="xx-small"
             )
