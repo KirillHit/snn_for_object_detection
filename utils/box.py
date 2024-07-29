@@ -90,22 +90,25 @@ def offset_inverse(anchors, offset_preds):
     return predicted_bbox
 
 
-def nms(boxes, scores, iou_threshold):
+def nms(boxes, scores, class_id, num_classes, iou_threshold):
     """Sort confidence scores of predicted bounding boxes."""
-    B = torch.argsort(scores, dim=-1, descending=True)
     keep = []  # Indices of predicted bounding boxes that will be kept
-    while B.numel() > 0:
-        i = B[0]
-        keep.append(i)
-        if B.numel() == 1:
-            break
-        iou = box_iou(boxes[i, :].reshape(-1, 4), boxes[B[1:], :].reshape(-1, 4)).reshape(-1)
-        inds = torch.nonzero(iou <= iou_threshold).reshape(-1)
-        B = B[inds + 1]
-    return torch.tensor(keep, device=boxes.device)
+    for class_idx in range(num_classes - 1):
+        scores_cls = torch.nonzero(class_id == class_idx).squeeze(dim=1)
+        boxes_cls = boxes[scores_cls]
+        B = torch.argsort(scores[scores_cls], descending=True)
+        while B.numel() > 0:
+            i = B[0]
+            keep.append(scores_cls[i])
+            if B.numel() == 1:
+                break
+            iou = box_iou(boxes_cls[i, :].reshape(-1, 4), boxes_cls[B[1:], :].reshape(-1, 4)).reshape(-1)
+            inds = torch.nonzero(iou <= iou_threshold).reshape(-1)
+            B = B[inds + 1]
+    return torch.tensor(keep, device=boxes.device, dtype=torch.long)
 
 
-def multibox_detection(cls_probs, offset_preds, anchors, nms_threshold=0.8,
+def multibox_detection(cls_probs, offset_preds, anchors, nms_threshold=0.01,
                        pos_threshold=0.009999999):
     """Predict bounding boxes using non-maximum suppression."""
     device, batch_size = cls_probs.device, cls_probs.shape[0]
@@ -115,14 +118,14 @@ def multibox_detection(cls_probs, offset_preds, anchors, nms_threshold=0.8,
         cls_prob, offset_pred = cls_probs[i], offset_preds[i].reshape(-1, 4)
         conf, class_id = torch.max(cls_prob, 1)
         predicted_bb = offset_inverse(anchors, offset_pred)
-        keep = nms(predicted_bb, conf, nms_threshold)
+        class_id -= 1
+        keep = nms(predicted_bb, conf, class_id, num_classes, nms_threshold)
         # Find all non-`keep` indices and set the class to background
         all_idx = torch.arange(num_anchors, dtype=torch.long, device=device)
         combined = torch.cat((keep, all_idx))
         uniques, counts = combined.unique(return_counts=True)
         non_keep = uniques[counts == 1]
         all_id_sorted = torch.cat((keep, non_keep))
-        class_id -= 1
         class_id[non_keep] = -1
         class_id = class_id[all_id_sorted]
         conf, predicted_bb = conf[all_id_sorted], predicted_bb[all_id_sorted]
