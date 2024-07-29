@@ -10,13 +10,18 @@ from tqdm import tqdm
 class Trainer:
     """The base class for training models with data."""
 
-    def __init__(self, max_epochs, num_gpus=0, display=True, every_n=4):
-        self.max_epochs, self.display, self.every_n = max_epochs, display, every_n
+    def __init__(self, num_gpus=0, display=True, every_n=4):
+        self.display, self.every_n = display, every_n
         self.gpus = [devices.gpu(i) for i in range(min(num_gpus, devices.num_gpus()))]
         self.board = ProgressBoard(yscale="log", display=self.display)
         self.train_batch_idx = 0
         self.val_batch_idx = 0
         self.epoch = 0
+
+    def prepare(self, model: Module, data: DataModule):
+        self.prepare_data(data)
+        self.prepare_model(model)
+        self.optim = model.configure_optimizers()
 
     def prepare_data(self, data: DataModule):
         self.train_dataloader = data.train_dataloader()
@@ -34,11 +39,8 @@ class Trainer:
             batch = [torch.Tensor.to(a, self.gpus[0]) for a in batch]
         return batch
 
-    def fit(self, model: Module, data: DataModule):
-        self.prepare_data(data)
-        self.prepare_model(model)
-        self.optim = model.configure_optimizers()
-        for self.epoch in tqdm(range(self.max_epochs), leave=False, desc="Epoch"):
+    def fit(self, num_epochs=1):
+        for self.epoch in tqdm(range(num_epochs), leave=False, desc="Epoch"):
             self.fit_epoch()
 
     def plot(self, loss, is_train=True):
