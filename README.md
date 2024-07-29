@@ -2,21 +2,6 @@
 
 Спайковая нейросеть для детекции объектов. Основана на библиотеке с открытым исходным кодом [norse](https://github.com/norse/norse/tree/main).
 
-## Настройка окружения
-
-Настройка окружения с помощью conda:
-
-``` bash
-conda create --name <name> --file requirements.txt -c pytorch -c nvidia -c conda-forge
-```
-
-На данный момент зависимости в conda для norse сломаны, поэтому его необходимо установить через pip:
-
-``` bash
-conda activate <name>
-pip install norse
-```
-
 ## Datasets
 
 ### Banana Detection

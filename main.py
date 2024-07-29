@@ -3,7 +3,8 @@ import engine
 import models
 from matplotlib import pyplot as plt
 import torchvision
-from torchviz import make_dot
+from torchview import draw_graph
+import torch
 
 import utils.devices
 
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     trainer.prepare(model, data)
     plotter = utils.Plotter(threshold=0.001, rows=2, columns=4, labels=data.get_names())
 
-    # make_dot(model(torch.unsqueeze(data[0][0].to("cuda"), dim=0)), params=dict(model.named_parameters())).render("rnn_torchviz2", format="png")
+    #model_graph = draw_graph(model, input_size=(8, 3, 256, 256), expand_nested=True, save_graph=True)
 
     if ask_question("Load parameters? [y/n]"):
         model.load_params()

@@ -1,6 +1,6 @@
 # environment.yml
 
-name: base
+name: /home/ubuntu/git/spike_yolo/.conda
 channels:
   - pytorch
   - nvidia
@@ -11,6 +11,7 @@ dependencies:
   - _openmp_mutex=4.5=2_kmp_llvm
   - anaconda-anon-usage=0.4.4=py312hfc0e8ea_100
   - archspec=0.2.3=pyhd3eb1b0_0
+  - atk-1.0=2.38.0=hd4edc92_1
   - blas=1.0=mkl
   - boltons=23.0.0=py312h06a4308_0
   - bottleneck=1.3.7=py312ha883a20_0
@@ -19,8 +20,9 @@ dependencies:
   - brotli-python=1.0.9=py312h6a678d5_8
   - bzip2=1.0.8=h5eee18b_6
   - c-ares=1.19.1=h5eee18b_0
-  - ca-certificates=2024.6.2=hbcca054_0
-  - certifi=2024.6.2=py312h06a4308_0
+  - ca-certificates=2024.7.4=hbcca054_0
+  - cairo=1.16.0=hb05425b_5
+  - certifi=2024.7.4=pyhd8ed1ab_0
   - cffi=1.16.0=py312h5eee18b_1
   - charset-normalizer=2.0.4=pyhd3eb1b0_0
   - conda=24.5.0=py312h7900ff3_0
@@ -46,17 +48,32 @@ dependencies:
   - ffmpeg=4.3=hf484d3e_0
   - filelock=3.13.1=py312h06a4308_0
   - fmt=9.1.0=hdb19cb5_1
+  - font-ttf-dejavu-sans-mono=2.37=hab24e00_0
+  - font-ttf-inconsolata=3.000=h77eed37_0
+  - font-ttf-source-code-pro=2.038=h77eed37_0
+  - font-ttf-ubuntu=0.83=h77eed37_2
   - fontconfig=2.14.2=h14ed4e7_0
+  - fonts-conda-ecosystem=1=0
+  - fonts-conda-forge=1=0
   - fonttools=4.53.0=py312h9a8786e_0
   - freetype=2.12.1=h4a9f257_0
+  - fribidi=1.0.10=h36c2ea0_0
   - frozendict=2.4.2=py312h06a4308_0
   - fsspec=2024.6.0=pyhff2d567_0
+  - gdk-pixbuf=2.42.10=h05c8ddd_0
+  - gettext=0.22.5=h59595ed_2
+  - gettext-tools=0.22.5=h59595ed_2
   - glib=2.78.4=h6a678d5_0
   - glib-tools=2.78.4=h6a678d5_0
   - gmp=6.2.1=h295c915_3
   - gnutls=3.6.15=he1e5248_0
+  - graphite2=1.3.14=h295c915_1
+  - graphviz=4.0.0=h5abf519_0
   - gst-plugins-base=1.14.1=h6a678d5_1
   - gstreamer=1.14.1=h5eee18b_1
+  - gtk2=2.24.33=h90689f9_2
+  - gts=0.7.6=h977cf35_4
+  - harfbuzz=4.3.0=hf52aaf7_2
   - icu=73.1=h6a678d5_0
   - idna=3.7=py312h06a4308_0
   - intel-openmp=2023.1.0=hdb19cb5_46306
@@ -73,6 +90,8 @@ dependencies:
   - lerc=3.0=h295c915_0
   - libabseil=20240116.2=cxx17_h59595ed_0
   - libarchive=3.6.2=h6ac8c49_3
+  - libasprintf=0.22.5=h661eb56_2
+  - libasprintf-devel=0.22.5=h661eb56_2
   - libblas=3.9.0=1_h86c2bf4_netlib
   - libbrotlicommon=1.1.0=hd590300_1
   - libbrotlidec=1.1.0=hd590300_1
@@ -94,6 +113,9 @@ dependencies:
   - libexpat=2.6.2=h59595ed_0
   - libffi=3.4.4=h6a678d5_1
   - libgcc-ng=13.2.0=h77fa898_10
+  - libgd=2.3.3=h695aa2c_1
+  - libgettextpo=0.22.5=h59595ed_2
+  - libgettextpo-devel=0.22.5=h59595ed_2
   - libgfortran-ng=13.2.0=h69a702a_10
   - libgfortran5=13.2.0=h3d2ce59_10
   - libglib=2.78.4=hdc74915_0
@@ -116,12 +138,14 @@ dependencies:
   - libpng=1.6.39=h5eee18b_0
   - libpq=12.17=hdbd6064_0
   - libprotobuf=4.25.3=h08a7969_0
+  - librsvg=2.54.4=h7abd40a_0
   - libsolv=0.7.24=he621ea3_1
   - libsqlite=3.46.0=hde9e2c9_0
   - libssh2=1.11.0=h251f7ec_0
   - libstdcxx-ng=13.2.0=hc0a3c3a_10
   - libtasn1=4.19.0=h5eee18b_0
   - libtiff=4.5.1=h6a678d5_0
+  - libtool=2.4.7=h27087fc_0
   - libunistring=0.9.10=h27cfd23_0
   - libuuid=2.38.1=h0b41bf4_0
   - libuv=1.48.0=hd590300_0
@@ -155,12 +179,14 @@ dependencies:
   - numpy-base=1.26.4=py312h0da6c21_0
   - openh264=2.1.1=h4ff587b_0
   - openjpeg=2.4.0=h3ad879b_0
-  - openssl=3.3.1=h4ab18f5_0
+  - openssl=3.3.1=h4bc722e_2
   - packaging=24.1=pyhd8ed1ab_0
   - pandas=2.2.2=py312h526ad5a_0
+  - pango=1.50.7=hbd2fdc8_0
   - pcre2=10.42=hebb0a14_1
   - pillow=10.3.0=py312h5eee18b_0
   - pip=24.0=py312h06a4308_0
+  - pixman=0.43.2=h59595ed_0
   - platformdirs=3.10.0=py312h06a4308_0
   - pluggy=1.0.0=py312h06a4308_1
   - ply=3.11=py312h06a4308_1
@@ -173,6 +199,7 @@ dependencies:
   - pysocks=1.7.1=py312h06a4308_0
   - python=3.12.2=hab00c5b_0_cpython
   - python-dateutil=2.9.0post0=py312h06a4308_2
+  - python-graphviz=0.20.3=pyh717bed2_0
   - python-tzdata=2023.3=pyhd3eb1b0_0
   - python_abi=3.12=4_cp312
   - pytorch=2.3.1=py3.12_cuda12.1_cudnn8.9.2_0
@@ -195,6 +222,7 @@ dependencies:
   - tbb=2021.8.0=hdb19cb5_0
   - tk=8.6.14=h39e8969_0
   - torchaudio=2.3.1=py312_cu121
+  - torchview=0.2.6=pyhd8ed1ab_0
   - torchvision=0.18.1=py312_cu121
   - tornado=6.3.3=py312h5eee18b_0
   - tqdm=4.66.4=py312he106c6f_0
@@ -214,6 +242,5 @@ dependencies:
       - nir==1.0.4
       - nirtorch==1.0
       - norse==1.1.0
-      - python-graphviz==0.20.3
       - torchviz==0.0.2
-prefix: /home/ubuntu/miniconda3
+prefix: /home/ubuntu/git/spike_yolo/.conda
