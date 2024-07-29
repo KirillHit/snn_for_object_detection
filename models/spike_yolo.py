@@ -24,7 +24,7 @@ class SpikeYOLO(Module):
 
     def configure_optimizers(self):
         return torch.optim.Adamax(self.parameters(), lr=0.002)
-        #return torch.optim.SGD(self.parameters(), lr=0.2, weight_decay=5e-4)
+        # return torch.optim.SGD(self.parameters(), lr=0.2, weight_decay=5e-4)
 
     def loss(self, y_hat, y):
         """
@@ -85,6 +85,46 @@ class SpikeYOLO(Module):
         return output
 
 
+class SpikeClassifierYOLO(SpikeYOLO):
+    """A simplified version of SpikeYOLO, only classifies assumptions.
+    Needed for pretraining"""
+
+    def __init__(self, num_classes, seq_length=16):
+        super().__init__(num_classes, seq_length)
+
+    def loss(self, y_hat, y):
+        """
+        Args:
+            y_hat: preds
+            y: true
+        """
+        cls_preds, bbox_preds = y_hat
+        bbox_offset, bbox_mask, class_labels = y
+
+        batch_size, _, num_classes = cls_preds.shape
+        cls = torch.reshape(
+            self.cls_loss(cls_preds.reshape(-1, num_classes), class_labels.reshape(-1)),
+            (batch_size, -1),
+        ).mean(dim=1)
+        return cls
+
+    def forward(self, X):
+        """
+        Args:
+            X: Real img
+
+        Returns:
+            anchors: [all_anchors, 4]
+            cls_preds: [num_batch, all_anchors,(num_classes + 1)]
+            bbox_preds: [num_batch, all_anchors * 4]
+        """
+        Y = self.encoder(X)
+        Y, state = self.base_net(Y)
+        cls_preds, bbox_preds = self.fpn_blk(Y)
+        bbox_preds = torch.zeros_like(bbox_preds)
+        return cls_preds, bbox_preds
+
+
 class SpikeDownSampleBlk(nn.Module):
     """Reduces the height and width of input feature maps by half"""
 
@@ -92,8 +132,8 @@ class SpikeDownSampleBlk(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
         self.lif1 = norse.LIFCell()
-        #self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
-        #self.lif2 = norse.LIFCell()
+        # self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
+        # self.lif2 = norse.LIFCell()
 
     def forward(self, X):
         s1 = s2 = None
@@ -101,8 +141,8 @@ class SpikeDownSampleBlk(nn.Module):
         for ts in range(X.shape[0]):
             z = self.conv1(X[ts])
             z, s1 = self.lif1(z, s1)
-            #z = self.conv2(z)
-            #z, s2 = self.lif2(z, s2)
+            # z = self.conv2(z)
+            # z, s2 = self.lif2(z, s2)
             z = nn.functional.max_pool2d(z, kernel_size=2, stride=2)
             zs.append(z)
         Y = torch.stack(zs)
@@ -117,8 +157,8 @@ class SpikeFPN(nn.Module):
         self.num_classes = num_classes
 
         self.low_layer = SpikeDownSampleBlk(64, 128)
-        #self.mid_layer = SpikeDownSampleBlk(128, 128)
-        #self.high_layer = SpikeDownSampleBlk(128, 128)
+        # self.mid_layer = SpikeDownSampleBlk(128, 128)
+        # self.high_layer = SpikeDownSampleBlk(128, 128)
 
         sizes = (
             [0.2, 0.272],
@@ -129,8 +169,8 @@ class SpikeFPN(nn.Module):
         ratios = (0.5, 1, 1.5)
         self.base_anchors = AnchorGenerator(sizes=sizes[0], ratios=ratios)
         self.low_anchors = AnchorGenerator(sizes=sizes[1], ratios=ratios)
-        #self.mid_anchors = AnchorGenerator(sizes=sizes[2], ratios=ratios)
-        #self.high_anchors = AnchorGenerator(sizes=sizes[3], ratios=ratios)
+        # self.mid_anchors = AnchorGenerator(sizes=sizes[2], ratios=ratios)
+        # self.high_anchors = AnchorGenerator(sizes=sizes[3], ratios=ratios)
 
         num_anchors = len(sizes[0]) + len(ratios) - 1
 
@@ -138,8 +178,8 @@ class SpikeFPN(nn.Module):
         num_box_out = num_anchors * 4
         self.base_pred = DetectorDirectDecoder(64, num_box_out, num_class_out, 3)
         self.low_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
-        #self.mid_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
-        #self.high_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
+        # self.mid_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
+        # self.high_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
 
     def forward(self, X):
         """
@@ -152,8 +192,8 @@ class SpikeFPN(nn.Module):
             bbox_preds: [num_batch, all_anchors, 4]
         """
         low_feature_map = self.low_layer(X)
-        #mid_feature_map = self.mid_layer(low_feature_map)
-        #high_feature_map = self.high_layer(mid_feature_map)
+        # mid_feature_map = self.mid_layer(low_feature_map)
+        # high_feature_map = self.high_layer(mid_feature_map)
 
         anchors, cls_preds, bbox_preds = [], [], []
 
