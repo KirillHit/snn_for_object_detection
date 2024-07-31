@@ -28,7 +28,7 @@ def ask_question(question, default="y"):
 
 
 if __name__ == "__main__":
-    data = utils.HardHatDataset(
+    data = utils.BananasDataset(
         batch_size=16,
         resize=v2.Resize((256, 256)),
         normalize=v2.Normalize((0.23, 0.23, 0.23), (0.12, 0.12, 0.12)),
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     plotter = utils.Plotter(threshold=0.001, rows=2, columns=4, labels=data.get_names())
 
     # model_graph = draw_graph(model, input_size=(8, 3, 256, 256), expand_nested=True, save_graph=True)
-    params_file = "hardhat"
+    params_file = "bananas"
 
     if ask_question("Load parameters? [y/n]"):
         model.load_params(params_file)

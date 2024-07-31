@@ -11,68 +11,6 @@ from torch.nn.utils.rnn import pad_sequence
 import PIL
 
 
-class ImagenetteDataset(DataModule):
-    """Imagenette is a subset of 10 easily classified classes from Imagenet."""
-
-    def read_data(self, is_train=True):
-        data = torchvision.datasets.Imagenette(
-            root=self._root,
-            split="train" if is_train else "val",
-            size="320px",
-            transform=self.transform,
-            download=not os.path.isdir(os.path.join(self._root, "imagenette2-320")),
-        )
-
-        if is_train:
-            self._train_dataset = data
-        else:
-            self._val_dataset = data
-
-    def get_names(self):
-        names = (
-            "tench",
-            "English" "springer",
-            "cassette player",
-            "chain saw",
-            "church",
-            "French horn",
-            "garbage truck",
-            "gas pump",
-            "golf ball",
-            "parachute",
-        )
-        return names
-
-
-class Cifar10Dataset(DataModule):
-    """The CIFAR-10 dataset consists of 60000 32x32 colour images in 10 classes, with 6000 images per class."""
-
-    def read_data(self, is_train=True):
-        data = torchvision.datasets.CIFAR10(
-            root=self._root, train=is_train, transform=self.transform, download=True
-        )
-
-        if is_train:
-            self._train_dataset = data
-        else:
-            self._val_dataset = data
-
-    def get_names(self):
-        names = (
-            "airplanes",
-            "cars",
-            "birds",
-            "cats",
-            "deer",
-            "dogs",
-            "frogs",
-            "horses",
-            "ships",
-            "trucks",
-        )
-        return names
-
-
 class HardHatDataset(DataModule):
     """Dataset for identifying hard hat"""
 
