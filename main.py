@@ -2,7 +2,7 @@ import utils
 import engine
 import models
 from matplotlib import pyplot as plt
-import torchvision
+from torchvision.transforms import v2
 from torchview import draw_graph
 import torch
 
@@ -28,20 +28,19 @@ def ask_question(question, default="y"):
 
 
 if __name__ == "__main__":
-    transform = torchvision.transforms.Compose(
-        [
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize((0.23, 0.23, 0.23), (0.12, 0.12, 0.12)),
-        ]
+    data = utils.HardHatDataset(
+        batch_size=16,
+        resize=v2.Resize((256, 256)),
+        normalize=v2.Normalize((0.23, 0.23, 0.23), (0.12, 0.12, 0.12)),
+        save_tensor=True,
     )
-    data = utils.BananasDataset(batch_size=16, transform=transform)
     model = models.SpikeYOLO(num_classes=1)
     model.to(utils.devices.gpu())
     trainer = engine.Trainer(num_gpus=1, display=True, every_n=1)
     trainer.prepare(model, data)
     plotter = utils.Plotter(threshold=0.001, rows=2, columns=4, labels=data.get_names())
 
-    #model_graph = draw_graph(model, input_size=(8, 3, 256, 256), expand_nested=True, save_graph=True)
+    # model_graph = draw_graph(model, input_size=(8, 3, 256, 256), expand_nested=True, save_graph=True)
 
     if ask_question("Load parameters? [y/n]"):
         model.load_params()

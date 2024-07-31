@@ -85,7 +85,7 @@ class Trainer:
             self.val_batch_idx += 1
 
     def test_model(self, data: DataModule, plotter: Plotter, is_train=False):
-        images, tensors, target = data.get_test_img(
+        images, tensors, target = data.get_test_batch(
             plotter.rows * plotter.columns, is_train
         )
         if self.gpus:
