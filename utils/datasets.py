@@ -73,6 +73,81 @@ class Cifar10Dataset(DataModule):
         return names
 
 
+class HardHatDataset(DataModule):
+    """Dataset for identifying hard hat"""
+
+    def read_data(self, is_train=True):
+        data_dir = download_extract("Hardhat", folder=self._root)
+        data_dir = os.path.join(data_dir, "Train" if is_train else "Test")
+
+        targets_path = os.path.join(data_dir, "targets.pt")
+        images_path = os.path.join(data_dir, "images.pt")
+
+        if os.path.exists(targets_path) and os.path.exists(images_path):
+            targets = torch.load(targets_path)
+            images = torch.load(images_path)
+            print("Tensors load")
+        else:
+            images, targets = self.parse(data_dir)
+            if self.save_tensor:
+                torch.save(targets, targets_path)
+                torch.save(images, images_path)
+
+        if is_train:
+            self._train_dataset = CustomDataset((images, targets))
+        else:
+            self._val_dataset = CustomDataset((images, targets))
+
+    def parse(self, data_dir):
+        labels_dir = os.path.join(data_dir, "Annotation")
+        images_dir = os.path.join(data_dir, "JPEGImage")
+
+        images, targets = [], []
+        for xml_file in os.listdir(labels_dir):
+            tree = ET.parse(os.path.join(labels_dir, xml_file))
+            root = tree.getroot()
+            size = root.find("size")
+            if size.find("depth").text != "3":
+                print("Warning: wrong depth")
+                continue
+            w = float(size.find("width").text)
+            h = float(size.find("height").text)
+            labels = []
+            for obj in root.findall("object"):
+                name = obj.find("name").text
+                classes = ("helmet",)  # "head", "person"
+                if name not in classes:
+                    # print("Warning: wrong name - " + name + " " + xml_file)
+                    continue
+                coord = obj.find("bndbox")
+                labels.append(
+                    (
+                        classes.index(name),
+                        float(coord.find("xmin").text) / w,
+                        float(coord.find("ymin").text) / h,
+                        float(coord.find("xmax").text) / w,
+                        float(coord.find("ymax").text) / h,
+                    )
+                )
+            if not labels:
+                continue
+            targets.append(labels)
+            filename = root.find("filename").text
+            img = PIL.Image.open(os.path.join(images_dir, filename))
+            images.append(self.transform(img))
+        targets = pad_sequence(
+            [torch.tensor(target) for target in targets],
+            batch_first=True,
+            padding_value=-1,
+        )
+
+        return torch.stack(images), targets
+
+    def get_names(self):
+        names = ("helmet",)
+        return names
+
+
 class BananasDataset(DataModule):
     """A customized dataset to load the banana detection dataset."""
 
@@ -115,30 +190,6 @@ class BananasDataset(DataModule):
             + (" training examples" if is_train else " validation examples")
         )
 
-    def get_test_img(self, num: int, is_train=False):
-        data_dir = download_extract("banana-detection", folder=self._root)
-        csv_fname = os.path.join(
-            data_dir, "bananas_train" if is_train else "bananas_val", "label.csv"
-        )
-        csv_data = pd.read_csv(csv_fname)
-        csv_data = csv_data.set_index("img_name")
-        images, tensors, targets = [], [], []
-        for img_name, target in csv_data.sample(n=num).iterrows():
-            img = PIL.Image.open(
-                os.path.join(
-                    data_dir,
-                    "bananas_train" if is_train else "bananas_val",
-                    "images",
-                    f"{img_name}",
-                )
-            )
-            images.append(torchvision.transforms.functional.pil_to_tensor(img))
-            tensors.append(self.transform(img))
-            targets.append(list(target))
-        return torch.stack(images), torch.stack(tensors), torch.tensor(targets).unsqueeze(1) / 256
-    
     def get_names(self):
-        names = (
-            "bananas",
-        )
+        names = ("bananas",)
         return names
