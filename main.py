@@ -36,14 +36,15 @@ if __name__ == "__main__":
     )
     model = models.SpikeYOLO(num_classes=1)
     model.to(utils.devices.gpu())
-    trainer = engine.Trainer(num_gpus=1, display=True, every_n=1)
+    trainer = engine.Trainer(num_gpus=1, display=True, every_n=8)
     trainer.prepare(model, data)
     plotter = utils.Plotter(threshold=0.001, rows=2, columns=4, labels=data.get_names())
 
     # model_graph = draw_graph(model, input_size=(8, 3, 256, 256), expand_nested=True, save_graph=True)
+    params_file = "hardhat"
 
     if ask_question("Load parameters? [y/n]"):
-        model.load_params()
+        model.load_params(params_file)
 
     while True:
         num_epochs = ask_question("Start fit? [number of epochs/y/n]", default=0)
@@ -57,4 +58,4 @@ if __name__ == "__main__":
             print("Training was stopped!")
 
     if ask_question("Save parameters? [y/n]"):
-        model.save_params()
+        model.save_params(params_file)

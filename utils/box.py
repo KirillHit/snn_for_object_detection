@@ -108,7 +108,7 @@ def nms(boxes, scores, class_id, num_classes, iou_threshold):
     return torch.tensor(keep, device=boxes.device, dtype=torch.long)
 
 
-def multibox_detection(cls_probs, offset_preds, anchors, nms_threshold=0.01,
+def multibox_detection(cls_probs, offset_preds, anchors, nms_threshold=0.1,
                        pos_threshold=0.009999999):
     """Predict bounding boxes using non-maximum suppression."""
     device, batch_size = cls_probs.device, cls_probs.shape[0]

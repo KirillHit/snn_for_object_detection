@@ -17,14 +17,14 @@ class SpikeYOLO(Module):
         self.encoder = DirectEncoder(seq_length)
         self.base_net = SpikeCNN()
         self.fpn_blk = SpikeFPN(num_classes)
-        self.roi_blk = RoI(iou_threshold=0.5)
+        self.roi_blk = RoI(iou_threshold=0.4)
 
         self.cls_loss = nn.CrossEntropyLoss(reduction="none")
         self.box_loss = nn.L1Loss(reduction="none")
 
     def configure_optimizers(self):
         return torch.optim.Adamax(self.parameters(), lr=0.002)
-        # return torch.optim.SGD(self.parameters(), lr=0.2, weight_decay=5e-4)
+        #return torch.optim.SGD(self.parameters(), lr=0.2, weight_decay=5e-4)
 
     def loss(self, y_hat, y):
         """
@@ -108,22 +108,6 @@ class SpikeClassifierYOLO(SpikeYOLO):
         ).mean(dim=1)
         return cls
 
-    def forward(self, X):
-        """
-        Args:
-            X: Real img
-
-        Returns:
-            anchors: [all_anchors, 4]
-            cls_preds: [num_batch, all_anchors,(num_classes + 1)]
-            bbox_preds: [num_batch, all_anchors * 4]
-        """
-        Y = self.encoder(X)
-        Y, state = self.base_net(Y)
-        cls_preds, bbox_preds = self.fpn_blk(Y)
-        bbox_preds = torch.zeros_like(bbox_preds)
-        return cls_preds, bbox_preds
-
 
 class SpikeDownSampleBlk(nn.Module):
     """Reduces the height and width of input feature maps by half"""
@@ -157,20 +141,26 @@ class SpikeFPN(nn.Module):
         self.num_classes = num_classes
 
         self.low_layer = SpikeDownSampleBlk(64, 128)
-        # self.mid_layer = SpikeDownSampleBlk(128, 128)
-        # self.high_layer = SpikeDownSampleBlk(128, 128)
+        self.mid_layer = SpikeDownSampleBlk(128, 128)
+        self.high_layer = SpikeDownSampleBlk(128, 128)
 
-        sizes = (
+        """ sizes = (
             [0.2, 0.272],
             [0.37, 0.447],
             [0.54, 0.619],
             [0.71, 0.79],
+        ) """
+        sizes = (
+            [0.062, 0.078, 0.094],
+            [0.125, 0.156, 0.188],
+            [0.250, 0.312, 0.375],
+            [0.500, 0.625, 0.750],
         )
-        ratios = (0.5, 1, 1.5)
+        ratios = (0.7, 1, 1.3)
         self.base_anchors = AnchorGenerator(sizes=sizes[0], ratios=ratios)
         self.low_anchors = AnchorGenerator(sizes=sizes[1], ratios=ratios)
-        # self.mid_anchors = AnchorGenerator(sizes=sizes[2], ratios=ratios)
-        # self.high_anchors = AnchorGenerator(sizes=sizes[3], ratios=ratios)
+        self.mid_anchors = AnchorGenerator(sizes=sizes[2], ratios=ratios)
+        self.high_anchors = AnchorGenerator(sizes=sizes[3], ratios=ratios)
 
         num_anchors = len(sizes[0]) + len(ratios) - 1
 
@@ -178,8 +168,8 @@ class SpikeFPN(nn.Module):
         num_box_out = num_anchors * 4
         self.base_pred = DetectorDirectDecoder(64, num_box_out, num_class_out, 3)
         self.low_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
-        # self.mid_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
-        # self.high_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
+        self.mid_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
+        self.high_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
 
     def forward(self, X):
         """
@@ -192,8 +182,8 @@ class SpikeFPN(nn.Module):
             bbox_preds: [num_batch, all_anchors, 4]
         """
         low_feature_map = self.low_layer(X)
-        # mid_feature_map = self.mid_layer(low_feature_map)
-        # high_feature_map = self.high_layer(mid_feature_map)
+        mid_feature_map = self.mid_layer(low_feature_map)
+        high_feature_map = self.high_layer(mid_feature_map)
 
         anchors, cls_preds, bbox_preds = [], [], []
 
@@ -204,6 +194,16 @@ class SpikeFPN(nn.Module):
 
         anchors.append(self.low_anchors(low_feature_map))
         boxes, classes = self.low_pred(low_feature_map)
+        bbox_preds.append(boxes)
+        cls_preds.append(classes)
+
+        anchors.append(self.mid_anchors(mid_feature_map))
+        boxes, classes = self.mid_pred(mid_feature_map)
+        bbox_preds.append(boxes)
+        cls_preds.append(classes)
+
+        anchors.append(self.high_anchors(high_feature_map))
+        boxes, classes = self.high_pred(high_feature_map)
         bbox_preds.append(boxes)
         cls_preds.append(classes)
 
