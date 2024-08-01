@@ -27,21 +27,38 @@ def ask_question(question, default="y"):
             print("Please respond with 'y' or 'n'")
 
 
+def ask_dataset(default: str = "b"):
+    while True:
+        print(f"Select dataset: b-bananas, h-hardhat (Default - {default})")
+        choice = input().lower()
+        if default is not None and choice == "":
+            choice = default
+        if choice == "b":
+            return utils.BananasDataset(
+                batch_size=16,
+                resize=v2.Resize((256, 256)),
+                normalize=v2.Normalize((0.23, 0.23, 0.23), (0.12, 0.12, 0.12)),
+            ), "bananas"
+        elif choice == "h":
+            return utils.HardHatDataset(
+                batch_size=16,
+                resize=v2.Resize((256, 256)),
+                normalize=v2.Normalize((0.23, 0.23, 0.23), (0.12, 0.12, 0.12)),
+                save_tensor=True,
+            ), "hardhat"
+        else:
+            print("Please respond with 'y' or 'n'")
+
+
 if __name__ == "__main__":
-    data = utils.BananasDataset(
-        batch_size=16,
-        resize=v2.Resize((256, 256)),
-        normalize=v2.Normalize((0.23, 0.23, 0.23), (0.12, 0.12, 0.12)),
-        save_tensor=True,
-    )
+    data, params_file = ask_dataset("b")
     model = models.SpikeYOLO(num_classes=1)
     model.to(utils.devices.gpu())
-    trainer = engine.Trainer(num_gpus=1, display=True, every_n=8)
+    trainer = engine.Trainer(num_gpus=1, display=True, every_n=4)
     trainer.prepare(model, data)
     plotter = utils.Plotter(threshold=0.001, rows=2, columns=4, labels=data.get_names())
 
     # model_graph = draw_graph(model, input_size=(8, 3, 256, 256), expand_nested=True, save_graph=True)
-    params_file = "bananas"
 
     if ask_question("Load parameters? [y/n]"):
         model.load_params(params_file)

@@ -1,6 +1,4 @@
-# environment.yml
-
-name: /home/ubuntu/git/spike_yolo/.conda
+name: spike_yolo_env
 channels:
   - pytorch
   - nvidia
