@@ -1,6 +1,4 @@
 from torch.utils.data import Dataset, DataLoader
-from torchvision.transforms import v2
-import torch
 
 
 class DataModule:
@@ -11,71 +9,59 @@ class DataModule:
         root="./data",
         num_workers=4,
         batch_size=32,
-        save_tensor=False,
-        resize: v2.Resize = None,
-        normalize: v2.Normalize = None,
     ):
+        """
+        Args:
+            root (str, optional): The directory where datasets are stored. Defaults to "./data".
+            num_workers (int, optional): A positive integer will turn on multi-process data loading with the specified number of loader worker processes. See torch.utils.data.DataLoader. Defaults to 4.
+            batch_size (int, optional): _description_. Defaults to 32.
+        """
         self._root = root
         self._num_workers = num_workers
         self._train_dataset: CustomDataset = None
+        self._test_dataset: CustomDataset = None
         self._val_dataset: CustomDataset = None
         self.batch_size = batch_size
-        self.save_tensor = save_tensor
 
-        transform_arr = [v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
-        undo_transform_arr = []
-        if resize is not None:
-            transform_arr.append(resize)
-        if normalize is not None:
-            transform_arr.append(normalize)
-            mean = torch.tensor(normalize.mean)
-            std = torch.tensor(normalize.std)
-            undo_transform_arr.append(
-                v2.Normalize((-mean / std).tolist(), (1.0 / std).tolist())
-            )
-        self.transform = v2.Compose(transform_arr)
-        self.undo_transform = v2.Compose(undo_transform_arr)
-
-    def get_dataloader(self, batch_size: int, is_train=True, shuffle=True):
-        self.update_dataset(is_train)
-
+    def get_dataloader(self, batch_size: int, split="train", shuffle=True):
+        self.update_dataset(split)
         return DataLoader(
-            self._train_dataset if is_train else self._val_dataset,
+            self.__get_dataset(split),
             batch_size,
             shuffle=shuffle,
             num_workers=self._num_workers,
         )
 
+    def __get_dataset(self, split: str):
+        match split:
+            case "train":
+                return self._train_dataset
+            case "test":
+                return self._test_dataset
+            case "val":
+                return self._val_dataset
+            case _:
+                raise ValueError(f'The split parameter cannot be "{split}"!')
+
     def train_dataloader(self):
-        return self.get_dataloader(self.batch_size, is_train=True, shuffle=True)
+        return self.get_dataloader(self.batch_size, split="train", shuffle=True)
+
+    def test_dataloader(self):
+        return self.get_dataloader(self.batch_size, split="test", shuffle=True)
 
     def val_dataloader(self):
-        return self.get_dataloader(self.batch_size, is_train=False, shuffle=False)
+        return self.get_dataloader(self.batch_size, split="val", shuffle=False)
 
-    def update_dataset(self, is_train=True):
-        if is_train:
-            if self._train_dataset is not None:
-                return
-        elif self._val_dataset is not None:
-            return
-        self.read_data(is_train)
+    def update_dataset(self, split: str):
+        if self.__get_dataset(split) is None:
+            self.read_data(split)
 
-    def read_data(self, is_train=True):
+    def read_data(self, split: str):
         """Read the dataset images and labels."""
         raise NotImplementedError
 
-    def __getitem__(self, idx: int):
-        if self._val_dataset is None:
-            self.read_data(is_train=False)
-        return self._val_dataset[idx]
-
-    def get_names(self):
+    def get_labels(self):
         return []
-
-    def get_test_batch(self, num: int, is_train=False):
-        dataloader = self.get_dataloader(num, is_train=is_train, shuffle=True)
-        images, targets = next(iter(dataloader))
-        return self.undo_transform(images), images, targets
 
 
 class CustomDataset(Dataset):

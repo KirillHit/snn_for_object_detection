@@ -27,36 +27,25 @@ def ask_question(question, default="y"):
             print("Please respond with 'y' or 'n'")
 
 
-def ask_dataset(default: str = "b"):
-    while True:
-        print(f"Select dataset: b-bananas, h-hardhat (Default - {default})")
-        choice = input().lower()
-        if default is not None and choice == "":
-            choice = default
-        if choice == "b":
-            return utils.BananasDataset(
-                batch_size=16,
-                resize=v2.Resize((256, 256)),
-                normalize=v2.Normalize((0.23, 0.23, 0.23), (0.12, 0.12, 0.12)),
-            ), "bananas"
-        elif choice == "h":
-            return utils.HardHatDataset(
-                batch_size=16,
-                resize=v2.Resize((256, 256)),
-                normalize=v2.Normalize((0.23, 0.23, 0.23), (0.12, 0.12, 0.12)),
-                save_tensor=True,
-            ), "hardhat"
-        else:
-            print("Please respond with 'y' or 'n'")
+def ask_dataset(default: str = "g"):
+    # print(f"Select dataset: g - Gen1, m - 1Mpx (not supported yet) (Default - {default})")
+    choice = ""  # input().lower() TODO
+    if choice == "":
+        choice = default
+    if choice == "g":
+        return utils.Gen1Dataset(batch_size=16), "gen1"
+    raise ValueError("Invalid dataset value!")
 
 
 if __name__ == "__main__":
-    data, params_file = ask_dataset("b")
+    data, params_file = ask_dataset()
     model = models.SpikeYOLO(num_classes=1)
     model.to(utils.devices.gpu())
     trainer = engine.Trainer(num_gpus=1, display=True, every_n=4)
     trainer.prepare(model, data)
-    plotter = utils.Plotter(threshold=0.001, rows=2, columns=4, labels=data.get_names())
+    plotter = utils.Plotter(
+        threshold=0.001, rows=2, columns=4, labels=data.get_labels()
+    )
 
     # model_graph = draw_graph(model, input_size=(8, 3, 256, 256), expand_nested=True, save_graph=True)
 

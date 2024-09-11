@@ -2,13 +2,24 @@ import os
 import PIL.Image
 import pandas as pd
 import torch
-import torchvision
-from torchvision import transforms
 import xml.etree.ElementTree as ET
 from utils.downloads import download_extract
 from engine.data import DataModule, CustomDataset
 from torch.nn.utils.rnn import pad_sequence
 import PIL
+
+import glob
+
+
+class Gen1Dataset(DataModule):
+    """Event-Based Dataset to date"""
+
+    def read_data(self, split: str):
+        data_dir = os.path.join(self._root, "gen1", split)
+        if not os.path.isdir(data_dir):
+            raise RuntimeError(f'Directory "{data_dir}" does not exist!')
+        gt_files = glob.glob(data_dir + "/*_bbox.npy")
+        images, targets = [], []
 
 
 class HardHatDataset(DataModule):
@@ -81,7 +92,7 @@ class HardHatDataset(DataModule):
 
         return torch.stack(images), targets
 
-    def get_names(self):
+    def get_labels(self):
         names = ("helmet",)
         return names
 
@@ -128,6 +139,6 @@ class BananasDataset(DataModule):
             + (" training examples" if is_train else " validation examples")
         )
 
-    def get_names(self):
+    def get_labels(self):
         names = ("bananas",)
         return names
