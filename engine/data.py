@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset, DataLoader
-
+from torchvision.transforms import v2
 
 class DataModule:
     """The base class of data."""
@@ -9,6 +9,8 @@ class DataModule:
         root="./data",
         num_workers=4,
         batch_size=32,
+        resize: v2.Resize = None,
+        normalize: v2.Normalize = None,
     ):
         """
         Args:

@@ -7,19 +7,49 @@ from utils.downloads import download_extract
 from engine.data import DataModule, CustomDataset
 from torch.nn.utils.rnn import pad_sequence
 import PIL
-
+import numpy as np
 import glob
+from .io.psee_loader import PSEELoader
+from tqdm import tqdm
 
 
 class Gen1Dataset(DataModule):
     """Event-Based Dataset to date"""
 
+    height: int = 240
+    width: int = 304
+    duration: int = 60000  # ms
+    time_step: int = 100  # ms
+
     def read_data(self, split: str):
+        # Data dir: ./data/gen1/<test, train, val>
         data_dir = os.path.join(self._root, "gen1", split)
         if not os.path.isdir(data_dir):
             raise RuntimeError(f'Directory "{data_dir}" does not exist!')
+        # Get files name
         gt_files = glob.glob(data_dir + "/*_bbox.npy")
-        images, targets = [], []
+        data_files = [p.replace("_bbox.npy", "_td.dat") for p in gt_files]
+        # npy format: ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
+        # class_id 0 for cars and 1 for pedestrians
+        # boxes are updated once per second
+        self.gt_boxes_list = [np.load(p) for p in gt_files]
+        self.events_loader = [PSEELoader(td_file) for td_file in data_files]
+        self.height, self.width = self.events_loader[0].get_size()
+        self.parse_videos()
+
+    def parse_videos(self):
+        """Transforms events into a video stream"""
+        # [dur, p [0-negative, 1-positive], h, w]
+        record = np.zeros([self.duration, 2, self.height, self.width], dtype=np.float32)
+        for loader in tqdm(self.events_loader, leave=False, desc="Parse video: "):
+            # Events format ('t' [us], 'x', 'y', 'p' [1-positive/0-negative])
+            record = loader.load_delta_t(self.time_step * 1000)
+            
+            # record[event[0]//1000, event[3], event[2], event[1]] = 1
+            record.zero_()
+
+    def parse_targets(self):
+        pass
 
 
 class HardHatDataset(DataModule):
@@ -126,13 +156,9 @@ class BananasDataset(DataModule):
             # lower-right x, lower-right y), where all the images have the same
             # banana class (index 0)
         if is_train:
-            self._train_dataset = CustomDataset(
-                (images, torch.tensor(targets).unsqueeze(1) / 256)
-            )
+            self._train_dataset = CustomDataset((images, torch.tensor(targets).unsqueeze(1) / 256))
         else:
-            self._val_dataset = CustomDataset(
-                (images, torch.tensor(targets).unsqueeze(1) / 256)
-            )
+            self._val_dataset = CustomDataset((images, torch.tensor(targets).unsqueeze(1) / 256))
         print(
             "Read "
             + str(len(targets))
