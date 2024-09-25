@@ -39,7 +39,9 @@ def ask_dataset(default: str = "g"):
 
 if __name__ == "__main__":
     data, params_file = ask_dataset()
-    model = models.SpikeYOLO(num_classes=1)
+    data.train_dataloader()
+
+    """ model = models.SpikeYOLO(num_classes=1)
     model.to(utils.devices.gpu())
     trainer = engine.Trainer(num_gpus=1, display=True, every_n=4)
     trainer.prepare(model, data)
@@ -64,4 +66,4 @@ if __name__ == "__main__":
             print("Training was stopped!")
 
     if ask_question("Save parameters? [y/n]"):
-        model.save_params(params_file)
+        model.save_params(params_file) """
