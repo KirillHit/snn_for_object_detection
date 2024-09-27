@@ -1,11 +1,11 @@
-import utils
+import torch
+from matplotlib import pyplot as plt
+from torchview import draw_graph
+from torchvision.transforms import v2
+
 import engine
 import models
-from matplotlib import pyplot as plt
-from torchvision.transforms import v2
-from torchview import draw_graph
-import torch
-
+import utils
 import utils.devices
 
 
@@ -33,7 +33,7 @@ def ask_dataset(default: str = "g"):
     if choice == "":
         choice = default
     if choice == "g":
-        return utils.Gen1Dataset(batch_size=16), "gen1"
+        return utils.Gen1Dataset(batch_size=32), "gen1"
     raise ValueError("Invalid dataset value!")
 
 

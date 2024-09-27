@@ -1,25 +1,27 @@
-import os
-import PIL.Image
-import pandas as pd
-import torch
-import xml.etree.ElementTree as ET
-from utils.downloads import download_extract
-from engine.data import DataModule, CustomDataset
-from torch.nn.utils.rnn import pad_sequence
-import PIL
-import numpy as np
 import glob
-from .io.psee_loader import PSEELoader
+import os
+import xml.etree.ElementTree as ET
+
+import numpy as np
+import pandas as pd
+import PIL
+import PIL.Image
+import torch
+from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import Dataset
 from tqdm import tqdm
+
+from engine.data import DataModule
+from utils.downloads import download_extract
+
+from .io.psee_loader import PSEELoader
 
 
 class Gen1Dataset(DataModule):
     """Event-Based Dataset to date"""
 
-    height: int = 240
-    width: int = 304
-    duration: int = 60000  # ms
-    time_step: int = 100  # ms
+    duration: int = 1000  # ms
+    time_step: int = 1  # ms
 
     def read_data(self, split: str):
         # Data dir: ./data/gen1/<test, train, val>
@@ -34,22 +36,45 @@ class Gen1Dataset(DataModule):
         # boxes are updated once per second
         self.gt_boxes_list = [np.load(p) for p in gt_files]
         self.events_loader = [PSEELoader(td_file) for td_file in data_files]
-        self.height, self.width = self.events_loader[0].get_size()
-        self.parse_videos()
+        features = self.parse_features()
 
-    def parse_videos(self):
+    def parse_features(self):
         """Transforms events into a video stream"""
-        # [dur, p [0-negative, 1-positive], h, w]
-        record = np.zeros([self.duration, 2, self.height, self.width], dtype=np.float32)
-        for loader in tqdm(self.events_loader, leave=False, desc="Parse video: "):
+        # [dur, batch, c [0-negative, 1-positive], h, w]
+        height, width = self.events_loader[0].get_size()
+        features = torch.zeros(
+            [self.duration, self.batch_size, 2, height, width],
+            dtype=torch.float32,
+        )
+        # [self.duration, self.width, self.height, 2],
+        for batch_num in range(self.batch_size):
             # Events format ('t' [us], 'x', 'y', 'p' [1-positive/0-negative])
-            record = loader.load_delta_t(self.time_step * 1000)
-            
-            # record[event[0]//1000, event[3], event[2], event[1]] = 1
-            record.zero_()
+            events = self.events_loader[batch_num].load_delta_t(self.duration * 1000)
+            time_stamp = events[0]["t"] // (self.time_step * 1000)
+            events[:]["t"] = (events[:]["t"] // (self.time_step * 1000)) - time_stamp
+            mask = np.stack(
+                [events[:]["t"], events[:]["p"], events[:]["y"], events[:]["x"]],
+                axis=1,
+                dtype=np.int32,
+            )
+            features[mask[:, 0], batch_num, mask[:, 1], mask[:, 2], mask[:, 3]] = 1
+        return features
 
     def parse_targets(self):
         pass
+
+
+class CustomDataset(Dataset):
+    """A customized dataset to load the banana detection dataset."""
+
+    def __init__(self, data: list):
+        self.features, self.labels = data
+
+    def __getitem__(self, idx):
+        return (self.features[idx].float(), self.labels[idx])
+
+    def __len__(self):
+        return len(self.features)
 
 
 class HardHatDataset(DataModule):
@@ -156,9 +181,13 @@ class BananasDataset(DataModule):
             # lower-right x, lower-right y), where all the images have the same
             # banana class (index 0)
         if is_train:
-            self._train_dataset = CustomDataset((images, torch.tensor(targets).unsqueeze(1) / 256))
+            self._train_dataset = CustomDataset(
+                (images, torch.tensor(targets).unsqueeze(1) / 256)
+            )
         else:
-            self._val_dataset = CustomDataset((images, torch.tensor(targets).unsqueeze(1) / 256))
+            self._val_dataset = CustomDataset(
+                (images, torch.tensor(targets).unsqueeze(1) / 256)
+            )
         print(
             "Read "
             + str(len(targets))
