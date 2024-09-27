@@ -20,9 +20,9 @@ class DataModule:
         """
         self._root = root
         self._num_workers = num_workers
-        self._train_dataset: CustomDataset = None
-        self._test_dataset: CustomDataset = None
-        self._val_dataset: CustomDataset = None
+        self._train_dataset: Dataset = None
+        self._test_dataset: Dataset = None
+        self._val_dataset: Dataset = None
         self.batch_size = batch_size
 
     def get_dataloader(self, batch_size: int, split="train", shuffle=True):
@@ -64,16 +64,3 @@ class DataModule:
 
     def get_labels(self):
         return []
-
-
-class CustomDataset(Dataset):
-    """A customized dataset to load the banana detection dataset."""
-
-    def __init__(self, data: list):
-        self.features, self.labels = data
-
-    def __getitem__(self, idx):
-        return (self.features[idx].float(), self.labels[idx])
-
-    def __len__(self):
-        return len(self.features)
