@@ -33,7 +33,7 @@ def ask_dataset(default: str = "g"):
     if choice == "":
         choice = default
     if choice == "g":
-        return utils.Gen1Dataset(batch_size=32), "gen1"
+        return utils.Gen1Dataset(batch_size=2), "gen1"
     raise ValueError("Invalid dataset value!")
 
 
