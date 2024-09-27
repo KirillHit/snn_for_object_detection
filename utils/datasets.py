@@ -33,15 +33,18 @@ class Gen1Dataset(DataModule):
         data_files = [p.replace("_bbox.npy", "_td.dat") for p in gt_files]
         # npy format: ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
         # class_id 0 for cars and 1 for pedestrians
-        # boxes are updated once per second
-        self.gt_boxes_list = [np.load(p) for p in gt_files]
-        self.events_loader = [PSEELoader(td_file) for td_file in data_files]
+        # boxes are updated once per second       
+        # TODO
+        np_gt_boxes = np.ndarray([np.load(p) for p in gt_files])
+        m = np_gt_boxes[:][:]["ts"]
+        
+        self.events_loaders = [PSEELoader(td_file) for td_file in data_files]
         features = self.parse_features()
 
     def parse_features(self):
         """Transforms events into a video stream"""
         # [dur, batch, c [0-negative, 1-positive], h, w]
-        height, width = self.events_loader[0].get_size()
+        height, width = self.events_loaders[0].get_size()
         features = torch.zeros(
             [self.duration, self.batch_size, 2, height, width],
             dtype=torch.float32,
@@ -49,7 +52,7 @@ class Gen1Dataset(DataModule):
         # [self.duration, self.width, self.height, 2],
         for batch_num in range(self.batch_size):
             # Events format ('t' [us], 'x', 'y', 'p' [1-positive/0-negative])
-            events = self.events_loader[batch_num].load_delta_t(self.duration * 1000)
+            events = self.events_loaders[batch_num].load_delta_t(self.duration * 1000)
             time_stamp = events[0]["t"] // (self.time_step * 1000)
             events[:]["t"] = (events[:]["t"] // (self.time_step * 1000)) - time_stamp
             mask = np.stack(
@@ -58,10 +61,20 @@ class Gen1Dataset(DataModule):
                 dtype=np.int32,
             )
             features[mask[:, 0], batch_num, mask[:, 1], mask[:, 2], mask[:, 3]] = 1
+            
+            # labels format: class id (0 car, 1 person), xmin, ymin, xmax, ymax
+            gt_boxes = self.gt_boxes_list[batch_num]
+            gt_boxes[:]["ts"] = gt_boxes[:]["ts"] // (self.time_step * 1000)
+            _, counts = np.unique(gt_boxes[:]["ts"], return_counts=True)
+            labels_count = np.max(counts)
+            torch.full((), -1, dtype=torch.float32)
+            gt_boxes
+            
         return features
 
     def parse_targets(self):
-        pass
+        names = ("car", "person")
+        return names
 
 
 class CustomDataset(Dataset):
