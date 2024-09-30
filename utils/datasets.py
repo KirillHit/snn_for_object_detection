@@ -3,8 +3,6 @@ import os
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-from torchvision.transforms.v2._geometry import Resize
-from torchvision.transforms.v2._misc import Normalize
 from engine.data import DataModule
 from .io.psee_loader import PSEELoader
 
@@ -15,13 +13,11 @@ class Gen1DataModule(DataModule):
     def __init__(
         self,
         root="./data",
-        num_workers=4,
+        num_workers=0,
         batch_size=32,
-        resize: Resize = None,
-        normalize: Normalize = None,
-        duration=10000,
+        duration=1000,
     ):
-        super().__init__(root, num_workers, batch_size, resize, normalize)
+        super().__init__(root, num_workers, batch_size)
         self.duration = duration
 
     def read_data(self, split: str):
@@ -50,6 +46,8 @@ class Gen1DataModule(DataModule):
                 self._test_dataset = dataset
             case "val":
                 self._val_dataset = dataset
+            case _:
+                raise ValueError(f'The split parameter cannot be "{split}"!')
 
         print(
             str(len(events_loaders))
@@ -72,24 +70,39 @@ class Gen1Fixed(Gen1DataModule):
     def __init__(
         self,
         root="./data",
-        num_workers=4,
+        num_workers=0,
         batch_size=32,
-        resize: Resize = None,
-        normalize: Normalize = None,
-        duration=10000,
+        duration=1000,
         time_step=100,
     ):
-        super().__init__(root, num_workers, batch_size, resize, normalize, duration)
+        super().__init__(root, num_workers, batch_size, duration)
         self.time_step = time_step
 
     def create_dataset(self, data: list):
         events_loaders, gt_boxes_list = data
 
-        for gt_boxes in gt_boxes_list:
-            gt_boxes[:]["ts"] //= self.time_step * 1000
+        # Numpy format ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
+        # Box update frequency 1-4 Hz
+        # Labels format (ts [ms], class id (0 car, 1 person), xlu, ylu, xrd, yrd)
+        labels = [
+            torch.from_numpy(
+                np.array(
+                    [
+                        gt_boxes[:]["ts"] // (self.time_step * 1000),
+                        gt_boxes[:]["class_id"],
+                        gt_boxes[:]["x"],
+                        gt_boxes[:]["y"],
+                        gt_boxes[:]["x"] + gt_boxes[:]["w"],
+                        gt_boxes[:]["y"] + gt_boxes[:]["h"],
+                    ],
+                    dtype=np.float32,
+                )
+            ).t()
+            for gt_boxes in gt_boxes_list
+        ]
 
         return Gen1FixedDataset(
-            (events_loaders, gt_boxes_list),
+            (events_loaders, labels),
             self.time_step,
             self.duration,
         )
@@ -104,6 +117,7 @@ class Gen1FixedDataset(Dataset):
         self.events_loaders, self.gt_boxes_list = data
         self.duration, self.time_step = duration, time_step
         self.record_steps = ((self.record_time - 1) // self.duration) + 1
+        self.sequence_len = self.duration // self.time_step
 
     def __getitem__(self, idx):
         return self.parse_data(idx)
@@ -117,9 +131,9 @@ class Gen1FixedDataset(Dataset):
         height, width = self.events_loaders[0].get_size()
 
         ############ Features preparing ############
-        # Features format (ts, c [0-negative, 1-positive], h, w)
+        # Return features format (ts, c [0-negative, 1-positive], h, w)
         features = torch.zeros(
-            [self.duration, 2, height, width],
+            [self.sequence_len, 2, height, width],
             dtype=torch.float32,
         )
         # Events format ('t' [us], 'x', 'y', 'p' [1-positive/0-negative])
@@ -133,25 +147,12 @@ class Gen1FixedDataset(Dataset):
         ] = 1
 
         ############ Labels preparing ############
-        # npy format ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
+        # Return labels format (ts, class id (0 car, 1 person), xlu, ylu, xrd, yrd)
         # Box update frequency 1-4 Hz
         gt_boxes = self.gt_boxes_list[data_idx]
-        gt_boxes_masked = gt_boxes[
-            (gt_boxes[:]["ts"] >= time_stamps[0])
-            & (gt_boxes[:]["ts"] <= time_stamps[-1])
+        labels = gt_boxes[
+            (gt_boxes[:, 0] >= time_stamps[0]) & (gt_boxes[:, 0] <= time_stamps[-1])
         ]
-        # Labels format (ts, class id (0 car, 1 person), xlu, ylu, xrd, yrd)
-        labels = torch.tensor(
-            [
-                gt_boxes_masked[:]["ts"],
-                gt_boxes_masked[:]["class_id"],
-                gt_boxes_masked[:]["x"],
-                gt_boxes_masked[:]["y"],
-                gt_boxes_masked[:]["x"] + gt_boxes_masked[:]["w"],
-                gt_boxes_masked[:]["y"] + gt_boxes_masked[:]["h"],
-            ],
-            dtype=torch.float32,
-        ).t()
 
         return (features, labels)
 
@@ -164,12 +165,10 @@ class Gen1Adaptive(Gen1DataModule):
         root="./data",
         num_workers=4,
         batch_size=32,
-        resize: Resize = None,
-        normalize: Normalize = None,
-        duration=10000,
+        duration=1000,
         event_step=100,
     ):
-        super().__init__(root, num_workers, batch_size, resize, normalize, duration)
+        super().__init__(root, num_workers, batch_size, duration)
         self.event_step = event_step
 
     def create_dataset(self, data: list):

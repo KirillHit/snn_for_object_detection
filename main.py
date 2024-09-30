@@ -33,15 +33,16 @@ def ask_dataset(default: str = "gf"):
     if choice == "":
         choice = default
     if choice == "gf":
-        return utils.Gen1Fixed(batch_size=2), "gen1"
+        return utils.Gen1Fixed(batch_size=8, time_step=100, duration=1000), "gen1"
     raise ValueError("Invalid dataset value!")
 
 
 if __name__ == "__main__":
     data, params_file = ask_dataset()
-    data.update_dataset("train")
-    loader = data.get_dataset("train")
-    print(loader[23])
+    loader = data.train_dataloader()
+    print("start")
+    for batch in loader:
+        print(batch[0].shape, batch[1].shape)
 
     """ 
     model = models.SpikeYOLO(num_classes=1)
