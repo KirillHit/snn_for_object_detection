@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from engine.data import DataModule
-from .io.psee_loader import PSEELoader
+from prophesee_toolbox.src.io.psee_loader import PSEELoader
 
 
 class Gen1DataModule(DataModule):
