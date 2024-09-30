@@ -27,21 +27,24 @@ def ask_question(question, default="y"):
             print("Please respond with 'y' or 'n'")
 
 
-def ask_dataset(default: str = "g"):
-    # print(f"Select dataset: g - Gen1, m - 1Mpx (not supported yet) (Default - {default})")
+def ask_dataset(default: str = "gf"):
+    # print(f"Select dataset: gf - Gen1Fixed, m - 1Mpx (not supported yet) (Default - {default})")
     choice = ""  # input().lower() TODO
     if choice == "":
         choice = default
-    if choice == "g":
-        return utils.Gen1Dataset(batch_size=2), "gen1"
+    if choice == "gf":
+        return utils.Gen1Fixed(batch_size=2), "gen1"
     raise ValueError("Invalid dataset value!")
 
 
 if __name__ == "__main__":
     data, params_file = ask_dataset()
-    data.train_dataloader()
+    data.update_dataset("train")
+    loader = data.get_dataset("train")
+    print(loader[23])
 
-    """ model = models.SpikeYOLO(num_classes=1)
+    """ 
+    model = models.SpikeYOLO(num_classes=1)
     model.to(utils.devices.gpu())
     trainer = engine.Trainer(num_gpus=1, display=True, every_n=4)
     trainer.prepare(model, data)
@@ -66,4 +69,5 @@ if __name__ == "__main__":
             print("Training was stopped!")
 
     if ask_question("Save parameters? [y/n]"):
-        model.save_params(params_file) """
+        model.save_params(params_file) 
+    """

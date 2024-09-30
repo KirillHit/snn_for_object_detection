@@ -28,13 +28,13 @@ class DataModule:
     def get_dataloader(self, batch_size: int, split="train", shuffle=True):
         self.update_dataset(split)
         return DataLoader(
-            self.__get_dataset(split),
+            self.get_dataset(split),
             batch_size,
             shuffle=shuffle,
             num_workers=self._num_workers,
         )
 
-    def __get_dataset(self, split: str):
+    def get_dataset(self, split: str):
         match split:
             case "train":
                 return self._train_dataset
@@ -55,7 +55,7 @@ class DataModule:
         return self.get_dataloader(self.batch_size, split="val", shuffle=False)
 
     def update_dataset(self, split: str):
-        if self.__get_dataset(split) is None:
+        if self.get_dataset(split) is None:
             self.read_data(split)
 
     def read_data(self, split: str):
