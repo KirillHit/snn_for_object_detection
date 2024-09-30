@@ -18,6 +18,9 @@ class Module(nn.Module):
     def training_step(self, batch):
         raise NotImplementedError
 
+    def test_step(self, batch):
+        raise NotImplementedError
+    
     def validation_step(self, batch):
         raise NotImplementedError
 

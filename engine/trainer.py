@@ -10,13 +10,15 @@ from tqdm import tqdm
 class Trainer:
     """The base class for training models with data."""
 
+    train_batch_idx = 0
+    test_batch_idx = 0
+    val_batch_idx = 0
+    epoch = 0
+
     def __init__(self, num_gpus=0, display=True, every_n=4):
         self.display, self.every_n = display, every_n
         self.gpus = [devices.gpu(i) for i in range(min(num_gpus, devices.num_gpus()))]
         self.board = ProgressBoard(yscale="log", display=self.display)
-        self.train_batch_idx = 0
-        self.val_batch_idx = 0
-        self.epoch = 0
 
     def prepare(self, model: Module, data: DataModule):
         self.prepare_data(data)
@@ -25,8 +27,10 @@ class Trainer:
 
     def prepare_data(self, data: DataModule):
         self.train_dataloader = data.train_dataloader()
+        self.test_dataloader = data.test_dataloader()
         self.val_dataloader = data.val_dataloader()
         self.num_train_batches = len(self.train_dataloader)
+        self.num_test_batches = len(self.test_dataloader)
         self.num_val_batches = len(self.val_dataloader)
 
     def prepare_model(self, model: Module):
@@ -43,25 +47,37 @@ class Trainer:
         for self.epoch in tqdm(range(num_epochs), leave=False, desc="Epoch"):
             self.fit_epoch()
 
-    def plot(self, loss, is_train=True):
+    def plot(self, loss, split):
         if not self.display:
             return
-        if is_train:
-            self.board.draw(
-                self.train_batch_idx,
-                torch.Tensor.to(loss, devices.cpu()),
-                "Train loss",
-                every_n=self.every_n,
-            )
-        else:
-            self.board.draw(
-                self.train_batch_idx
-                - self.num_val_batches
-                + self.val_batch_idx % self.num_val_batches,
-                torch.Tensor.to(loss, devices.cpu()),
-                "Val loss",
-                every_n=self.every_n,
-            )
+        match split:
+            case "train":
+                self.board.draw(
+                    self.train_batch_idx,
+                    torch.Tensor.to(loss, devices.cpu()),
+                    "Train loss",
+                    every_n=self.every_n,
+                )
+            case "test":
+                self.board.draw(
+                    self.train_batch_idx
+                    - self.num_test_batches
+                    + self.test_batch_idx % self.num_test_batches,
+                    torch.Tensor.to(loss, devices.cpu()),
+                    "Test loss",
+                    every_n=self.every_n,
+                )
+            case "val":
+                self.board.draw(
+                    self.train_batch_idx
+                    - self.num_val_batches
+                    + self.val_batch_idx % self.num_test_batches,
+                    torch.Tensor.to(loss, devices.cpu()),
+                    "Val loss",
+                    every_n=self.every_n,
+                )
+            case _:
+                raise ValueError(f'The split parameter cannot be "{split}"!')
 
     def fit_epoch(self):
         # Training
@@ -72,16 +88,26 @@ class Trainer:
             with torch.no_grad():
                 train_loss.backward()
                 self.optim.step()
-                self.plot(train_loss, is_train=True)
+                self.plot(train_loss, split="train")
             self.train_batch_idx += 1
-        # Validation
+        # Testing
+        if self.test_dataloader is None:
+            return
+        self.model.eval()
+        for batch in self.test_dataloader:
+            with torch.no_grad():
+                test_loss = self.model.training_step(self.prepare_batch(batch))
+                self.plot(test_loss, split="test")
+            self.test_batch_idx += 1
+
+    def validation(self):
         if self.val_dataloader is None:
             return
         self.model.eval()
         for batch in self.val_dataloader:
             with torch.no_grad():
                 val_loss = self.model.validation_step(self.prepare_batch(batch))
-                self.plot(val_loss, is_train=False)
+                self.plot(val_loss, split="val")
             self.val_batch_idx += 1
 
     def test_model(self, data: DataModule, plotter: Plotter, is_train=False):

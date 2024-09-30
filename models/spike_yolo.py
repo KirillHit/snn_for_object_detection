@@ -12,9 +12,8 @@ import utils.box as box
 class SpikeYOLO(Module):
     """Simple Single Shot Multibox Detection"""
 
-    def __init__(self, num_classes, seq_length=16):
+    def __init__(self, num_classes):
         super().__init__()
-        self.encoder = DirectEncoder(seq_length)
         self.base_net = SpikeCNN()
         self.fpn_blk = SpikeFPN(num_classes)
         self.roi_blk = RoI(iou_threshold=0.4)
@@ -24,7 +23,7 @@ class SpikeYOLO(Module):
 
     def configure_optimizers(self):
         return torch.optim.Adamax(self.parameters(), lr=0.002)
-        #return torch.optim.SGD(self.parameters(), lr=0.2, weight_decay=5e-4)
+        # return torch.optim.SGD(self.parameters(), lr=0.2, weight_decay=5e-4)
 
     def loss(self, y_hat, y):
         """
@@ -52,6 +51,9 @@ class SpikeYOLO(Module):
         loss = self.loss((cls_preds, bbox_preds), y)
         return loss.mean()
 
+    def test_step(self, batch):
+        return self.training_step(batch)
+
     def validation_step(self, batch):
         return self.training_step(batch)
 
@@ -65,8 +67,7 @@ class SpikeYOLO(Module):
             cls_preds: [num_batch, all_anchors,(num_classes + 1)]
             bbox_preds: [num_batch, all_anchors * 4]
         """
-        Y = self.encoder(X)
-        Y, state = self.base_net(Y)
+        Y, state = self.base_net(X)
         return self.fpn_blk(Y)
 
     def predict(self, X: torch.Tensor) -> torch.Tensor:
@@ -85,28 +86,19 @@ class SpikeYOLO(Module):
         return output
 
 
-class SpikeClassifierYOLO(SpikeYOLO):
-    """A simplified version of SpikeYOLO, only classifies assumptions.
-    Needed for pretraining"""
+class SpikeCNN(nn.Module):
+    """Convolutional neural network for extracting features from images"""
 
-    def __init__(self, num_classes, seq_length=16):
-        super().__init__(num_classes, seq_length)
+    def __init__(self):
+        super().__init__()
+        blk = []
+        num_filters = [3, 16, 32, 64]
+        for i in range(len(num_filters) - 1):
+            blk.append(SpikeDownSampleBlk(num_filters[i], num_filters[i + 1]))
+        self.cnn_net = norse.SequentialState(*blk)
 
-    def loss(self, y_hat, y):
-        """
-        Args:
-            y_hat: preds
-            y: true
-        """
-        cls_preds, bbox_preds = y_hat
-        bbox_offset, bbox_mask, class_labels = y
-
-        batch_size, _, num_classes = cls_preds.shape
-        cls = torch.reshape(
-            self.cls_loss(cls_preds.reshape(-1, num_classes), class_labels.reshape(-1)),
-            (batch_size, -1),
-        ).mean(dim=1)
-        return cls
+    def forward(self, X):
+        return self.cnn_net(X)
 
 
 class SpikeDownSampleBlk(nn.Module):
@@ -221,32 +213,6 @@ class SpikeFPN(nn.Module):
     def concat_preds(self, preds):
         """Concatenating Predictions for Multiple Scales"""
         return torch.cat([self.flatten_pred(p) for p in preds], dim=1)
-
-
-class SpikeCNN(nn.Module):
-    """Convolutional neural network for extracting features from images"""
-
-    def __init__(self):
-        super().__init__()
-        blk = []
-        num_filters = [3, 16, 32, 64]
-        for i in range(len(num_filters) - 1):
-            blk.append(SpikeDownSampleBlk(num_filters[i], num_filters[i + 1]))
-        self.cnn_net = norse.SequentialState(*blk)
-
-    def forward(self, X):
-        return self.cnn_net(X)
-
-
-class DirectEncoder(nn.Module):
-    def __init__(self, seq_length: int) -> None:
-        super().__init__()
-        self.encode = norse.ConstantCurrentLIFEncoder(seq_length=seq_length)
-
-    def forward(self, X: torch.Tensor):
-        Y = self.encode(X)
-
-        return Y
 
 
 class DetectorDirectDecoder(nn.Module):
