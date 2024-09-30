@@ -1,5 +1,7 @@
 from torch.utils.data import Dataset, DataLoader
-from torchvision.transforms import v2
+from torch.nn.utils.rnn import pad_sequence
+import torch
+
 
 class DataModule:
     """The base class of data."""
@@ -9,8 +11,6 @@ class DataModule:
         root="./data",
         num_workers=4,
         batch_size=32,
-        resize: v2.Resize = None,
-        normalize: v2.Normalize = None,
     ):
         """
         Args:
@@ -32,6 +32,7 @@ class DataModule:
             batch_size,
             shuffle=shuffle,
             num_workers=self._num_workers,
+            collate_fn=padd_labels,
         )
 
     def get_dataset(self, split: str):
@@ -64,3 +65,9 @@ class DataModule:
 
     def get_labels(self):
         return []
+
+
+def padd_labels(batch):
+    features = torch.stack([sample[0] for sample in batch])
+    labels = pad_sequence([sample[1] for sample in batch], padding_value=-1.0, batch_first=True)
+    return features, labels
