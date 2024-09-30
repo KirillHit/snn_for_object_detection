@@ -68,6 +68,9 @@ class DataModule:
 
 
 def padd_labels(batch):
-    features = torch.stack([sample[0] for sample in batch])
+    features = torch.stack([sample[0] for sample in batch], dim=1)
     labels = pad_sequence([sample[1] for sample in batch], padding_value=-1.0, batch_first=True)
+    # Return features format (ts, batch, p, h, w)
+    # Return labels format (batch, max_len, 6). Empty fill -1
+    # One label contains (ts, class id (0 car, 1 person), xlu, ylu, xrd, yrd)
     return features, labels
