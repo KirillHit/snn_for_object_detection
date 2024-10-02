@@ -137,6 +137,8 @@ class Gen1FixedDataset(Dataset):
             dtype=torch.float32,
         )
         # Events format ('t' [us], 'x', 'y', 'p' [1-positive/0-negative])
+        if self.events_loaders[data_idx].done:
+            self.events_loaders[data_idx].reset()
         events = self.events_loaders[data_idx].load_delta_t(self.duration * 1000)
         time_stamps = events[:]["t"] // (self.time_step * 1000)
         features[
