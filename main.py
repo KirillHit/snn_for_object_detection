@@ -33,7 +33,7 @@ def ask_dataset(default: str = "gf"):
     if choice == "":
         choice = default
     if choice == "gf":
-        return utils.Gen1Fixed(batch_size=10, time_step=100, duration=10000), "gen1"
+        return utils.Gen1Fixed(batch_size=8, time_step=16, duration=10000), "gen1"
     raise ValueError("Invalid dataset value!")
 
 
@@ -41,12 +41,12 @@ if __name__ == "__main__":
     data, params_file = ask_dataset()
     loader = data.test_dataloader()
     plotter = utils.Plotter(
-        threshold=0.001, labels=data.get_labels(), interval=data.time_step, wight=4
+        threshold=0.001, labels=data.get_labels(), interval=data.time_step, columns=4
     )
     while True:
         batch = next(iter(loader))
         print(batch[0].shape, batch[1].shape)
-        plotter.display(batch[0])
+        plotter.display(batch[0], target=batch[1])
         ask_question("Save parameters? [y/n]")
         
     """ model = models.SpikeYOLO(num_classes=2)

@@ -13,11 +13,10 @@ class Gen1DataModule(DataModule):
     def __init__(
         self,
         root="./data",
-        num_workers=0,
         batch_size=32,
         duration=1000,
     ):
-        super().__init__(root, num_workers, batch_size)
+        super().__init__(root, num_workers=0, batch_size=batch_size)
         self.duration = duration
 
     def read_data(self, split: str):
@@ -70,12 +69,11 @@ class Gen1Fixed(Gen1DataModule):
     def __init__(
         self,
         root="./data",
-        num_workers=0,
         batch_size=32,
         duration=1000,
         time_step=100,
     ):
-        super().__init__(root, num_workers, batch_size, duration)
+        super().__init__(root, batch_size, duration)
         self.time_step = time_step
 
     def create_dataset(self, data: list):
@@ -95,7 +93,7 @@ class Gen1Fixed(Gen1DataModule):
                         gt_boxes[:]["x"] + gt_boxes[:]["w"],
                         gt_boxes[:]["y"] + gt_boxes[:]["h"],
                     ],
-                    dtype=np.float32,
+                    dtype=np.int32,
                 )
             ).t()
             for gt_boxes in gt_boxes_list
@@ -165,12 +163,11 @@ class Gen1Adaptive(Gen1DataModule):
     def __init__(
         self,
         root="./data",
-        num_workers=4,
         batch_size=32,
         duration=1000,
         event_step=100,
     ):
-        super().__init__(root, num_workers, batch_size, duration)
+        super().__init__(root, batch_size, duration)
         self.event_step = event_step
 
     def create_dataset(self, data: list):
