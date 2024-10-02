@@ -15,7 +15,9 @@ class DataModule:
         """
         Args:
             root (str, optional): The directory where datasets are stored. Defaults to "./data".
-            num_workers (int, optional): A positive integer will turn on multi-process data loading with the specified number of loader worker processes. See torch.utils.data.DataLoader. Defaults to 4.
+            num_workers (int, optional): A positive integer will turn on multi-process data loading 
+                with the specified number of loader worker processes. See torch.utils.data.DataLoader. 
+                Defaults to 4.
             batch_size (int, optional): _description_. Defaults to 32.
         """
         self._root = root
@@ -32,7 +34,7 @@ class DataModule:
             batch_size,
             shuffle=shuffle,
             num_workers=self._num_workers,
-            collate_fn=padd_labels,
+            collate_fn=pad_labels,
         )
 
     def get_dataset(self, split: str):
@@ -67,7 +69,7 @@ class DataModule:
         return []
 
 
-def padd_labels(batch):
+def pad_labels(batch):
     features = torch.stack([sample[0] for sample in batch], dim=1)
     labels = pad_sequence([sample[1] for sample in batch], padding_value=-1.0, batch_first=True)
     # Return features format (ts, batch, p, h, w)
