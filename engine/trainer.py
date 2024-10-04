@@ -84,6 +84,8 @@ class Trainer:
         self.model.train()
         for batch in tqdm(self.train_dataloader, leave=False, desc="Batch: "):
             train_loss = self.model.training_step(self.prepare_batch(batch))
+            if train_loss is None:
+                continue
             self.optim.zero_grad()
             with torch.no_grad():
                 train_loss.backward()
@@ -97,6 +99,8 @@ class Trainer:
         for batch in self.test_dataloader:
             with torch.no_grad():
                 test_loss = self.model.training_step(self.prepare_batch(batch))
+                if test_loss is None:
+                    continue
                 self.plot(test_loss, split="test")
             self.test_batch_idx += 1
 
@@ -107,15 +111,16 @@ class Trainer:
         for batch in self.val_dataloader:
             with torch.no_grad():
                 val_loss = self.model.validation_step(self.prepare_batch(batch))
+                if val_loss is None:
+                    continue
                 self.plot(val_loss, split="val")
             self.val_batch_idx += 1
 
-    def test_model(self, data: DataModule, plotter: Plotter, is_train=False):
-        images, tensors, target = data.get_test_batch(
-            plotter.rows * plotter.columns, is_train
-        )
+    def test_model(self, plotter: Plotter):
+        tensors, target = next(iter(self.test_dataloader))
         if self.gpus:
             tensors = tensors.to(self.gpus[0])
         predictions = self.model.predict(tensors).to(devices.cpu())
-        # predictions is array of tensor [num_pred, 6] - [class, roi, luw, luh, rdw, rdh]
-        plotter.display(images, predictions, target)
+        if self.gpus:
+            tensors = tensors.to(devices.cpu())
+        plotter.display(tensors, predictions, target)

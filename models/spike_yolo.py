@@ -2,6 +2,7 @@ import torch
 from torch import nn
 import norse.torch as norse
 from torch.nn import functional as F
+from tqdm import tqdm
 
 from engine.model import Module
 from utils.anchors import AnchorGenerator
@@ -16,14 +17,14 @@ class SpikeYOLO(Module):
         super().__init__()
         self.base_net = SpikeCNN()
         self.fpn_blk = SpikeFPN(num_classes)
-        self.roi_blk = RoI(iou_threshold=0.4)
+        self.roi_blk = RoI(iou_threshold=0.0001)
 
         self.cls_loss = nn.CrossEntropyLoss(reduction="none")
         self.box_loss = nn.L1Loss(reduction="none")
 
     def configure_optimizers(self):
-        return torch.optim.Adamax(self.parameters(), lr=0.002)
-        # return torch.optim.SGD(self.parameters(), lr=0.2, weight_decay=5e-4)
+        # return torch.optim.Adamax(self.parameters(), lr=0.002)
+        return torch.optim.SGD(self.parameters(), lr=0.2, weight_decay=5e-4)
 
     def loss(self, y_hat, y):
         """
@@ -31,25 +32,39 @@ class SpikeYOLO(Module):
             y_hat: preds
             y: true
         """
-        cls_preds, bbox_preds = y_hat
-        bbox_offset, bbox_mask, class_labels = y
-
-        batch_size, _, num_classes = cls_preds.shape
-        cls = torch.reshape(
-            self.cls_loss(cls_preds.reshape(-1, num_classes), class_labels.reshape(-1)),
-            (batch_size, -1),
-        ).mean(dim=1)
-        bbox = torch.reshape(
-            self.box_loss(bbox_preds * bbox_mask, bbox_offset * bbox_mask),
-            (batch_size, -1),
-        ).mean(dim=1)
-        return cls + bbox
+        ts_cls_preds, ts_bbox_preds = y_hat
+        time_step, ts_bbox_offset, ts_bbox_mask, ts_class_labels = y
+        _, batch_size, _, num_classes = ts_cls_preds.shape
+        loss = torch.zeros(
+            (batch_size), dtype=torch.float32, device=ts_cls_preds.device
+        )
+        for idx, ts in enumerate(time_step):
+            cls_preds = ts_cls_preds[ts]
+            bbox_preds = ts_bbox_preds[ts]
+            bbox_offset = ts_bbox_offset[idx]
+            bbox_mask = ts_bbox_mask[idx]
+            class_labels = ts_class_labels[idx]
+            cls = torch.reshape(
+                self.cls_loss(
+                    cls_preds.reshape(-1, num_classes), class_labels.reshape(-1)
+                ),
+                (batch_size, -1),
+            ).mean(dim=1)
+            bbox = torch.reshape(
+                self.box_loss(bbox_preds * bbox_mask, bbox_offset * bbox_mask),
+                (batch_size, -1),
+            ).mean(dim=1)
+            loss += cls + bbox
+        return loss.mean()
 
     def training_step(self, batch):
+        if batch[1].shape[1] == 0:
+            tqdm.write("Warning: There are no targets in this interval")
+            return None
         anchors, cls_preds, bbox_preds = self(batch[0])
         y = self.roi_blk(anchors, batch[1])
         loss = self.loss((cls_preds, bbox_preds), y)
-        return loss.mean()
+        return loss
 
     def test_step(self, batch):
         return self.training_step(batch)
@@ -61,21 +76,18 @@ class SpikeYOLO(Module):
         """
         Args:
             X: Real img
-
         Returns:
             anchors: [all_anchors, 4]
             cls_preds: [num_batch, all_anchors,(num_classes + 1)]
             bbox_preds: [num_batch, all_anchors * 4]
         """
-        Y, state = self.base_net(X)
+        Y, _ = self.base_net(X)
         return self.fpn_blk(Y)
 
     def predict(self, X: torch.Tensor) -> torch.Tensor:
         """
         Args:
             X (torch.Tensor): img batch
-            threshold (_type_): TODO
-
         Returns:
             torch.Tensor: [class, roi, luw, luh, rdw, rdh]
         """
@@ -91,10 +103,11 @@ class SpikeCNN(nn.Module):
 
     def __init__(self):
         super().__init__()
-        blk = []
-        num_filters = [3, 16, 32, 64]
-        for i in range(len(num_filters) - 1):
-            blk.append(SpikeDownSampleBlk(num_filters[i], num_filters[i + 1]))
+        num_filters = [2, 4, 16, 32]
+        blk = [
+            SpikeDownSampleBlk(num_filters[i], num_filters[i + 1])
+            for i in range(len(num_filters) - 1)
+        ]
         self.cnn_net = norse.SequentialState(*blk)
 
     def forward(self, X):
@@ -108,17 +121,13 @@ class SpikeDownSampleBlk(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
         self.lif1 = norse.LIFCell()
-        # self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
-        # self.lif2 = norse.LIFCell()
 
     def forward(self, X):
-        s1 = s2 = None
+        s1 = None
         zs = []
         for ts in range(X.shape[0]):
             z = self.conv1(X[ts])
             z, s1 = self.lif1(z, s1)
-            # z = self.conv2(z)
-            # z, s2 = self.lif2(z, s2)
             z = nn.functional.max_pool2d(z, kernel_size=2, stride=2)
             zs.append(z)
         Y = torch.stack(zs)
@@ -132,34 +141,28 @@ class SpikeFPN(nn.Module):
         super().__init__()
         self.num_classes = num_classes
 
-        self.low_layer = SpikeDownSampleBlk(64, 128)
-        self.mid_layer = SpikeDownSampleBlk(128, 128)
+        self.low_layer = SpikeDownSampleBlk(32, 64)
+        self.mid_layer = SpikeDownSampleBlk(64, 128)
         self.high_layer = SpikeDownSampleBlk(128, 128)
 
-        """ sizes = (
-            [0.2, 0.272],
-            [0.37, 0.447],
-            [0.54, 0.619],
-            [0.71, 0.79],
-        ) """
         sizes = (
-            [0.062, 0.078, 0.094],
-            [0.125, 0.156, 0.188],
-            [0.250, 0.312, 0.375],
-            [0.500, 0.625, 0.750],
+            [0.010, 0.024, 0.044],
+            [0.010, 0.034, 0.068],
+            [0.044, 0.068, 0.154],
+            [0.068, 0.154, 0.274],
         )
-        ratios = (0.7, 1, 1.3)
-        self.base_anchors = AnchorGenerator(sizes=sizes[0], ratios=ratios)
-        self.low_anchors = AnchorGenerator(sizes=sizes[1], ratios=ratios)
-        self.mid_anchors = AnchorGenerator(sizes=sizes[2], ratios=ratios)
-        self.high_anchors = AnchorGenerator(sizes=sizes[3], ratios=ratios)
+        ratios = ([0.38, 0.3, 0.5], [1.4, 1.0, 2.1], [0.38, 0.3, 0.5], [1.4, 1.0, 2.1])
+        self.base_anchors = AnchorGenerator(sizes=sizes[0], ratios=ratios[0])
+        self.low_anchors = AnchorGenerator(sizes=sizes[1], ratios=ratios[1])
+        self.mid_anchors = AnchorGenerator(sizes=sizes[2], ratios=ratios[2])
+        self.high_anchors = AnchorGenerator(sizes=sizes[3], ratios=ratios[3])
 
-        num_anchors = len(sizes[0]) + len(ratios) - 1
+        num_anchors = len(sizes[0]) + len(ratios[0]) - 1
 
         num_class_out = num_anchors * (self.num_classes + 1)
         num_box_out = num_anchors * 4
-        self.base_pred = DetectorDirectDecoder(64, num_box_out, num_class_out, 3)
-        self.low_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
+        self.base_pred = DetectorDirectDecoder(32, num_box_out, num_class_out, 3)
+        self.low_pred = DetectorDirectDecoder(64, num_box_out, num_class_out, 3)
         self.mid_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
         self.high_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
 
@@ -167,7 +170,6 @@ class SpikeFPN(nn.Module):
         """
         Args:
             X: Feature map
-
         Returns:
             anchors: [num_anchors, 4]
             cls_preds: [num_batch, all_anchors, (num_classes + 1)]
@@ -201,23 +203,25 @@ class SpikeFPN(nn.Module):
 
         anchors = torch.cat(anchors, dim=0)
         cls_preds = self.concat_preds(cls_preds)
-        cls_preds = cls_preds.reshape(cls_preds.shape[0], -1, self.num_classes + 1)
+        cls_preds = cls_preds.reshape(
+            cls_preds.shape[0], cls_preds.shape[1], -1, self.num_classes + 1
+        )
         bbox_preds = self.concat_preds(bbox_preds)
-        bbox_preds = bbox_preds.reshape(bbox_preds.shape[0], -1, 4)
+        bbox_preds = bbox_preds.reshape(bbox_preds.shape[0], bbox_preds.shape[1], -1, 4)
         return anchors, cls_preds, bbox_preds
 
     def flatten_pred(self, pred: torch.Tensor):
         """Transforms the tensor so that each pixel retains channels values and smooths each batch"""
-        return torch.flatten(torch.permute(pred, (0, 2, 3, 1)), start_dim=1)
+        return torch.flatten(torch.permute(pred, (0, 1, 3, 4, 2)), start_dim=2)
 
-    def concat_preds(self, preds):
+    def concat_preds(self, preds: list[torch.Tensor]):
         """Concatenating Predictions for Multiple Scales"""
-        return torch.cat([self.flatten_pred(p) for p in preds], dim=1)
+        return torch.cat([self.flatten_pred(p) for p in preds], dim=2)
 
 
 class DetectorDirectDecoder(nn.Module):
     def __init__(
-        self, in_channels: int, box_out: int, cls_out, kernel_size: int
+        self, in_channels: int, box_out: int, cls_out: int, kernel_size: int
     ) -> None:
         super().__init__()
         assert kernel_size % 2 == 1, "Kernel size must be odd"
@@ -225,7 +229,6 @@ class DetectorDirectDecoder(nn.Module):
             in_channels, in_channels, kernel_size=kernel_size, padding=kernel_size // 2
         )
         self.li = norse.LICell()
-
         self.box_preds = nn.Conv2d(in_channels, box_out, kernel_size=1)
         self.cls_preds = nn.Conv2d(in_channels, cls_out, kernel_size=1)
 
@@ -236,11 +239,11 @@ class DetectorDirectDecoder(nn.Module):
             classes: predicted classes
         """
         s1 = None
+        boxes = []
+        classes = []
         for ts in range(X.shape[0]):
             z = self.conv(X[ts])
             z, s1 = self.li(z, s1)
-
-        box = self.box_preds(z)
-        cls = self.cls_preds(z)
-
-        return box, cls
+            boxes.append(self.box_preds(z))
+            classes.append(self.cls_preds(z))
+        return torch.stack(boxes), torch.stack(classes)
