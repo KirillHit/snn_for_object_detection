@@ -110,12 +110,14 @@ class Gen1FixedDataset(Dataset):
     """A customized dataset to load the banana detection dataset."""
 
     record_time = 60000  # ms
+    # wight = 304
+    # hight = 240
 
     def __init__(self, data: list, time_step, duration):
         self.events_loaders, self.gt_boxes_list = data
         self.duration, self.time_step = duration, time_step
         self.record_steps = ((self.record_time - 1) // self.duration) + 1
-        self.sequence_len = self.duration // self.time_step
+        self.sequence_len = ((self.duration - 1) // self.time_step) + 1
 
     def __getitem__(self, idx):
         return self.parse_data(idx)
@@ -153,6 +155,7 @@ class Gen1FixedDataset(Dataset):
         labels = gt_boxes[
             (gt_boxes[:, 0] >= time_stamps[0]) & (gt_boxes[:, 0] <= time_stamps[-1])
         ]
+        labels[:, 0] -= time_stamps[0]
 
         return (features, labels)
 
