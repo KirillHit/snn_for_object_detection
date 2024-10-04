@@ -2,6 +2,7 @@ import torch
 from tqdm import tqdm
 import utils.box as box
 
+
 class RoI:
     """Label anchor boxes using ground-truth bounding boxes."""
 
@@ -12,13 +13,29 @@ class RoI:
         """
         self.iou_threshold = iou_threshold
 
-    def __call__(self, anchors: torch.Tensor, labels: torch.Tensor):
-        """Label anchor boxes using ground-truth bounding boxes
+    def __call__(self, anchors: torch.Tensor, labels_batched: list[torch.Tensor]):
+        for labels in labels_batched:
+            # TODO
+            ts_list = torch.unique(labels[..., 0])
+            if ts_list[0] == -1:
+                ts_list = ts_list[1:]
+            bbox_offset_ts, bbox_mask_ts, class_labels_ts = [], [], []
+            for ts in ts_list:
+                masked_labels = labels[..., 1:]
+                masked_labels[labels[..., 0] != ts] = -1
+                bbox_offset, bbox_mask, class_labels = self.multibox_target(
+                    anchors, masked_labels
+                )
+                bbox_offset_ts.append(bbox_offset)
+                bbox_mask_ts.append(bbox_mask)
+                class_labels_ts.append(class_labels)
+        return ts_list, bbox_offset_ts, bbox_mask_ts, class_labels_ts
 
+    def multibox_target(self, anchors: torch.Tensor, labels: torch.Tensor):
+        """Label anchor boxes using ground-truth bounding boxes
         Args:
             anchors (torch.Tensor): [num_anchors, 4]
             labels (torch.Tensor): [num_batch, num_gt_boxes, 5 (class, luw, luh, rdw, rdh)]
-
         Returns:
             bbox_offset: [num_batch, num_anchors, 4]. Ground truth offsets for each box
             bbox_mask: [num_batch, num_anchors, 4]. (0)*4 for background, (1)*4 for object
@@ -33,14 +50,16 @@ class RoI:
             bbox_mask = ((anchors_bbox_map >= 0).float().unsqueeze(-1)).repeat(1, 4)
             # Initialize class labels and assigned bounding box coordinates with zeros
             class_labels = torch.zeros(num_anchors, dtype=torch.long, device=device)
-            assigned_bb = torch.zeros((num_anchors, 4), dtype=torch.float32, device=device)
+            assigned_bb = torch.zeros(
+                (num_anchors, 4), dtype=torch.float32, device=device
+            )
             # Label classes of anchor boxes using their assigned ground-truth
             # bounding boxes. If an anchor box is not assigned any, we label its
             # class as background (the value remains zero)
             indices_true = torch.nonzero(anchors_bbox_map >= 0)
             bb_idx = anchors_bbox_map[indices_true]
             class_labels[indices_true] = label[bb_idx, 0].long() + 1
-            assigned_bb[indices_true] = label[bb_idx, 1:]
+            assigned_bb[indices_true] = label[bb_idx, 1:].type(dtype=torch.float32)
             # Offset transformation
             offset = box.offset_boxes(anchors, assigned_bb) * bbox_mask
             batch_offset.append(offset)
@@ -51,17 +70,14 @@ class RoI:
         class_labels = torch.stack(batch_class_labels)
         return bbox_offset, bbox_mask, class_labels
 
-
     def assign_anchor_to_box(
         self, ground_truth: torch.Tensor, anchors: torch.Tensor
     ) -> torch.Tensor:
         """Assign closest ground-truth bounding boxes to anchor boxes.
         see https://d2l.ai/chapter_computer-vision/anchor.html#assigning-ground-truth-bounding-boxes-to-anchor-boxes
-
         Args:
             ground_truth (torch.Tensor): The ground-truth bounding boxes [num_gt_box, 4] - ulw, ulh, drw, drh
             anchors (torch.Tensor): Anchors boxes [num_anchors, 4] - ulw, ulh, drw, drh
-
         Returns:
             torch.Tensor: Tensor with ground truth box indices [num_anchors]
         """
@@ -70,7 +86,9 @@ class RoI:
         jaccard = box.box_iou(anchors, ground_truth)
 
         # Initialize the tensor to hold the assigned ground-truth bounding box for each anchor
-        anchors_box_map = torch.full((num_anchors,), -1, dtype=torch.long, device=anchors.device)
+        anchors_box_map = torch.full(
+            (num_anchors,), -1, dtype=torch.long, device=anchors.device
+        )
 
         # Assign ground-truth bounding boxes according to the threshold
         max_ious, indices = torch.max(jaccard, dim=1)

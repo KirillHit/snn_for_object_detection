@@ -15,7 +15,7 @@ class AnchorGenerator(nn.Module):
 
         Args:
             sizes (tuple, optional): Box scales (0,1] = S'/S.
-            ratios (tuple, optional): Ratio of width to height of boxes.
+            ratios (tuple, optional): Ratio of width to height of boxes (w/h).
             step (int, optional): Box per pixel.
         """
         super().__init__()

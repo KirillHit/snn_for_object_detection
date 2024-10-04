@@ -240,5 +240,6 @@ dependencies:
       - nir==1.0.4
       - nirtorch==1.0
       - norse==1.1.0
+      - opencv-python==4.10.0.84
       - torchviz==0.0.2
 prefix: /home/ubuntu/git/spike_yolo/.conda
