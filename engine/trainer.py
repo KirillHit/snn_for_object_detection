@@ -81,10 +81,6 @@ class Trainer:
         self.model.train()
         for batch in tqdm(self.train_dataloader, leave=False, desc="Train: "):
             train_loss = self.model.training_step(self.prepare_batch(batch))
-            if train_loss.isnan() or not train_loss.requires_grad:
-                self.train_batch_idx += 1
-                tqdm.write("[WARN]: The loss value is nan")
-                continue
             self.optim.zero_grad()
             with torch.no_grad():
                 train_loss.backward()
@@ -96,10 +92,6 @@ class Trainer:
         for batch in tqdm(self.test_dataloader, leave=False, desc="Test: "):
             with torch.no_grad():
                 test_loss = self.model.test_step(self.prepare_batch(batch))
-                if test_loss.isnan():
-                    tqdm.write("[WARN]: The loss value is nan")
-                    self.test_batch_idx += 1
-                    continue
                 self.plot(test_loss, split="test")
             self.test_batch_idx += 1
 
@@ -108,9 +100,6 @@ class Trainer:
         for batch in tqdm(self.val_dataloader, leave=False, desc="Val: "):
             with torch.no_grad():
                 val_loss = self.model.validation_step(self.prepare_batch(batch))
-                if val_loss.isnan():
-                    self.val_batch_idx += 1
-                    continue
                 self.plot(val_loss, split="val")
             self.val_batch_idx += 1
 

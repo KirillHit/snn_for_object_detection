@@ -51,7 +51,7 @@ class SpikeYOLO(Module):
         for batch_idx, labels in enumerate(labels_batch):
             ts_list: torch.Tensor = torch.unique(labels[..., 0])
             loss_ts = torch.zeros(
-                (ts_list.shape[0]), dtype=ts_cls_preds.dtype, device=ts_cls_preds.device
+                (max(ts_list.shape[0], 1)), dtype=ts_cls_preds.dtype, device=ts_cls_preds.device
             )
             for ts_idx, ts in enumerate(ts_list):
                 masked_labels = labels[..., 1:]
@@ -67,7 +67,7 @@ class SpikeYOLO(Module):
                     ts_bbox_preds[ts.type(torch.uint32), batch_idx] * bbox_mask,
                     bbox_offset * bbox_mask,
                 ).mean()
-                loss_ts[ts_idx] += cls + bbox
+                loss_ts[ts_idx] = cls + bbox
             loss[batch_idx] = loss_ts.mean()
         return loss.mean()
 
@@ -110,9 +110,12 @@ class SpikeYOLO(Module):
         """
         self.eval()
         anchors, cls_preds, bbox_preds = self.forward(X)
-        cls_probs = F.softmax(cls_preds, dim=2)
-        output = box.multibox_detection(cls_probs, bbox_preds, anchors)
-        return output
+        time_stamps = cls_preds.shape[0]
+        output = []
+        for ts in range(time_stamps):
+            cls_probs_ts = F.softmax(cls_preds[ts], dim=2)
+            output = box.multibox_detection(cls_probs_ts, bbox_preds[ts], anchors)
+        return torch.stack(output)
 
 
 class SpikeCNN(nn.Module):
