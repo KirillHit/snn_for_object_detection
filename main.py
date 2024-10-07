@@ -51,14 +51,14 @@ if __name__ == "__main__":
 
     # model_graph = draw_graph(model, input_size=(8, 3, 256, 256), expand_nested=True, save_graph=True)
 
-    if ask_question("Load parameters? [y/n]", default="n"):
+    if ask_question("Load parameters? [y/n]", default="y"):
         model.load_params(params_file)
 
     plotter = utils.Plotter(
-        threshold=0.001, labels=data.get_labels(), interval=data.time_step, columns=4
+        threshold=0.00, labels=data.get_labels(), interval=data.time_step, columns=4
     )
     while True:
-        num_epochs = ask_question("Start fit? [number of epochs/y/n]", default=1)
+        num_epochs = ask_question("Start fit? [number of epochs/y/n]", default=0)
         if num_epochs is False:
             break
         try:

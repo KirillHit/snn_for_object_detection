@@ -52,7 +52,7 @@ class Module(nn.Module):
             name = name = self.__class__.__name__
         file = os.path.join("./nets", name + ".params")
         if os.path.exists(file):
-            self.load_state_dict(torch.load(file))
+            self.load_state_dict(torch.load(file, weights_only=True))
             print("Model parameters loaded")
         else:
             print("The parameters file does not exist")
