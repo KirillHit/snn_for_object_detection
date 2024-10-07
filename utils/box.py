@@ -1,5 +1,4 @@
 import torch
-from matplotlib import pyplot as plt
 
 
 def box_corner_to_center(boxes):
@@ -22,21 +21,6 @@ def box_center_to_corner(boxes):
     y2 = cy + 0.5 * h
     boxes = torch.stack((x1, y1, x2, y2), axis=-1)
     return boxes
-
-
-def bbox_to_rect(bbox, color):
-    """Convert bounding box to matplotlib format."""
-    # Convert the bounding box (upper-left x, upper-left y, lower-right x,
-    # lower-right y) format to the matplotlib format: ((upper-left x,
-    # upper-left y), width, height)
-    return plt.Rectangle(
-        xy=(bbox[0], bbox[1]),
-        width=bbox[2] - bbox[0],
-        height=bbox[3] - bbox[1],
-        fill=False,
-        edgecolor=color,
-        linewidth=1,
-    )
 
 
 def box_iou(boxes1: torch.Tensor, boxes2: torch.Tensor) -> torch.Tensor:
@@ -71,7 +55,7 @@ def box_iou(boxes1: torch.Tensor, boxes2: torch.Tensor) -> torch.Tensor:
 def offset_boxes(anchors, assigned_bb, eps=1e-6):
     """Transform for anchor box offsets.
     see https://d2l-ai.translate.goog/chapter_computer-vision/anchor.html?_x_tr_sl=auto&_x_tr_tl=ru&_x_tr_hl=ru#labeling-classes-and-offsets"""
-    # TODO Найти формулу получше
+    # TODO find a better formula
     c_anc = box_corner_to_center(anchors)
     c_assigned_bb = box_corner_to_center(assigned_bb)
     offset_xy = 10 * (c_assigned_bb[:, :2] - c_anc[:, :2]) / c_anc[:, 2:]
@@ -102,14 +86,17 @@ def nms(boxes, scores, class_id, num_classes, iou_threshold):
             keep.append(scores_cls[i])
             if B.numel() == 1:
                 break
-            iou = box_iou(boxes_cls[i, :].reshape(-1, 4), boxes_cls[B[1:], :].reshape(-1, 4)).reshape(-1)
+            iou = box_iou(
+                boxes_cls[i, :].reshape(-1, 4), boxes_cls[B[1:], :].reshape(-1, 4)
+            ).reshape(-1)
             inds = torch.nonzero(iou <= iou_threshold).reshape(-1)
             B = B[inds + 1]
     return torch.tensor(keep, device=boxes.device, dtype=torch.long)
 
 
-def multibox_detection(cls_probs, offset_preds, anchors, nms_threshold=0.1,
-                       pos_threshold=0.009999999):
+def multibox_detection(
+    cls_probs, offset_preds, anchors, nms_threshold=0.1, pos_threshold=0.009999999
+):
     """Predict bounding boxes using non-maximum suppression."""
     device, batch_size = cls_probs.device, cls_probs.shape[0]
     num_classes, num_anchors = cls_probs.shape[2], cls_probs.shape[1]
@@ -131,11 +118,11 @@ def multibox_detection(cls_probs, offset_preds, anchors, nms_threshold=0.1,
         conf, predicted_bb = conf[all_id_sorted], predicted_bb[all_id_sorted]
         # Here `pos_threshold` is a threshold for positive (non-background)
         # predictions
-        below_min_idx = (conf < pos_threshold)
+        below_min_idx = conf < pos_threshold
         class_id[below_min_idx] = -1
         conf[below_min_idx] = 1 - conf[below_min_idx]
-        pred_info = torch.cat((class_id.unsqueeze(1),
-                               conf.unsqueeze(1),
-                               predicted_bb), dim=1)
+        pred_info = torch.cat(
+            (class_id.unsqueeze(1), conf.unsqueeze(1), predicted_bb), dim=1
+        )
         out.append(pred_info)
     return torch.stack(out)

@@ -7,32 +7,34 @@ class ProgressBoard:
 
     def __init__(
         self,
-        xlabel=None,
-        ylabel=None,
-        ylim=None,
-        xscale="linear",
-        yscale="linear",
-        ls=["-", "--", "-.", ":"],
-        colors=["C0", "C1", "C2", "C3"],
-        figsize=(6, 6),
-        display=True,
+        xlabel: str = None,
+        ylabel: str = None,
+        ylim: tuple[float, float] = (1.0, 0.1),
+        xscale: str = "linear",
+        yscale: str = "linear",
+        ls: list[str] = ["-", "--", "-.", ":"],
+        colors: list[str] = ["C0", "C1", "C2", "C3"],
+        figsize: tuple[int, int] = (6, 6),
+        display: bool = True,
+        every_n: int = 1,
     ):
-        self.ls, self.colors, self.display = ls, colors, display
+        self.ls, self.colors, self.display, self.every_n = ls, colors, display, every_n
         if not self.display:
             return
         plt.ion()
-        self.fig, self.axes = plt.subplots(figsize=figsize)
+        subplot = plt.subplots(figsize=figsize)
+        self.fig = subplot[0]
+        self.axes: plt.Axes = subplot[1]
         self.axes.set_xlabel(xlabel)
         self.axes.set_ylabel(ylabel)
         self.axes.set_xscale(xscale)
         self.axes.set_yscale(yscale)
-        if ylim is not None:
-            self.axes.set_ylim(ylim)
+        self.axes.set_ylim(top=ylim[0], bottom=ylim[1])
         self.raw_points = collections.OrderedDict()
         self.data = collections.OrderedDict()
         self.lines = {}
 
-    def draw(self, x, y, label, every_n=1):
+    def draw(self, x, y, label: str):
         if not self.display:
             return
 
@@ -45,7 +47,7 @@ class ProgressBoard:
         linep = self.data[label]
 
         points.append(Point(x, y))
-        if len(points) != every_n:
+        if len(points) != self.every_n:
             return
 
         mean = lambda x: sum(x) / len(x)

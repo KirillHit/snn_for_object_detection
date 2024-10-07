@@ -30,7 +30,7 @@ def ask_dataset(default: str = "gf"):
     if choice == "":
         choice = default
     if choice == "gf":
-        return utils.Gen1Fixed(batch_size=2, time_step=100, duration=10000), "gen1"
+        return utils.Gen1Fixed(batch_size=4, time_step=100, duration=10000), "gen1"
     raise ValueError("Invalid dataset value!")
 
 
@@ -38,7 +38,15 @@ if __name__ == "__main__":
     data, params_file = ask_dataset()
     model = models.SpikeYOLO(num_classes=2)
     model.to(utils.devices.gpu())
-    trainer = engine.Trainer(num_gpus=1, display=True, every_n=4)
+    board = utils.ProgressBoard(
+        yscale="log",
+        xlabel="Batch idx",
+        ylabel="Average loss",
+        display=True,
+        ylim=(1.2, 0.01),
+        every_n=4,
+    )
+    trainer = engine.Trainer(board, num_gpus=1)
     trainer.prepare(model, data)
 
     # model_graph = draw_graph(model, input_size=(8, 3, 256, 256), expand_nested=True, save_graph=True)

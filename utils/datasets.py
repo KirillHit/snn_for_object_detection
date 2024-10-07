@@ -36,7 +36,7 @@ class Gen1DataModule(DataModule):
         gt_boxes_list = [np.load(p) for p in gt_files]
         events_loaders = [PSEELoader(td_file) for td_file in data_files]
 
-        dataset = self.create_dataset((events_loaders, gt_boxes_list))
+        dataset = self.create_dataset(events_loaders, gt_boxes_list)
 
         match split:
             case "train":
@@ -55,7 +55,9 @@ class Gen1DataModule(DataModule):
             + " samples loaded from Gen1 dataset..."
         )
 
-    def create_dataset(self, data: list):
+    def create_dataset(
+        self, events_loaders: list[PSEELoader], gt_boxes_list: list[np.ndarray]
+    ) -> Dataset:
         raise NotImplementedError
 
     def get_labels(self):
@@ -76,31 +78,33 @@ class Gen1Fixed(Gen1DataModule):
         super().__init__(root, batch_size, duration)
         self.time_step = time_step
 
-    def create_dataset(self, data: list):
-        events_loaders, gt_boxes_list = data
-
+    def create_dataset(
+        self, events_loaders: list[PSEELoader], gt_boxes_list: list[np.ndarray]
+    ) -> Dataset:
         # Numpy format ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
         # Box update frequency 1-4 Hz
         # Labels format (ts [ms], class id (0 car, 1 person), xlu, ylu, xrd, yrd)
+        height, width = events_loaders[0].get_size()
         labels = [
             torch.from_numpy(
                 np.array(
                     [
                         gt_boxes[:]["ts"] // (self.time_step * 1000),
                         gt_boxes[:]["class_id"],
-                        gt_boxes[:]["x"],
-                        gt_boxes[:]["y"],
-                        gt_boxes[:]["x"] + gt_boxes[:]["w"],
-                        gt_boxes[:]["y"] + gt_boxes[:]["h"],
+                        gt_boxes[:]["x"] / width,
+                        gt_boxes[:]["y"] / height,
+                        (gt_boxes[:]["x"] + gt_boxes[:]["w"]) / width,
+                        (gt_boxes[:]["y"] + gt_boxes[:]["h"]) / height,
                     ],
-                    dtype=np.int32,
+                    dtype=np.float32,
                 )
             ).t()
             for gt_boxes in gt_boxes_list
         ]
 
         return Gen1FixedDataset(
-            (events_loaders, labels),
+            events_loaders,
+            labels,
             self.time_step,
             self.duration,
         )
@@ -113,19 +117,25 @@ class Gen1FixedDataset(Dataset):
     # wight = 304
     # hight = 240
 
-    def __init__(self, data: list, time_step, duration):
-        self.events_loaders, self.gt_boxes_list = data
+    def __init__(
+        self,
+        events_loaders: list[PSEELoader],
+        gt_boxes_list: list[torch.Tensor],
+        time_step: int,
+        duration: int,
+    ):
+        self.events_loaders, self.gt_boxes_list = events_loaders, gt_boxes_list
         self.duration, self.time_step = duration, time_step
         self.record_steps = ((self.record_time - 1) // self.duration) + 1
         self.sequence_len = ((self.duration - 1) // self.time_step) + 1
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         return self.parse_data(idx)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.events_loaders) * self.record_steps
 
-    def parse_data(self, idx):
+    def parse_data(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         """Transforms events into a video stream"""
         data_idx = idx // self.record_steps
         height, width = self.events_loaders[0].get_size()
@@ -173,6 +183,8 @@ class Gen1Adaptive(Gen1DataModule):
         super().__init__(root, batch_size, duration)
         self.event_step = event_step
 
-    def create_dataset(self, data: list):
+    def create_dataset(
+        self, events_loaders: list[PSEELoader], gt_boxes_list: list[np.ndarray]
+    ) -> Dataset:
         # TODO
         raise NotImplementedError

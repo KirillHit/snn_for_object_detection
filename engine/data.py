@@ -1,5 +1,4 @@
 from torch.utils.data import Dataset, DataLoader
-from torch.nn.utils.rnn import pad_sequence
 import torch
 
 
@@ -34,7 +33,7 @@ class DataModule:
             batch_size,
             shuffle=shuffle,
             num_workers=self._num_workers,
-            collate_fn=pad_labels,
+            collate_fn=stack_data,
         )
 
     def get_dataset(self, split: str):
@@ -69,11 +68,10 @@ class DataModule:
         return []
 
 
-def pad_labels(batch):
+def stack_data(batch):
     features = torch.stack([sample[0] for sample in batch], dim=1)
-    # labels = pad_sequence([sample[1] for sample in batch], padding_value=-1.0, batch_first=True)
-    # Return features format (ts, batch, p, h, w)
-    # Return labels format (batch, max_len, 6). Empty fill -1
-    # One label contains (ts, class id (0 car, 1 person), xlu, ylu, xrd, yrd)
     labels = [sample[1] for sample in batch]
+    # Return features format (ts, batch, p, h, w)
+    # Return labels format list[torch.Tensor]. Len = batch
+    # One label contains (ts, class id (0 car, 1 person), xlu, ylu, xrd, yrd)
     return features, labels
