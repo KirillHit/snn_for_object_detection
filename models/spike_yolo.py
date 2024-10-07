@@ -106,7 +106,8 @@ class SpikeYOLO(Module):
         Args:
             X (torch.Tensor): img batch
         Returns:
-            torch.Tensor: [class, roi, luw, luh, rdw, rdh]
+            torch.Tensor: Shape [ts, batch, anchors, 6]. 
+                One label contains [class, iou, luw, luh, rdw, rdh]
         """
         self.eval()
         anchors, cls_preds, bbox_preds = self.forward(X)
@@ -114,7 +115,7 @@ class SpikeYOLO(Module):
         output = []
         for ts in range(time_stamps):
             cls_probs_ts = F.softmax(cls_preds[ts], dim=2)
-            output = box.multibox_detection(cls_probs_ts, bbox_preds[ts], anchors)
+            output.append(box.multibox_detection(cls_probs_ts, bbox_preds[ts], anchors))
         return torch.stack(output)
 
 

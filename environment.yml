@@ -169,4 +169,3 @@ dependencies:
       - nir==1.0.4
       - nirtorch==1.0
       - norse==1.1.0
-prefix: /home/ubuntu/miniconda3/envs/spike_yolo_env
