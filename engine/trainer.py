@@ -2,7 +2,7 @@ import torch
 from engine.data import DataModule
 from engine.model import Module
 import utils.devices as devices
-from utils.plots import ProgressBoard
+from utils.progress_board import ProgressBoard
 from utils.plotter import Plotter
 from tqdm import tqdm
 
