@@ -44,7 +44,7 @@ if __name__ == "__main__":
         ylabel="Average loss",
         display=True,
         ylim=(1.2, 0.01),
-        every_n=4,
+        every_n=1,
     )
     trainer = engine.Trainer(board, num_gpus=1)
     trainer.prepare(model, data)
