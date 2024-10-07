@@ -15,17 +15,16 @@ class Trainer:
     val_batch_idx = 0
     epoch = 0
 
-    def __init__(self, num_gpus=0, display=True, every_n=4):
-        self.display, self.every_n = display, every_n
+    def __init__(self, board: ProgressBoard, num_gpus=0):
+        self.board = board
         self.gpus = [devices.gpu(i) for i in range(min(num_gpus, devices.num_gpus()))]
-        self.board = ProgressBoard(yscale="log", display=self.display)
 
-    def prepare(self, model: Module, data: DataModule):
+    def prepare(self, model: Module, data: DataModule) -> None:
         self.prepare_data(data)
         self.prepare_model(model)
         self.optim = model.configure_optimizers()
 
-    def prepare_data(self, data: DataModule):
+    def prepare_data(self, data: DataModule) -> None:
         self.train_dataloader = data.train_dataloader()
         self.test_dataloader = data.test_dataloader()
         self.val_dataloader = data.val_dataloader()
@@ -33,30 +32,31 @@ class Trainer:
         self.num_test_batches = len(self.test_dataloader)
         self.num_val_batches = len(self.val_dataloader)
 
-    def prepare_model(self, model: Module):
+    def prepare_model(self, model: Module) -> None:
         if self.gpus:
             model.to(self.gpus[0])
         self.model = model
 
-    def prepare_batch(self, batch):
-        if self.gpus:
-            batch = [torch.Tensor.to(a, self.gpus[0]) for a in batch]
-        return batch
+    def prepare_batch(
+        self, batch: tuple[torch.Tensor, list[torch.Tensor]]
+    ) -> tuple[torch.Tensor, list[torch.Tensor]]:
+        if not self.gpus:
+            return batch
+        return batch[0].to(self.gpus[0]), [
+            labels.to(self.gpus[0]) for labels in batch[1]
+        ]
 
     def fit(self, num_epochs=1):
         for self.epoch in tqdm(range(num_epochs), leave=False, desc="Epoch"):
             self.fit_epoch()
 
     def plot(self, loss, split):
-        if not self.display:
-            return
         match split:
             case "train":
                 self.board.draw(
                     self.train_batch_idx,
                     torch.Tensor.to(loss, devices.cpu()),
                     "Train loss",
-                    every_n=self.every_n,
                 )
             case "test":
                 self.board.draw(
@@ -65,7 +65,6 @@ class Trainer:
                     + self.test_batch_idx % self.num_test_batches,
                     torch.Tensor.to(loss, devices.cpu()),
                     "Test loss",
-                    every_n=self.every_n,
                 )
             case "val":
                 self.board.draw(
@@ -74,17 +73,17 @@ class Trainer:
                     + self.val_batch_idx % self.num_test_batches,
                     torch.Tensor.to(loss, devices.cpu()),
                     "Val loss",
-                    every_n=self.every_n,
                 )
             case _:
                 raise ValueError(f'The split parameter cannot be "{split}"!')
 
     def fit_epoch(self):
-        # Training
         self.model.train()
-        for batch in tqdm(self.train_dataloader, leave=False, desc="Batch: "):
+        for batch in tqdm(self.train_dataloader, leave=False, desc="Train: "):
             train_loss = self.model.training_step(self.prepare_batch(batch))
-            if train_loss is None:
+            if train_loss.isnan() or not train_loss.requires_grad:
+                self.train_batch_idx += 1
+                tqdm.write("[WARN]: The loss value is nan")
                 continue
             self.optim.zero_grad()
             with torch.no_grad():
@@ -92,26 +91,25 @@ class Trainer:
                 self.optim.step()
                 self.plot(train_loss, split="train")
             self.train_batch_idx += 1
-        # Testing
-        if self.test_dataloader is None:
-            return
+
         self.model.eval()
-        for batch in self.test_dataloader:
+        for batch in tqdm(self.test_dataloader, leave=False, desc="Test: "):
             with torch.no_grad():
-                test_loss = self.model.training_step(self.prepare_batch(batch))
-                if test_loss is None:
+                test_loss = self.model.test_step(self.prepare_batch(batch))
+                if test_loss.isnan():
+                    tqdm.write("[WARN]: The loss value is nan")
+                    self.test_batch_idx += 1
                     continue
                 self.plot(test_loss, split="test")
             self.test_batch_idx += 1
 
     def validation(self):
-        if self.val_dataloader is None:
-            return
         self.model.eval()
-        for batch in self.val_dataloader:
+        for batch in tqdm(self.val_dataloader, leave=False, desc="Val: "):
             with torch.no_grad():
                 val_loss = self.model.validation_step(self.prepare_batch(batch))
-                if val_loss is None:
+                if val_loss.isnan():
+                    self.val_batch_idx += 1
                     continue
                 self.plot(val_loss, split="val")
             self.val_batch_idx += 1
