@@ -55,7 +55,7 @@ if __name__ == "__main__":
         model.load_params(params_file)
 
     plotter = utils.Plotter(
-        threshold=0.00, labels=data.get_labels(), interval=data.time_step, columns=4
+        threshold=0.001, labels=data.get_labels(), interval=data.time_step, columns=4
     )
     while True:
         num_epochs = ask_question("Start fit? [number of epochs/y/n]", default=0)

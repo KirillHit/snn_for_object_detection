@@ -86,7 +86,8 @@ class Plotter:
                 predictions[:, batch_idx, :, [3, 5]] * hight
                 + (batch_idx // self.columns) * hight
             )
-        return torch.flatten(predictions, start_dim=1, end_dim=2)
+        predictions[..., 1] *= 100
+        return torch.flatten(predictions, start_dim=1, end_dim=2).type(torch.int32)
 
     def prepare_targets(self, target: list[torch.Tensor], hight: int, wight: int):
         """Changes the coordinates of the boxes according to the position of the batch
@@ -130,8 +131,8 @@ class Plotter:
     def draw_preds_box(self, image: np.ndarray, preds: torch.Tensor) -> np.ndarray:
         """Draw bounding boxes for preds
         Args:
-            image (np.ndarray): Shape [ts, h, w, c]
-            preds (torch.Tensor): Shape [ts, count_box, 6].
+            image (np.ndarray): Shape [h, w, c]
+            preds (torch.Tensor): Shape [count_box, 6].
                 One label contains [class, iou, xlu, ylu, xrd, yrd]
         Returns:
             np.ndarray: Image with boxes
@@ -144,12 +145,12 @@ class Plotter:
                 image,
                 start_point,
                 end_point,
-                color=self.colors[box[1].type(torch.uint32)],
+                color=self.colors[box[0]],
                 thickness=1,
             )
             cv2.putText(
                 image,
-                text=str(box[0]) + self.labels[box[1].type(torch.uint32)],
+                text="%.2f %s" % (box[1].item() / 100, self.labels[box[0]]),
                 org=(box[2].item(), box[3].item() - 4),
                 fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                 fontScale=0.5,
@@ -171,7 +172,7 @@ class Plotter:
             start_point = (box[2].item(), box[3].item())
             end_point = (box[4].item(), box[5].item())
             cv2.rectangle(
-                image, start_point, end_point, color=self.colors[box[1]], thickness=1
+                image, start_point, end_point, color=self.colors[box[1]], thickness=2
             )
             cv2.putText(
                 image,
@@ -179,7 +180,7 @@ class Plotter:
                 org=(box[2].item(), box[3].item() - 4),
                 fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                 fontScale=0.5,
-                thickness=1,
+                thickness=2,
                 color=(255, 0, 0),
             )
         return image
