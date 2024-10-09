@@ -81,6 +81,11 @@ class Trainer:
         self.model.train()
         for batch in tqdm(self.train_dataloader, leave=False, desc="Train: "):
             train_loss = self.model.training_step(self.prepare_batch(batch))
+            if not train_loss.requires_grad:
+                tqdm.write("[WARN]: The loss tensor does not require a gradient. \
+                           Not a single sample from the pack contains targets")
+                self.train_batch_idx += 1
+                continue
             self.optim.zero_grad()
             with torch.no_grad():
                 train_loss.backward()
