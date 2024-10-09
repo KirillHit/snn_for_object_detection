@@ -95,14 +95,28 @@ def nms(boxes, scores, class_id, num_classes, iou_threshold):
 
 
 def multibox_detection(
-    cls_probs, offset_preds, anchors, nms_threshold=0.1, pos_threshold=0.009999999
-):
-    """Predict bounding boxes using non-maximum suppression."""
-    device, batch_size = cls_probs.device, cls_probs.shape[0]
-    num_classes, num_anchors = cls_probs.shape[2], cls_probs.shape[1]
+    cls_probs: torch.Tensor,
+    offset_preds: torch.Tensor,
+    anchors: torch.Tensor,
+    nms_threshold: float = 0.1,
+    pos_threshold: float = 0.009999999,
+) -> torch.Tensor:
+    """Predict bounding boxes using non-maximum suppression.
+    Args:
+        cls_probs (torch.Tensor): Shape [batch, num_anchors, num_classes + 1]
+        offset_preds (torch.Tensor): Shape [batch, num_anchors, 4]
+        anchors (torch.Tensor): Shape [num_anchors, 4]
+        nms_threshold (float, optional): TODO. Defaults to 0.1.
+        pos_threshold (float, optional): TODO. Defaults to 0.009999999.
+    Returns:
+        torch.Tensor: Shape [batch, anchors, 6]. 
+            One label contains [class, iou, luw, luh, rdw, rdh]
+    """
+    device = cls_probs.device
+    batch_size, num_anchors, num_classes = cls_probs.shape
     out = []
-    for i in range(batch_size):
-        cls_prob, offset_pred = cls_probs[i], offset_preds[i].reshape(-1, 4)
+    for batch_idx in range(batch_size):
+        cls_prob, offset_pred = cls_probs[batch_idx], offset_preds[batch_idx]
         conf, class_id = torch.max(cls_prob, 1)
         predicted_bb = offset_inverse(anchors, offset_pred)
         class_id -= 1
