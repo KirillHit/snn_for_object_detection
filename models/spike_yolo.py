@@ -2,7 +2,6 @@ import torch
 from torch import nn
 import norse.torch as norse
 from torch.nn import functional as F
-from tqdm import tqdm
 
 from engine.model import Module
 from utils.anchors import AnchorGenerator
@@ -124,7 +123,7 @@ class SpikeCNN(nn.Module):
 
     def __init__(self) -> None:
         super().__init__()
-        num_filters = [2, 4, 16, 32]
+        num_filters = [2, 8, 32, 64]
         blk = [
             SpikeDownSampleBlk(num_filters[i], num_filters[i + 1])
             for i in range(len(num_filters) - 1)
@@ -142,6 +141,7 @@ class SpikeDownSampleBlk(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
         self.lif1 = norse.LIFCell()
+        # self.dropout = nn.Dropout() TODO
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         s1 = None
@@ -150,6 +150,7 @@ class SpikeDownSampleBlk(nn.Module):
             z = self.conv1(X[ts])
             z, s1 = self.lif1(z, s1)
             z = nn.functional.max_pool2d(z, kernel_size=2, stride=2)
+            # z = self.dropout(z)
             zs.append(z)
         Y = torch.stack(zs)
         return Y
@@ -162,17 +163,9 @@ class SpikeFPN(nn.Module):
         super().__init__()
         self.num_classes = num_classes
 
-        self.low_layer = SpikeDownSampleBlk(32, 64)
-        self.mid_layer = SpikeDownSampleBlk(64, 128)
+        self.low_layer = SpikeDownSampleBlk(64, 128)
+        self.mid_layer = SpikeDownSampleBlk(128, 128)
         self.high_layer = SpikeDownSampleBlk(128, 128)
-
-        """ sizes = (
-            [0.010, 0.024, 0.044],
-            [0.010, 0.034, 0.068],
-            [0.044, 0.068, 0.154],
-            [0.068, 0.154, 0.274],
-        )
-        ratios = ([0.38, 0.3, 0.5], [1.4, 1.0, 2.1], [0.38, 0.3, 0.5], [1.4, 1.0, 2.1]) """
 
         sizes = (
             [0.062, 0.078, 0.094],
@@ -190,8 +183,8 @@ class SpikeFPN(nn.Module):
 
         num_class_out = num_anchors * (self.num_classes + 1)
         num_box_out = num_anchors * 4
-        self.base_pred = DetectorDirectDecoder(32, num_box_out, num_class_out, 3)
-        self.low_pred = DetectorDirectDecoder(64, num_box_out, num_class_out, 3)
+        self.base_pred = DetectorDirectDecoder(64, num_box_out, num_class_out, 3)
+        self.low_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
         self.mid_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
         self.high_pred = DetectorDirectDecoder(128, num_box_out, num_class_out, 3)
 
