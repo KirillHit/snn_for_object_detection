@@ -126,7 +126,7 @@ class Gen1FixedDataset(Dataset):
     ):
         self.events_loaders, self.gt_boxes_list = events_loaders, gt_boxes_list
         self.duration, self.time_step = duration, time_step
-        self.record_steps = ((self.record_time - 1) // self.duration) + 1
+        self.record_steps = self.record_time // self.duration
         self.sequence_len = ((self.duration - 1) // self.time_step) + 1
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
@@ -151,6 +151,10 @@ class Gen1FixedDataset(Dataset):
             self.events_loaders[data_idx].reset()
         events = self.events_loaders[data_idx].load_delta_t(self.duration * 1000)
         time_stamps = events[:]["t"] // (self.time_step * 1000)
+        
+        if not time_stamps.size:  
+            return (features, self.gt_boxes_list[data_idx][0:0])
+        
         features[
             time_stamps[:] - time_stamps[0],
             events[:]["p"].astype(np.uint32),

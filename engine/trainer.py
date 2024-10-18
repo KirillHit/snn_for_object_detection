@@ -70,7 +70,7 @@ class Trainer:
                 self.board.draw(
                     self.train_batch_idx
                     - self.num_val_batches
-                    + self.val_batch_idx % self.num_test_batches,
+                    + self.val_batch_idx % self.num_val_batches,
                     torch.Tensor.to(loss, devices.cpu()),
                     "Val loss",
                 )
