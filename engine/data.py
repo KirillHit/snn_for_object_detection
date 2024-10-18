@@ -1,4 +1,4 @@
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import IterableDataset, DataLoader
 import torch
 
 
@@ -21,17 +21,16 @@ class DataModule:
         """
         self._root = root
         self._num_workers = num_workers
-        self._train_dataset: Dataset = None
-        self._test_dataset: Dataset = None
-        self._val_dataset: Dataset = None
+        self._train_dataset: IterableDataset = None
+        self._test_dataset: IterableDataset = None
+        self._val_dataset: IterableDataset = None
         self.batch_size = batch_size
 
-    def get_dataloader(self, batch_size: int, split="train", shuffle=True):
+    def get_dataloader(self, batch_size: int, split="train"):
         self.update_dataset(split)
         return DataLoader(
             self.get_dataset(split),
             batch_size,
-            shuffle=shuffle,
             num_workers=self._num_workers,
             collate_fn=stack_data,
         )
@@ -48,13 +47,13 @@ class DataModule:
                 raise ValueError(f'The split parameter cannot be "{split}"!')
 
     def train_dataloader(self):
-        return self.get_dataloader(self.batch_size, split="train", shuffle=True)
+        return self.get_dataloader(self.batch_size, split="train")
 
     def test_dataloader(self):
-        return self.get_dataloader(self.batch_size, split="test", shuffle=True)
+        return self.get_dataloader(self.batch_size, split="test")
 
     def val_dataloader(self):
-        return self.get_dataloader(self.batch_size, split="val", shuffle=False)
+        return self.get_dataloader(self.batch_size, split="val")
 
     def update_dataset(self, split: str):
         if self.get_dataset(split) is None:

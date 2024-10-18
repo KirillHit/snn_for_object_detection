@@ -93,6 +93,7 @@ class Trainer:
                 self.plot(train_loss, split="train")
             self.train_batch_idx += 1
 
+    def test(self):
         self.model.eval()
         for batch in tqdm(self.test_dataloader, leave=False, desc="Test: "):
             with torch.no_grad():
