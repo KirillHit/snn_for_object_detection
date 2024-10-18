@@ -60,7 +60,7 @@ class Plotter:
         con_imgs = []
         for time_stamp in video:
             arr = [
-                np.concatenate(time_stamp[idx : idx + 4], axis=1)
+                np.concatenate(time_stamp[idx : idx + self.columns], axis=1)
                 for idx in range(0, b, self.columns)
             ]
             con_imgs.append(np.concatenate(arr, axis=0))
