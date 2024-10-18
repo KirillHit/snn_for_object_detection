@@ -30,7 +30,7 @@ def ask_dataset(default: str = "gf"):
     if choice == "":
         choice = default
     if choice == "gf":
-        return utils.Gen1Fixed(batch_size=4, time_step=64, duration=4096), "gen1"
+        return utils.Gen1Fixed(batch_size=8, time_step=64, duration=1000, num_load_file=10, num_workers=4), "gen1"
     raise ValueError("Invalid dataset value!")
 
 
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         ylabel="Average loss",
         display=True,
         ylim=(1.2, 0.01),
-        every_n=1,
+        every_n=8,
     )
     trainer = engine.Trainer(board, num_gpus=1)
     trainer.prepare(model, data)
