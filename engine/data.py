@@ -14,8 +14,8 @@ class DataModule:
         """
         Args:
             root (str, optional): The directory where datasets are stored. Defaults to "./data".
-            num_workers (int, optional): A positive integer will turn on multi-process data loading 
-                with the specified number of loader worker processes. See torch.utils.data.DataLoader. 
+            num_workers (int, optional): A positive integer will turn on multi-process data loading
+                with the specified number of loader worker processes. See torch.utils.data.DataLoader.
                 Defaults to 4.
             batch_size (int, optional): _description_. Defaults to 32.
         """
@@ -33,6 +33,7 @@ class DataModule:
             batch_size,
             num_workers=self._num_workers,
             collate_fn=stack_data,
+            persistent_workers=True,
         )
 
     def get_dataset(self, split: str):
