@@ -1,9 +1,14 @@
 from matplotlib import pyplot as plt
 import collections
+import json
+import os
+import time
 
 
 class ProgressBoard:
     """The board that plots data points in animation."""
+
+    log_folder = "./log"
 
     def __init__(
         self,
@@ -19,6 +24,9 @@ class ProgressBoard:
         every_n: int = 1,
     ):
         self.ls, self.colors, self.display, self.every_n = ls, colors, display, every_n
+        self.raw_points = collections.OrderedDict()
+        self.data = collections.OrderedDict()
+        self.lines = {}
         if not self.display:
             return
         plt.ion()
@@ -30,14 +38,8 @@ class ProgressBoard:
         self.axes.set_xscale(xscale)
         self.axes.set_yscale(yscale)
         self.axes.set_ylim(top=ylim[0], bottom=ylim[1])
-        self.raw_points = collections.OrderedDict()
-        self.data = collections.OrderedDict()
-        self.lines = {}
 
     def draw(self, x, y, label: str):
-        if not self.display:
-            return
-
         Point = collections.namedtuple("Point", ["x", "y"])
 
         if label not in self.raw_points:
@@ -53,6 +55,9 @@ class ProgressBoard:
         mean = lambda x: sum(x) / len(x)
         linep.append(Point(mean([p.x for p in points]), mean([p.y for p in points])))
         points.clear()
+
+        if not self.display:
+            return
 
         if label not in self.lines:
             (line,) = self.axes.plot(
@@ -81,3 +86,11 @@ class ProgressBoard:
 
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+
+    def save_plot(self):
+        if not os.path.exists(self.log_folder):
+            os.makedirs(self.log_folder)
+        timestr = time.strftime("%Y%m%d-%H%M%S")
+        with open(self.log_folder + f"/{timestr}.json", "w") as f:
+            f.write(json.dumps(self.data))
+        print("[INFO]: Training logs saved")

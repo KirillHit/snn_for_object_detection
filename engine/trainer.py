@@ -52,7 +52,7 @@ class Trainer:
             case "train":
                 self.board.draw(
                     self.train_batch_idx,
-                    torch.Tensor.to(loss, devices.cpu()),
+                    torch.Tensor.to(loss, devices.cpu()).item(),
                     "Train loss",
                 )
             case "test":
@@ -60,7 +60,7 @@ class Trainer:
                     self.train_batch_idx
                     - self.epoch_size
                     + self.test_batch_idx % self.epoch_size,
-                    torch.Tensor.to(loss, devices.cpu()),
+                    torch.Tensor.to(loss, devices.cpu()).item(),
                     "Test loss",
                 )
             case "val":
@@ -68,7 +68,7 @@ class Trainer:
                     self.train_batch_idx
                     - self.epoch_size
                     + self.val_batch_idx % self.epoch_size,
-                    torch.Tensor.to(loss, devices.cpu()),
+                    torch.Tensor.to(loss, devices.cpu()).item(),
                     "Val loss",
                 )
             case _:
