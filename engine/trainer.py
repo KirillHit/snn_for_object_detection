@@ -80,6 +80,8 @@ class Trainer:
     def fit(self, num_epochs=1):
         self.stop_flag = False
         for self.epoch in tqdm(range(num_epochs), leave=False, desc="Epoch"):
+            if self.stop_flag:
+                return
             self.fit_epoch()
         self.test()
 
@@ -87,7 +89,7 @@ class Trainer:
         self.model.train()
         for _ in tqdm(range(self.epoch_size), leave=False, desc="Train: "):
             if self.stop_flag:
-                break
+                return
             batch = next(self.train_dataloader_iter)
             train_loss = self.model.training_step(self.prepare_batch(batch))
             if not train_loss.requires_grad:
@@ -108,7 +110,7 @@ class Trainer:
         self.model.eval()
         for _ in tqdm(range(self.epoch_size), leave=False, desc="Test: "):
             if self.stop_flag:
-                break
+                return
             batch = next(self.test_dataloader_iter)
             with torch.no_grad():
                 test_loss = self.model.test_step(self.prepare_batch(batch))
@@ -120,7 +122,7 @@ class Trainer:
         self.model.eval()
         for _ in tqdm(range(self.epoch_size), leave=False, desc="Val: "):
             if self.stop_flag:
-                break
+                return
             batch = next(self.val_dataloader_iter)
             with torch.no_grad():
                 val_loss = self.model.validation_step(self.prepare_batch(batch))

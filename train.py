@@ -1,6 +1,3 @@
-from matplotlib import pyplot as plt
-from pynput import keyboard
-
 import engine
 import models
 import utils
@@ -37,14 +34,6 @@ def ask_dataset(default: str = "gf"):
     raise ValueError("Invalid dataset value!")
 
 
-def on_press_construct(trainer: engine.Trainer):
-    def on_press(key):
-        if key == keyboard.KeyCode.from_char("q"):
-            trainer.stop()
-
-    return on_press
-
-
 if __name__ == "__main__":
     data, params_file = ask_dataset()
     model = models.SpikeYOLO(num_classes=2)
@@ -53,7 +42,7 @@ if __name__ == "__main__":
         yscale="log",
         xlabel="Batch idx",
         ylabel="Average loss",
-        display=True,
+        display=False,
         ylim=(1.2, 0.01),
         every_n=10,
     )
@@ -65,28 +54,17 @@ if __name__ == "__main__":
     if ask_question("Load parameters? [y/n]", default="y"):
         model.load_params(params_file)
 
-    key_listener = keyboard.Listener(on_press=on_press_construct(trainer))
-    key_listener.start()
-    print("[INFO]: Press 'q' to pause training!")
-
     plotter = utils.Plotter(
         threshold=0.001, labels=data.get_labels(), interval=data.time_step, columns=4
     )
-    while True:
-        num_epochs = ask_question("Start fit? [number of epochs/y/n]", default=0)
-        if num_epochs is False:
-            break
-        try:
-            if num_epochs:
-                trainer.fit(num_epochs)
-            trainer.test_model(plotter)
-            plt.show()
-        except KeyboardInterrupt:
-            print("[INFO]: Training was stopped!")
-            break
-        except RuntimeError as exc:
-            print("Error description: ", exc)
-            print("[ERROR]: Training stopped due to error!")
 
-    if ask_question("Save parameters? [y/n]"):
-        model.save_params(params_file)
+    num_epochs = ask_question("Start fit? [number of epochs/y/n]", default=0)
+    try:
+        trainer.fit(num_epochs)
+    except KeyboardInterrupt:
+        print("[INFO]: Training was stopped!")
+    except RuntimeError as exc:
+        print("Error description: ", exc)
+        print("[ERROR]: Training stopped due to error!")
+
+    model.save_params(params_file)

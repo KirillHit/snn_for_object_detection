@@ -1,6 +1,7 @@
 data/*
 .vscode/
 .conda
+arc
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
