@@ -45,14 +45,14 @@ class Module(nn.Module):
         if not name:
             name = name = self.__class__.__name__
         torch.save(self.state_dict(), os.path.join("./nets", name + ".params"))
-        print("Model parameters saved")
+        print("[INFO]: Model parameters saved")
 
     def load_params(self, name: str = "") -> None:
         if not name:
             name = name = self.__class__.__name__
         file = os.path.join("./nets", name + ".params")
-        if os.path.exists(file):
-            self.load_state_dict(torch.load(file, weights_only=True))
-            print("Model parameters loaded")
-        else:
-            print("The parameters file does not exist")
+        if not os.path.exists(file):
+            print("[ERROR]: The parameters file does not exist. Check path: " + file)
+            return
+        self.load_state_dict(torch.load(file, weights_only=True))
+        print("[INFO]: Model parameters loaded")
