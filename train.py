@@ -7,7 +7,7 @@ import time
 
 if __name__ == "__main__":
     data = utils.Gen1Fixed(
-        batch_size=16, time_step=64, num_steps=32, num_load_file=16, num_workers=4
+        batch_size=4, time_step=16, num_steps=128, num_load_file=16, num_workers=4
     )
     params_file = "gen1"
     model = models.SpikeYOLO(num_classes=2)
@@ -18,18 +18,11 @@ if __name__ == "__main__":
         ylabel="Average loss",
         display=False,
         ylim=(1.2, 0.01),
-        every_n=1,
+        every_n=32,
     )
     trainer = engine.Trainer(board, num_gpus=1, epoch_size=64)
     trainer.prepare(model, data)
-
-    # model_graph = draw_graph(model, input_size=(8, 3, 256, 256), expand_nested=True, save_graph=True)
-
     model.load_params(params_file)
-
-    plotter = utils.Plotter(
-        threshold=0.001, labels=data.get_labels(), interval=data.time_step, columns=4
-    )
 
     idx = 1
     valid = True

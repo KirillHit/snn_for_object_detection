@@ -32,7 +32,7 @@ def ask_dataset(default: str = "gf"):
         choice = default
     if choice == "gf":
         return utils.Gen1Fixed(
-            batch_size=16, time_step=64, num_steps=32, num_load_file=16, num_workers=4
+            batch_size=2, time_step=16, num_steps=256, num_load_file=16, num_workers=4
         ), "gen1"
     raise ValueError("Invalid dataset value!")
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         ylabel="Average loss",
         display=True,
         ylim=(1.2, 0.01),
-        every_n=10,
+        every_n=1,
     )
     trainer = engine.Trainer(board, num_gpus=1, epoch_size=60)
     trainer.prepare(model, data)
@@ -70,7 +70,7 @@ if __name__ == "__main__":
     print("[INFO]: Press 'q' to pause training!")
 
     plotter = utils.Plotter(
-        threshold=0.001, labels=data.get_labels(), interval=data.time_step, columns=4
+        threshold=0.1, labels=data.get_labels(), interval=data.time_step, columns=4
     )
     while True:
         num_epochs = ask_question("Start fit? [number of epochs/y/n]", default=0)
