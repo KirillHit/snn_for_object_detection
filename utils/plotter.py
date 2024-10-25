@@ -7,7 +7,7 @@ class Plotter:
     """Displays images, predictions and boxes"""
 
     def __init__(self, threshold=0.8, labels=None, interval=200, columns=4):
-        self.threshold = threshold
+        self.threshold = int(threshold * 100)
         self.labels = labels
         self.colors = [(0, 255, 0), (0, 0, 255)]
         self.interval = interval
