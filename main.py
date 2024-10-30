@@ -1,11 +1,9 @@
-import utils
+from matplotlib import pyplot as plt
+from pynput import keyboard
+
 import engine
 import models
-from matplotlib import pyplot as plt
-from torchvision.transforms import v2
-from torchview import draw_graph
-import torch
-
+import utils
 import utils.devices
 
 
@@ -24,55 +22,71 @@ def ask_question(question, default="y"):
         elif choice.isdigit():
             return int(choice)
         else:
-            print("Please respond with 'y' or 'n'")
+            print("Please respond with 'y', 'n' or number")
 
 
-def ask_dataset(default: str = "b"):
-    while True:
-        print(f"Select dataset: b-bananas, h-hardhat (Default - {default})")
-        choice = input().lower()
-        if default is not None and choice == "":
-            choice = default
-        if choice == "b":
-            return utils.BananasDataset(
-                batch_size=16,
-                resize=v2.Resize((256, 256)),
-                normalize=v2.Normalize((0.23, 0.23, 0.23), (0.12, 0.12, 0.12)),
-            ), "bananas"
-        elif choice == "h":
-            return utils.HardHatDataset(
-                batch_size=16,
-                resize=v2.Resize((256, 256)),
-                normalize=v2.Normalize((0.23, 0.23, 0.23), (0.12, 0.12, 0.12)),
-                save_tensor=True,
-            ), "hardhat"
-        else:
-            print("Please respond with 'y' or 'n'")
+def ask_dataset(default: str = "gf"):
+    # print(f"Select dataset: gf - Gen1Fixed, m - 1Mpx (not supported yet) (Default - {default})")
+    choice = ""  # input().lower() TODO
+    if choice == "":
+        choice = default
+    if choice == "gf":
+        return utils.Gen1Fixed(
+            batch_size=2, time_step=16, num_steps=256, num_load_file=16, num_workers=4
+        ), "gen1"
+    raise ValueError("Invalid dataset value!")
+
+
+def on_press_construct(trainer: engine.Trainer):
+    def on_press(key):
+        if key == keyboard.KeyCode.from_char("q"):
+            trainer.stop()
+
+    return on_press
 
 
 if __name__ == "__main__":
-    data, params_file = ask_dataset("b")
-    model = models.SpikeYOLO(num_classes=1)
+    data, params_file = ask_dataset()
+    model = models.SpikeYOLO(num_classes=2)
     model.to(utils.devices.gpu())
-    trainer = engine.Trainer(num_gpus=1, display=True, every_n=4)
+    board = utils.ProgressBoard(
+        yscale="log",
+        xlabel="Batch idx",
+        ylabel="Average loss",
+        display=True,
+        ylim=(1.2, 0.01),
+        every_n=1,
+    )
+    trainer = engine.Trainer(board, num_gpus=1, epoch_size=60)
     trainer.prepare(model, data)
-    plotter = utils.Plotter(threshold=0.001, rows=2, columns=4, labels=data.get_names())
 
     # model_graph = draw_graph(model, input_size=(8, 3, 256, 256), expand_nested=True, save_graph=True)
 
-    if ask_question("Load parameters? [y/n]"):
+    if ask_question("Load parameters? [y/n]", default="y"):
         model.load_params(params_file)
 
+    key_listener = keyboard.Listener(on_press=on_press_construct(trainer))
+    key_listener.start()
+    print("[INFO]: Press 'q' to pause training!")
+
+    plotter = utils.Plotter(
+        threshold=0.6, labels=data.get_labels(), interval=data.time_step, columns=4
+    )
     while True:
         num_epochs = ask_question("Start fit? [number of epochs/y/n]", default=0)
         if num_epochs is False:
             break
         try:
-            trainer.fit(num_epochs)
-            trainer.test_model(data, plotter, is_train=False)
+            if num_epochs:
+                trainer.fit(num_epochs)
+            trainer.test_model(plotter)
             plt.show()
         except KeyboardInterrupt:
-            print("Training was stopped!")
+            print("[INFO]: Training was stopped!")
+            break
+        except RuntimeError as exc:
+            print("Error description: ", exc)
+            print("[ERROR]: Training stopped due to error!")
 
     if ask_question("Save parameters? [y/n]"):
         model.save_params(params_file)

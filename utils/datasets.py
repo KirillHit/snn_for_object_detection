@@ -1,133 +1,249 @@
+import glob
 import os
-import PIL.Image
-import pandas as pd
+import numpy as np
 import torch
-import torchvision
-from torchvision import transforms
-import xml.etree.ElementTree as ET
-from utils.downloads import download_extract
-from engine.data import DataModule, CustomDataset
-from torch.nn.utils.rnn import pad_sequence
-import PIL
+from torch.utils.data import IterableDataset, get_worker_info
+from engine.data import DataModule
+from prophesee_toolbox.src.io.psee_loader import PSEELoader
+from random import shuffle
+from typing import Generator, Iterator
+from tqdm import tqdm
+import itertools
 
 
-class HardHatDataset(DataModule):
-    """Dataset for identifying hard hat"""
+class Gen1DataModule(DataModule):
+    """Event-Based Dataset to date"""
 
-    def read_data(self, is_train=True):
-        data_dir = download_extract("Hardhat", folder=self._root)
-        data_dir = os.path.join(data_dir, "Train" if is_train else "Test")
+    def __init__(self, root="./data", batch_size=32, num_steps=16, num_workers=4):
+        super().__init__(root, num_workers=num_workers, batch_size=batch_size)
+        self.num_steps = num_steps
 
-        targets_path = os.path.join(data_dir, "targets.pt")
-        images_path = os.path.join(data_dir, "images.pt")
+    def read_data(self, split: str):
+        # Data dir: ./data/gen1/<test, train, val>
+        data_dir = os.path.join(self._root, "gen1", split)
+        # Get files name
+        gt_files = glob.glob(data_dir + "/*_bbox.npy")
+        data_files = [p.replace("_bbox.npy", "_td.dat") for p in gt_files]
 
-        if os.path.exists(targets_path) and os.path.exists(images_path):
-            targets = torch.load(targets_path)
-            images = torch.load(images_path)
-            print("Tensors load")
-        else:
-            images, targets = self.parse(data_dir)
-            if self.save_tensor:
-                torch.save(targets, targets_path)
-                torch.save(images, images_path)
+        if not data_files or not gt_files or len(data_files) != len(gt_files):
+            tqdm.write(
+                f"[WARN]: Directory '{data_dir}' does not contain data or data is invalid! I'm expecting: "
+                f"./data/{data_dir}/*_bbox.npy (and *_td.dat). "
+                "The dataset can be downloaded from this link: "
+                "https://www.prophesee.ai/2020/01/24/prophesee-gen1-automotive-detection-dataset/"
+            )
 
-        if is_train:
-            self._train_dataset = CustomDataset((images, targets))
-        else:
-            self._val_dataset = CustomDataset((images, targets))
+        dataset = self.create_dataset(gt_files, data_files)
 
-    def parse(self, data_dir):
-        labels_dir = os.path.join(data_dir, "Annotation")
-        images_dir = os.path.join(data_dir, "JPEGImage")
+        match split:
+            case "train":
+                self._train_dataset = dataset
+            case "test":
+                self._test_dataset = dataset
+            case "val":
+                self._val_dataset = dataset
+            case _:
+                raise ValueError(f'[ERROR]: The split parameter cannot be "{split}"!')
 
-        images, targets = [], []
-        for xml_file in os.listdir(labels_dir):
-            tree = ET.parse(os.path.join(labels_dir, xml_file))
-            root = tree.getroot()
-            size = root.find("size")
-            if size.find("depth").text != "3":
-                print("Warning: wrong depth")
-                continue
-            w = float(size.find("width").text)
-            h = float(size.find("height").text)
-            labels = []
-            for obj in root.findall("object"):
-                name = obj.find("name").text
-                classes = ("helmet",)  # "head", "person"
-                if name not in classes:
-                    # print("Warning: wrong name - " + name + " " + xml_file)
-                    continue
-                coord = obj.find("bndbox")
-                labels.append(
-                    (
-                        classes.index(name),
-                        float(coord.find("xmin").text) / w,
-                        float(coord.find("ymin").text) / h,
-                        float(coord.find("xmax").text) / w,
-                        float(coord.find("ymax").text) / h,
-                    )
-                )
-            if not labels:
-                continue
-            targets.append(labels)
-            filename = root.find("filename").text
-            img = PIL.Image.open(os.path.join(images_dir, filename))
-            images.append(self.transform(img))
-        targets = pad_sequence(
-            [torch.tensor(target) for target in targets],
-            batch_first=True,
-            padding_value=-1,
+        print(
+            "[INFO]: " + str(len(data_files)) + " " + split + " samples loaded from Gen1 dataset..."
         )
 
-        return torch.stack(images), targets
+    def create_dataset(
+        self, gt_files: list[str], data_files: list[str]
+    ) -> IterableDataset:
+        raise NotImplementedError
 
-    def get_names(self):
-        names = ("helmet",)
+    def get_labels(self):
+        names = ("car", "person")
         return names
 
 
-class BananasDataset(DataModule):
+class Gen1Fixed(Gen1DataModule):
+    """Returns a sequence of event histograms with a fixed time step"""
+
+    def __init__(
+        self,
+        root="./data",
+        batch_size=32,
+        num_steps=16,
+        time_step=100,
+        num_load_file=50,
+        num_workers=4,
+    ):
+        super().__init__(root, batch_size, num_steps, num_workers)
+        self.time_step, self.num_load_file = time_step, num_load_file
+
+    def create_dataset(
+        self, gt_files: list[str], data_files: list[str]
+    ) -> IterableDataset:
+        return Gen1FixedDataset(
+            gt_files,
+            data_files,
+            self.time_step,
+            self.num_steps,
+            self.num_load_file,
+        )
+
+
+class Gen1FixedDataset(IterableDataset):
     """A customized dataset to load the banana detection dataset."""
 
-    def read_data(self, is_train=True):
-        data_dir = download_extract("banana-detection", folder=self._root)
-        csv_fname = os.path.join(
-            data_dir, "bananas_train" if is_train else "bananas_val", "label.csv"
-        )
-        csv_data = pd.read_csv(csv_fname)
-        csv_data = csv_data.set_index("img_name")
-        images, targets = [], []
-        for img_name, target in csv_data.iterrows():
-            images.append(
-                self.transform(
-                    PIL.Image.open(
-                        os.path.join(
-                            data_dir,
-                            "bananas_train" if is_train else "bananas_val",
-                            "images",
-                            f"{img_name}",
-                        )
-                    )
-                )
-            )
-            targets.append(list(target))
-            # Here `target` contains (class, upper-left x, upper-left y,
-            # lower-right x, lower-right y), where all the images have the same
-            # banana class (index 0)
-        if is_train:
-            self._train_dataset = CustomDataset(
-                (images, torch.tensor(targets).unsqueeze(1) / 256)
-            )
-        else:
-            self._val_dataset = CustomDataset(
-                (images, torch.tensor(targets).unsqueeze(1) / 256)
-            )
-        print(
-            "Read "
-            + str(len(targets))
-            + (" training examples" if is_train else " validation examples")
-        )
+    record_time = 60000000  # ns
+    width: int = 304
+    height: int = 240
 
-    def get_names(self):
-        names = ("bananas",)
-        return names
+    def __init__(
+        self,
+        gt_files: list[str],
+        data_files: list[str],
+        time_step: int,
+        num_steps: int,
+        num_load_file: int,
+    ):
+        """
+        Args:
+            gt_files (list[str]): List of ground truth file paths
+            data_files (list[str]): List of data file paths
+            time_step (int): Duration for one frame (ms)
+            num_steps (int): Number of time steps
+            num_load_file (int): Number of examples loaded at a time
+        """
+        assert num_load_file > 0, "The number of loaded files must be more than zero"
+
+        self.gt_files, self.data_files = gt_files, data_files
+        self.num_steps, self.time_step = num_steps, time_step
+        self.num_load_file = num_load_file
+        self.time_step_ns = self.time_step * 1000
+        self.duration_ns = self.time_step_ns * self.num_steps
+        self.record_steps = self.record_time // self.duration_ns
+
+    def __iter__(self) -> Iterator[tuple[torch.Tensor, torch.Tensor]]:
+        return iter(self.samples_generator())
+
+    def __len__(self) -> int:
+        return len(self.gt_files) * self.record_steps
+
+    def samples_generator(
+        self,
+    ) -> Generator[tuple[torch.Tensor, torch.Tensor], None, None]:
+        if not self.gt_files:
+            raise RuntimeError("Attempt to access unloaded part of dataset")
+        file_loader = self.load_generator()
+        shuffle_idx = list(range(self.num_load_file * self.record_steps))
+        shuffle(shuffle_idx)
+        while True:
+            gt_boxes_list, events_loaders = next(file_loader)
+            for idx in shuffle_idx:
+                data_idx = idx % self.num_load_file
+                yield self.parse_data(gt_boxes_list[data_idx], events_loaders[data_idx])
+
+    def parse_data(
+        self, gt_boxes: torch.Tensor, events_loader: PSEELoader
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Transforms events into a video stream"""
+
+        ############ Features preparing ############
+        # Return features format (ts, c [0-negative, 1-positive], h, w)
+        features = torch.zeros(
+            [self.num_steps, 2, self.height, self.width],
+            dtype=torch.float32,
+        )
+        # Events format ('t' [us], 'x', 'y', 'p' [1-positive/0-negative])
+        if events_loader.done:
+            events_loader.reset()
+        start_time = events_loader.current_time // (self.time_step_ns)
+        end_time = start_time + self.num_steps
+        events = events_loader.load_delta_t(self.duration_ns)
+        time_stamps = (events[:]["t"] // (self.time_step_ns)) - start_time
+
+        if not time_stamps.size:
+            return (features, gt_boxes[0:0])
+
+        features[
+            time_stamps[:],
+            events[:]["p"].astype(np.uint32),
+            events[:]["y"].astype(np.uint32),
+            events[:]["x"].astype(np.uint32),
+        ] = 1
+
+        ############ Labels preparing ############
+        # Return labels format (ts, class id (0 car, 1 person), xlu, ylu, xrd, yrd)
+        # Box update frequency 1-4 Hz
+        labels = gt_boxes[(gt_boxes[:, 0] >= start_time) & (gt_boxes[:, 0] < end_time)]
+        labels[:, 0] -= start_time
+
+        return (features, labels)
+
+    def load_generator(
+        self,
+    ) -> Generator[tuple[list[torch.Tensor], list[PSEELoader]], None, None]:
+        """Loads num_load_file new samples from the list.
+        This is necessary when working with a large number of files."""
+        
+        worker_info = get_worker_info()
+        id = worker_info.id
+        num_workers = worker_info.num_workers
+        per_worker = len(self.gt_files) // num_workers
+        
+        # Shuffle loaded files
+        shuffle_file_idx = list(range(per_worker * id, per_worker * (id + 1)))
+        shuffle(shuffle_file_idx)
+        idx_file_iter = itertools.cycle(iter(shuffle_file_idx))
+
+        while True:
+            labels: list[np.ndarray] = []
+            loaders: list[PSEELoader] = []
+            for count, file_idx in enumerate(idx_file_iter):
+                if count >= self.num_load_file:
+                    break
+                labels.append(np.load(self.gt_files[file_idx]))
+                loaders.append(PSEELoader(self.data_files[file_idx]))
+            yield self.labels_prepare(labels), loaders
+
+    def labels_prepare(self, labels: list[np.ndarray]) -> list[torch.Tensor]:
+        """Converts labels from numpy.ndarray format to torch.
+        Args:
+            labels (list[np.ndarray]): Labels in numpy format
+                * Numpy format ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
+                * Tensor format (ts [ms], class id (0 car, 1 person), xlu, ylu, xrd, yrd)
+        Returns:
+            list[torch.Tensor]: Labels in torch format
+        """
+
+        return [
+            torch.from_numpy(
+                np.array(
+                    [
+                        gt_boxes[:]["ts"] // (self.time_step_ns),
+                        gt_boxes[:]["class_id"],
+                        gt_boxes[:]["x"] / self.width,
+                        gt_boxes[:]["y"] / self.height,
+                        (gt_boxes[:]["x"] + gt_boxes[:]["w"]) / self.width,
+                        (gt_boxes[:]["y"] + gt_boxes[:]["h"]) / self.height,
+                    ],
+                    dtype=np.float32,
+                )
+            ).t()
+            for gt_boxes in labels
+        ]
+
+
+class Gen1Adaptive(Gen1DataModule):
+    """Returns a sequence of event histograms with an adaptive time step"""
+
+    def __init__(
+        self,
+        root="./data",
+        batch_size=32,
+        num_steps=16,
+        event_step=100,
+    ):
+        super().__init__(root, batch_size, num_steps)
+        self.event_step = event_step
+
+    def create_dataset(
+        self, events_loaders: list[PSEELoader], gt_boxes_list: list[np.ndarray]
+    ) -> IterableDataset:
+        # TODO
+        raise NotImplementedError
