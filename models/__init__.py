@@ -1,4 +1,4 @@
 from .yolo import YOLO
-from .spike_yolo import SpikeYOLO, SpikeClassifierYOLO
+from .spike_yolo import SpikeYOLO
 
-__all__ = "YOLO", "SpikeYOLO", "SpikeClassifierYOLO"
+__all__ = "YOLO", "SpikeYOLO"
