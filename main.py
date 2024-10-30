@@ -47,7 +47,7 @@ def on_press_construct(trainer: engine.Trainer):
 
 if __name__ == "__main__":
     data, params_file = ask_dataset()
-    model = models.SpikeYOLO(num_classes=2)
+    model = models.SpikeSSD(num_classes=2)
     model.to(utils.devices.gpu())
     board = utils.ProgressBoard(
         yscale="log",
@@ -84,9 +84,9 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             print("[INFO]: Training was stopped!")
             break
-        except RuntimeError as exc:
+        """ except RuntimeError as exc:
             print("Error description: ", exc)
-            print("[ERROR]: Training stopped due to error!")
+            print("[ERROR]: Training stopped due to error!") """
 
     if ask_question("Save parameters? [y/n]"):
         model.save_params(params_file)
