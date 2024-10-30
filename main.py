@@ -70,7 +70,7 @@ if __name__ == "__main__":
     print("[INFO]: Press 'q' to pause training!")
 
     plotter = utils.Plotter(
-        threshold=0.1, labels=data.get_labels(), interval=data.time_step, columns=4
+        threshold=0.6, labels=data.get_labels(), interval=data.time_step, columns=4
     )
     while True:
         num_epochs = ask_question("Start fit? [number of epochs/y/n]", default=0)

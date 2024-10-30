@@ -1,6 +1,6 @@
 # Spiking YOLO
 
-Спайковая нейросеть для детекции объектов. Основана на библиотеке с открытым исходным кодом [norse](https://github.com/norse/norse/tree/main).
+Импульсная нейросеть для детекции объектов дорожной обстановки с использованием событийной камеры. Применяются открытые библиотеки [PyTorch](https://github.com/pytorch/pytorch) и [norse](https://github.com/norse/norse/tree/main).
 
 ## Запуск
 
@@ -24,18 +24,22 @@ conda activate spike_yolo_env
 python3 main.py
 ```
 
-Далее для выбора датасета, загрузки параметров и запуска обучения/тестирования следуйте указаниям.
+Далее выберете датасет и запустите обучение/тестирование.
 
-## Datasets
+## Использованные датасеты
 
-### Banana Detection
+### [GEN1 Automotive Detection Dataset](https://www.prophesee.ai/2020/01/24/prophesee-gen1-automotive-detection-dataset/)
 
-Содержит размеченные изображения бананов, наложенные на случайные картинки. Представлен в книге [d2l](https://d2l.ai/chapter_computer-vision/object-detection-dataset.html), можно скачать по [ссылке](http://d2l-data.s3-accelerate.amazonaws.com/banana-detection.zip).
+Набор данных записывался с помощью датчика PROPHESEE GEN1 с разрешением 304×240 пикселей, установленного на приборной панели автомобиля. Метки были получены с использованием камеры ATIS путем маркировки вручную.
 
-![bananas example](.images/bananas_example.png)
+Он содержит 39 часов езды по открытой дороге и различные сценарии вождения: в городе, на шоссе, в пригороде и сельской местности.
 
-### Hardhat  dataset
+Доступны ограничивающие рамки для двух классов: пешеходов и автомобилей. (Грузовые автомобили и автобусы не имеют маркировки).
 
-Размеченные изображения для детекции касок. 
+Планируется поддержка датасетов [1Mpx](https://www.prophesee.ai/2020/11/24/automotive-megapixel-event-based-dataset/) и [DSEC](https://dsec.ifi.uzh.ch/)
 
-![hardhat example](.images/hardhat_example.png)
+## Промежуточные результаты
+
+Пример работы сети на датасете Gen1.
+
+![gen1_example](.images/gen1_example.gif)
