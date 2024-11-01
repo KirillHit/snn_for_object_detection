@@ -22,8 +22,8 @@ class SpikeSSD(Module):
         self.box_loss = nn.L1Loss(reduction="none")
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
-        return torch.optim.Adamax(self.parameters(), lr=0.001)
-        # return torch.optim.SGD(self.parameters(), lr=0.2, weight_decay=5e-4)
+        #return torch.optim.Adamax(self.parameters(), lr=0.001)
+        return torch.optim.SGD(self.parameters(), lr=0.002)
 
     def loss(
         self,
@@ -133,25 +133,31 @@ class SpikeCNN(nn.Module):
         self.cnn_net = nn.Sequential(*blk)
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
-        spk_out = []
-        for ts in range(X.shape[0]):
-            spk = self.cnn_net(X[ts])
-            spk_out.append(spk)
-        return torch.stack(spk_out)
+        return self.cnn_net(X)
+
 
 class SpikeDownSampleBlk(nn.Module):
     """Reduces the height and width of input feature maps by half"""
 
     def __init__(self, in_channels: int, out_channels: int) -> None:
         super().__init__()
-        self.net = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
-            snn.Leaky(beta=0.85, init_hidden=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-        )
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
+        self.lif = snn.Leaky(beta=0.85)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
     def forward(self, X: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        return self.net(X)
+        mem = self.lif.init_leaky()
+
+        spk_rec = []
+        # mem_rec = []
+
+        for step in range(X.shape[0]):
+            x_conv = self.conv(X[step])
+            spk, mem = self.lif(x_conv, mem)
+            spk_rec.append(spk)
+            # mem_rec.append(mem)
+
+        return torch.stack(spk_rec)
 
 
 class SpikeFPN(nn.Module):
@@ -198,18 +204,9 @@ class SpikeFPN(nn.Module):
                 cls_preds (torch.Tensor): [ts, num_batch, all_anchors, (num_classes + 1)]
                 bbox_preds (torch.Tensor): [ts, num_batch, all_anchors, 4]
         """
-        low = []
-        mid = []
-        high = []
-        for ts in range(X.shape[0]):
-            low.append(self.low_layer(X[ts]))
-            mid.append(self.mid_layer(low[ts]))
-            high.append(self.high_layer(mid[ts]))
-        
-        low_feature_map = torch.stack(low)
-        mid_feature_map = torch.stack(mid)
-        high_feature_map = torch.stack(high)
-        
+        low_feature_map = self.low_layer(X)
+        mid_feature_map = self.mid_layer(low_feature_map)
+        high_feature_map = self.high_layer(mid_feature_map)
 
         anchors, cls_preds, bbox_preds = [], [], []
 
@@ -260,7 +257,7 @@ class DetectorDirectDecoder(nn.Module):
         self.conv = nn.Conv2d(
             in_channels, in_channels, kernel_size=kernel_size, padding=kernel_size // 2
         )
-        self.li = snn.Leaky(beta=0.85, learn_beta=True, reset_mechanism="none")
+        self.li = snn.Leaky(beta=0.85, reset_mechanism="none")
         self.box_preds = nn.Conv2d(in_channels, box_out, kernel_size=1)
         self.cls_preds = nn.Conv2d(in_channels, cls_out, kernel_size=1)
 
