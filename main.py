@@ -1,5 +1,6 @@
 from matplotlib import pyplot as plt
 from pynput import keyboard
+from torch.nn.utils import parameters_to_vector as p2v
 
 import engine
 import models
@@ -32,7 +33,7 @@ def ask_dataset(default: str = "gf"):
         choice = default
     if choice == "gf":
         return utils.Gen1Fixed(
-            batch_size=2, time_step=16, num_steps=256, num_load_file=16, num_workers=4
+            batch_size=2, time_step=16, num_steps=16, num_load_file=16, num_workers=4
         ), "gen1"
     raise ValueError("Invalid dataset value!")
 
@@ -48,6 +49,7 @@ def on_press_construct(trainer: engine.Trainer):
 if __name__ == "__main__":
     data, params_file = ask_dataset()
     model = models.SpikeSSD(num_classes=2)
+    print("Number of parameters: ", p2v(model.parameters()).numel())
     model.to(utils.devices.gpu())
     board = utils.ProgressBoard(
         yscale="log",
