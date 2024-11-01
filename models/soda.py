@@ -11,8 +11,8 @@ import utils.box as box
 
 class SODa(Module):
     """
-    Spike Object Detector
-    Based on Single Shot Multibox Detection architecture
+    Spike Object Detector.
+    Based on Single Shot Multibox Detection architecture.
     """
 
     def __init__(self, num_classes):
