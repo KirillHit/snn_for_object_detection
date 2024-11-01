@@ -1,5 +1,6 @@
 from matplotlib import pyplot as plt
 from pynput import keyboard
+from torch.nn.utils import parameters_to_vector as p2v
 
 import engine
 import models
@@ -47,7 +48,8 @@ def on_press_construct(trainer: engine.Trainer):
 
 if __name__ == "__main__":
     data, params_file = ask_dataset()
-    model = models.SpikeYOLO(num_classes=2)
+    model = models.SODa(num_classes=2)
+    print("Number of parameters: ", p2v(model.parameters()).numel())
     model.to(utils.devices.gpu())
     board = utils.ProgressBoard(
         yscale="log",

@@ -9,8 +9,11 @@ from utils.roi import RoI
 import utils.box as box
 
 
-class SpikeYOLO(Module):
-    """Simple Single Shot Multibox Detection"""
+class SODa(Module):
+    """
+    Spike Object Detector
+    Based on Single Shot Multibox Detection architecture
+    """
 
     def __init__(self, num_classes):
         super().__init__()
@@ -50,7 +53,9 @@ class SpikeYOLO(Module):
         for batch_idx, labels in enumerate(labels_batch):
             ts_list: torch.Tensor = torch.unique(labels[..., 0])
             loss_ts = torch.zeros(
-                (max(ts_list.shape[0], 1)), dtype=ts_cls_preds.dtype, device=ts_cls_preds.device
+                (max(ts_list.shape[0], 1)),
+                dtype=ts_cls_preds.dtype,
+                device=ts_cls_preds.device,
             )
             for ts_idx, ts in enumerate(ts_list):
                 masked_labels = labels[..., 1:]
@@ -105,7 +110,7 @@ class SpikeYOLO(Module):
         Args:
             X (torch.Tensor): img batch
         Returns:
-            torch.Tensor: Shape [ts, batch, anchors, 6]. 
+            torch.Tensor: Shape [ts, batch, anchors, 6].
                 One label contains [class, iou, luw, luh, rdw, rdh]
         """
         self.eval()
