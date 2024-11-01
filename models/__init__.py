@@ -1,4 +1,3 @@
-from .yolo import YOLO
-from .spike_yolo import SpikeYOLO
+from .soda import SODa
 
-__all__ = "YOLO", "SpikeYOLO"
+__all__ = "SODa"
