@@ -7,10 +7,14 @@ import time
 
 if __name__ == "__main__":
     data = utils.Gen1Fixed(
-        batch_size=4, time_step=16, num_steps=128, num_load_file=16, num_workers=4
+        batch_size=4, time_step=16, num_steps=32, num_load_file=16, num_workers=4
     )
-    params_file = "gen1"
-    model = models.SpikeYOLO(num_classes=2)
+    backbone_name = "vgg6"
+    neck_name = "ssd6"
+    params_file = f"{backbone_name}-{neck_name}-gen1"
+    backbone = models.VGGBackbone("6", batch_norm=True)
+    neck = models.SSDNeck("6", backbone.out_channels, batch_norm=True)
+    model = models.SODa(backbone, neck, num_classes=2)
     model.to(utils.devices.gpu())
     board = utils.ProgressBoard(
         yscale="log",
@@ -26,7 +30,7 @@ if __name__ == "__main__":
 
     idx = 1
     valid = True
-    while valid:
+    while (idx < 10) and valid:
         num_epochs = 10
         print(f"[INFO]: Starting round {idx}  of {num_epochs} epoch")
         try:

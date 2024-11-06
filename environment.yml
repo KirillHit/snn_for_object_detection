@@ -1,4 +1,4 @@
-name: spike_yolo_env
+name: soda_env
 channels:
   - pytorch
   - nvidia
