@@ -7,19 +7,30 @@ import norse.torch as snn
 class VGGBackbone(nn.Module):
     # fmt: off
     cfgs: Dict[str, List[Union[str, int]]] = {
-        11: [64, "M", 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
-        13: [64, 64, "M", 128, 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
-        16: [64, 64, "M", 128, 128, "M", 256, 256, 256, "M", 512, 512, 512, "M", 512, 512, 512, "M"],
-        19: [64, 64, "M", 128, 128, "M", 256, 256, 256, 256, "M", 512, 512, 512, 512, "M", 512, 512, 512, 512, "M"],
+        "s11": [64, "M", 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
+        "s13": [64, 64, "M", 128, 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
+        "s16": [64, 64, "M", 128, 128, "M", 256, 256, 256, "M", 512, 512, 512, "M", 512, 512, 512, "M"],
+        "s19": [64, 64, "M", 128, 128, "M", 256, 256, 256, 256, "M", 512, 512, 512, 512, "M", 512, 512, 512, 512, "M"],
+        "6": [32, "M", 64, "M", 128, 128, "M", 256, 256, "M"],
     }
     # fmt: on
+
+    out_channels: int = 0
+
     def __init__(
         self,
-        layers: int,
+        layers: str,
         in_channels=2,
         init_weights=True,
         batch_norm=False,
     ) -> None:
+        """
+        Args:
+            layers (str): s11, s13, s16, s19, 6 available
+            in_channels (int, optional): Defaults to 2.
+            init_weights (bool, optional): Defaults to True.
+            batch_norm (bool, optional): Defaults to False.
+        """
         super().__init__()
 
         self.net = self.make_layers(self.cfgs[layers], batch_norm, in_channels)
@@ -27,21 +38,18 @@ class VGGBackbone(nn.Module):
         if init_weights:
             for m in self.modules():
                 if isinstance(m, nn.Conv2d):
-                    nn.init.kaiming_normal_(
-                        m.weight, mode="fan_out", nonlinearity="sigmoid"
+                    nn.init.normal_(
+                        m.weight, mean=0.2, std=1.0
                     )
                     if m.bias is not None:
                         nn.init.constant_(m.bias, 0)
                 elif isinstance(m, nn.BatchNorm2d):
                     nn.init.constant_(m.weight, 1)
                     nn.init.constant_(m.bias, 0)
-                elif isinstance(m, nn.Linear):
-                    nn.init.normal_(m.weight, 0, 0.01)
-                    nn.init.constant_(m.bias, 0)
 
     def make_layers(
-        cfg: List[Union[str, int]], batch_norm: bool, in_channels: int
-    ) -> nn.Sequential:
+        self, cfg: List[Union[str, int]], batch_norm: bool, in_channels: int
+    ) -> snn.SequentialState:
         layers: List[nn.Module] = []
         for v in cfg:
             if v == "M":
@@ -51,13 +59,14 @@ class VGGBackbone(nn.Module):
                 conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
                 if batch_norm:
                     layers += [
-                        conv2d,
+                        snn.Lift(conv2d),
                         snn.Lift(nn.BatchNorm2d(v)),
                         snn.LIF(),
                     ]
                 else:
-                    layers += [conv2d, snn.LIF()]
+                    layers += [snn.Lift(conv2d), snn.LIF()]
                 in_channels = v
+        self.out_channels = in_channels
         return snn.SequentialState(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

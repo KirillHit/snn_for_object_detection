@@ -33,7 +33,7 @@ def ask_dataset(default: str = "gf"):
         choice = default
     if choice == "gf":
         return utils.Gen1Fixed(
-            batch_size=2, time_step=16, num_steps=256, num_load_file=16, num_workers=4
+            batch_size=4, time_step=16, num_steps=32, num_load_file=16, num_workers=4
         ), "gen1"
     raise ValueError("Invalid dataset value!")
 
@@ -46,10 +46,35 @@ def on_press_construct(trainer: engine.Trainer):
     return on_press
 
 
+def generate_model(backbone_name: str, neck_name: str):
+    match backbone_name:
+        case "vgg11":
+            backbone = models.VGGBackbone("s11")
+        case "vgg6":
+            backbone = models.VGGBackbone("6", batch_norm=True)
+        case _:
+            raise RuntimeError("Wrong backbone name")
+
+    match neck_name:
+        case "ssd10":
+            neck = models.SSDNeck("s10", backbone.out_channels)
+        case "ssd6":
+            neck = models.SSDNeck("6", backbone.out_channels, batch_norm=True)
+        case _:
+            raise RuntimeError("Wrong neck name")
+
+    return models.SODa(backbone, neck, num_classes=2)
+
+
 if __name__ == "__main__":
-    data, params_file = ask_dataset()
-    model = models.SODa(num_classes=2)
+    data, dataset_name = ask_dataset()
+    backbone_name = "vgg6"
+    neck_name = "ssd6"
+    params_file = f"{backbone_name}-{neck_name}-{dataset_name}"
+
+    model = generate_model(backbone_name, neck_name)
     print("Number of parameters: ", p2v(model.parameters()).numel())
+
     model.to(utils.devices.gpu())
     board = utils.ProgressBoard(
         yscale="log",
@@ -72,7 +97,7 @@ if __name__ == "__main__":
     print("[INFO]: Press 'q' to pause training!")
 
     plotter = utils.Plotter(
-        threshold=0.6, labels=data.get_labels(), interval=data.time_step, columns=4
+        threshold=0.1, labels=data.get_labels(), interval=data.time_step, columns=4
     )
     while True:
         num_epochs = ask_question("Start fit? [number of epochs/y/n]", default=0)
