@@ -7,10 +7,10 @@ import time
 
 if __name__ == "__main__":
     data = utils.Gen1Fixed(
-        batch_size=4, time_step=16, num_steps=32, num_load_file=16, num_workers=4
+        batch_size=8, time_step=16, num_steps=64, num_load_file=16, num_workers=4
     )
-    backbone_name = "vgg6"
-    neck_name = "ssd6"
+    backbone_name = "vgg3"
+    neck_name = "ssd3"
     params_file = f"{backbone_name}-{neck_name}-gen1"
     backbone = models.VGGBackbone("6", batch_norm=True)
     neck = models.SSDNeck("6", backbone.out_channels, batch_norm=True)
