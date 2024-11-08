@@ -33,7 +33,7 @@ def ask_dataset(default: str = "gf"):
         choice = default
     if choice == "gf":
         return utils.Gen1Fixed(
-            batch_size=4, time_step=16, num_steps=32, num_load_file=16, num_workers=4
+            batch_size=7, time_step=16, num_steps=64, num_load_file=16, num_workers=4
         ), "gen1"
     raise ValueError("Invalid dataset value!")
 
@@ -52,6 +52,8 @@ def generate_model(backbone_name: str, neck_name: str):
             backbone = models.VGGBackbone("s11")
         case "vgg6":
             backbone = models.VGGBackbone("6", batch_norm=True)
+        case "vgg3":
+            backbone = models.VGGBackbone("3", batch_norm=True)
         case _:
             raise RuntimeError("Wrong backbone name")
 
@@ -60,6 +62,8 @@ def generate_model(backbone_name: str, neck_name: str):
             neck = models.SSDNeck("s10", backbone.out_channels)
         case "ssd6":
             neck = models.SSDNeck("6", backbone.out_channels, batch_norm=True)
+        case "ssd3":
+            neck = models.SSDNeck("3", backbone.out_channels, batch_norm=True)
         case _:
             raise RuntimeError("Wrong neck name")
 
@@ -68,8 +72,8 @@ def generate_model(backbone_name: str, neck_name: str):
 
 if __name__ == "__main__":
     data, dataset_name = ask_dataset()
-    backbone_name = "vgg6"
-    neck_name = "ssd6"
+    backbone_name = "vgg3"
+    neck_name = "ssd3"
     params_file = f"{backbone_name}-{neck_name}-{dataset_name}"
 
     model = generate_model(backbone_name, neck_name)
@@ -97,7 +101,7 @@ if __name__ == "__main__":
     print("[INFO]: Press 'q' to pause training!")
 
     plotter = utils.Plotter(
-        threshold=0.1, labels=data.get_labels(), interval=data.time_step, columns=4
+        threshold=0.01, labels=data.get_labels(), interval=data.time_step, columns=4
     )
     while True:
         num_epochs = ask_question("Start fit? [number of epochs/y/n]", default=0)
