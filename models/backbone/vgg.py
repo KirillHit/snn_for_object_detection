@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from typing import cast, Dict, List, Union, Optional
+from typing import cast, Dict, List, Union
 import norse.torch as snn
 
 
@@ -17,7 +17,6 @@ class VGGBackbone(nn.Module):
     # fmt: on
 
     out_channels: int = 0
-    states: List[Optional[snn.LIFFeedForwardState]] = None
 
     def __init__(
         self,
@@ -70,22 +69,7 @@ class VGGBackbone(nn.Module):
                 in_channels = v
         self.out_channels = in_channels
         return snn.SequentialState(*layers)
-    
-    def detach_states(self):
-        if self.states is None:
-            return
-        new_states = [None] * len(self.states)
-        for idx, state in enumerate(self.states):
-            if state is not None:
-                new_state = snn.LIFFeedForwardState(
-                    v=state.v.detach(),
-                    i=state.i.detach(),
-                )
-                new_state.v.requires_grad = True
-                new_states[idx] = new_state
-        self.states = new_states
-    
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
-        self.detach_states()
-        spike, self.states = self.net(X, self.states)
-        return spike
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        spikes, state = self.net(x)
+        return spikes
