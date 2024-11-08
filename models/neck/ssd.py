@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from typing import cast, Dict, List, Union
+from typing import cast, Dict, List, Union, Optional
 import norse.torch as snn
 
 
@@ -24,6 +24,7 @@ class SSDNeck(nn.Module):
 
     # Description of neck output for head generation. Contains the number of channels for each map
     out_shape: List[int] = []
+    states: List[Optional[snn.LIFFeedForwardState]] = None
 
     def __init__(
         self,
@@ -95,6 +96,20 @@ class SSDNeck(nn.Module):
                 conv_kernel = 3
         return snn.SequentialState(*layers, return_hidden=True)
 
+    def detach_states(self):
+        if self.states is None:
+            return
+        new_states = [None] * len(self.states)
+        for idx, state in enumerate(self.states):
+            if state is not None:
+                new_state = snn.LIFFeedForwardState(
+                    v=state.v.detach(),
+                    i=state.i.detach(),
+                )
+                new_state.v.requires_grad = True
+                new_states[idx] = new_state
+        self.states = new_states
+
     def forward(self, X: torch.Tensor) -> List[torch.Tensor]:
         """
         Args:
@@ -102,5 +117,6 @@ class SSDNeck(nn.Module):
         Returns:
             List[torch.Tensor]: Shape - [ts, batch, in_channels, h, w] a list of several feature maps of different sizes
         """
-        maps, state = self.net(X)
+        self.detach_states()
+        maps, self.states = self.net(X, self.states)
         return [maps[idx] for idx in self.return_idx]
