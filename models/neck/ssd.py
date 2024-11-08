@@ -9,6 +9,7 @@ class SSDNeck(nn.Module):
     """
     int: Number of output convolution layers
     "M": MaxPool2d(kernel_size=2, stride=2)
+    "A": AvgPool2d(kernel_size=2, stride=2)
     "R": Appends a feature map to the returned list
     "S": The next convolution will have a 1*1 kernel, the rest 3*3
     "D": Dropout
@@ -16,7 +17,8 @@ class SSDNeck(nn.Module):
     cfgs: Dict[str, List[Union[str, int]]] = {
         "s10": ["R", "M", 1024, "S", 1024, "R", "M", "S", 256, 512, "R", "M", "S",
                 128, 256, "R", "M", "S", 128, 256, "R", "M", "S", 128, 256, "R"], # Standard head. See https://arxiv.org/pdf/1512.02325
-        "6": ["R", "M", 512, "S", 512, "R", "M", "S", 128, 256, "R", "M", "S", 128, 256, "R"]
+        "6": ["R", "A", 512, "S", 512, "R", "A", "S", 128, 256, "R", "A", "S", 128, 256, "R"],
+        "3": [128, "A", "R", 128, "A", "R", 128, "A", "R"],
     }
     # fmt: on
 
@@ -24,7 +26,12 @@ class SSDNeck(nn.Module):
     out_shape: List[int] = []
 
     def __init__(
-        self, type: str, in_channels: int, init_weights=True, batch_norm=False, dropout=0.5
+        self,
+        type: str,
+        in_channels: int,
+        init_weights=True,
+        batch_norm=False,
+        dropout=0.5,
     ) -> None:
         """
         Args:
@@ -35,13 +42,11 @@ class SSDNeck(nn.Module):
         """
         super().__init__()
         self.net = self.make_layers(self.cfgs[type], in_channels, batch_norm, dropout)
-        
+
         if init_weights:
             for m in self.modules():
                 if isinstance(m, nn.Conv2d):
-                    nn.init.normal_(
-                        m.weight, mean=0.2, std=1.0
-                    )
+                    nn.init.normal_(m.weight, mean=0.5, std=0.1)
                     if m.bias is not None:
                         nn.init.constant_(m.bias, 0)
                 elif isinstance(m, nn.BatchNorm2d):
@@ -55,12 +60,14 @@ class SSDNeck(nn.Module):
         batch_norm: bool,
         dropout: int,
     ) -> snn.SequentialState:
-        layers: List[snn.SequentialState] = [nn.Identity()]
+        layers: List[nn.Module] = [nn.Identity()]
         conv_kernel = 3
         self.return_idx: List[int] = []
         for v in cfg:
             if v == "M":
                 layers += [snn.Lift(nn.MaxPool2d(kernel_size=2, stride=2))]
+            elif v == "A":
+                layers += [snn.Lift(nn.AvgPool2d(kernel_size=2, stride=2))]
             elif v == "S":
                 conv_kernel = 1
             elif v == "D":
