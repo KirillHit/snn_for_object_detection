@@ -17,12 +17,6 @@ class Head(nn.Module):
             [0.125, 0.156, 0.188],
             [0.250, 0.312, 0.375],
             [0.500, 0.625, 0.750],
-            [0.500, 0.625, 0.750],
-            [0.500, 0.625, 0.750],
-            [0.500, 0.625, 0.750],
-            [0.500, 0.625, 0.750],
-            [0.500, 0.625, 0.750],
-            [0.500, 0.625, 0.750],
         )
         ratios = (0.7, 1, 1.3)
 
@@ -39,7 +33,7 @@ class Head(nn.Module):
             setattr(
                 self,
                 f"decoder_{idx}",
-                Decoder(channels, num_box_out, num_class_out, 3, True),
+                Decoder(channels, num_box_out, num_class_out, 3),
             )
 
     def forward(
@@ -83,30 +77,27 @@ class Head(nn.Module):
 
 class Decoder(nn.Module):
     def __init__(
-        self, in_channels: int, box_out: int, cls_out: int, kernel_size: int, train_li_layer = False
+        self,
+        in_channels: int,
+        box_out: int,
+        cls_out: int,
+        kernel_size: int,
+        train_li_layer=False,
     ) -> None:
-        super().__init__()
-
-        self.decoder = self.make_decoder(in_channels, kernel_size, train_li_layer)
-
-        self.box_preds = snn.Lift(nn.Conv2d(in_channels, box_out, kernel_size=1))
-        self.cls_preds = snn.Lift(nn.Conv2d(in_channels, cls_out, kernel_size=1))
-
-    def make_decoder(
-        self, in_channels: int, kernel_size: int, train_li_layer: bool
-    ) -> snn.SequentialState:
         assert kernel_size % 2 == 1, "Kernel size must be odd"
+        super().__init__()
         
-        layers: List[nn.Module] = []
-        conv2d = nn.Conv2d(
+        self.conv2d = nn.Conv2d(
             in_channels, in_channels, kernel_size=kernel_size, padding=kernel_size // 2
         )
+        
         li_params = LIParameters()
         if train_li_layer:
             self.li_grad_params = torch.nn.Parameter(li_params.tau_mem_inv)
-        layers += [snn.Lift(conv2d), snn.LI(p=li_params)]
+        self.li = snn.LI(p=li_params)
         
-        return snn.SequentialState(*layers)
+        self.box_conv = nn.Conv2d(in_channels, box_out, kernel_size=1)
+        self.cls_conv = nn.Conv2d(in_channels, cls_out, kernel_size=1)
 
     def forward(self, X: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
@@ -117,5 +108,12 @@ class Decoder(nn.Module):
                 boxes (torch.Tensor): predicted boxes [ts, batch, box_out, h, w]
                 classes (torch.Tensor): predicted classes [ts, batch, cls_out, h, w]
         """
-        Y = self.decoder(X)
-        return self.box_preds(Y), self.cls_preds(Y)
+        li_state = None
+        box_preds, cls_preds = [], []
+        for ts in range(X.shape[0]):
+            Z = X[ts]
+            Z = self.conv2d(Z)
+            Z, li_state = self.li(Z, li_state)
+            box_preds.append(self.box_conv(Z))
+            cls_preds.append(self.cls_conv(Z))
+        return torch.stack(box_preds), torch.stack(cls_preds)

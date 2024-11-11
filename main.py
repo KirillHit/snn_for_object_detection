@@ -27,43 +27,43 @@ def ask_question(question, default="y"):
 
 
 def ask_dataset(default: str = "gf"):
-    # print(f"Select dataset: gf - Gen1Fixed, m - 1Mpx (not supported yet) (Default - {default})")
+    # print(f"Select dataset: gf - Gen1, m - 1Mpx (not supported yet) (Default - {default})")
     choice = ""  # input().lower() TODO
     if choice == "":
         choice = default
     if choice == "gf":
-        return utils.Gen1Fixed(
-            batch_size=8, time_step=16, num_steps=64, num_load_file=16, num_workers=4
+        return utils.Gen1(
+            batch_size=2, time_step=16, num_steps=256, num_load_file=16, num_workers=4
         ), "gen1"
     raise ValueError("Invalid dataset value!")
 
 
 def on_press_construct(trainer: engine.Trainer):
-    def on_press(key):
-        if key == keyboard.KeyCode.from_char("q"):
-            trainer.stop()
-
+    def on_press():
+        print("[INFO]: Pause training")
+        trainer.stop()
     return on_press
 
 
-def generate_model(backbone_name: str, neck_name: str):
-    match backbone_name:
-        case "vgg11":
-            backbone = models.VGGBackbone("s11")
-        case "vgg6":
-            backbone = models.VGGBackbone("6", batch_norm=True)
-        case "vgg3":
-            backbone = models.VGGBackbone("3", batch_norm=True)
+def generate_model(
+    backbone_name: str, neck_name: str, batch_norm=False, init_weights=False
+):
+    match backbone_name[:3]:
+        case "vgg":
+            backbone = models.VGGBackbone(
+                backbone_name[3:], batch_norm=batch_norm, init_weights=init_weights
+            )
         case _:
             raise RuntimeError("Wrong backbone name")
 
-    match neck_name:
-        case "ssd10":
-            neck = models.SSDNeck("s10", backbone.out_channels)
-        case "ssd6":
-            neck = models.SSDNeck("6", backbone.out_channels, batch_norm=True)
-        case "ssd3":
-            neck = models.SSDNeck("3", backbone.out_channels, batch_norm=True)
+    match neck_name[:3]:
+        case "ssd":
+            neck = models.SSDNeck(
+                neck_name[3:],
+                backbone.out_channels,
+                batch_norm=batch_norm,
+                init_weights=init_weights,
+            )
         case _:
             raise RuntimeError("Wrong neck name")
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     neck_name = "ssd3"
     params_file = f"{backbone_name}-{neck_name}-{dataset_name}"
 
-    model = generate_model(backbone_name, neck_name)
+    model = generate_model(backbone_name, neck_name, init_weights=True)
     print("Number of parameters: ", p2v(model.parameters()).numel())
 
     model.to(utils.devices.gpu())
@@ -96,9 +96,9 @@ if __name__ == "__main__":
     if ask_question("Load parameters? [y/n]", default="y"):
         model.load_params(params_file)
 
-    key_listener = keyboard.Listener(on_press=on_press_construct(trainer))
+    key_listener = keyboard.GlobalHotKeys({'<ctrl>+q': on_press_construct(trainer)})
     key_listener.start()
-    print("[INFO]: Press 'q' to pause training!")
+    print("[INFO]: Press 'ctrl + q' to pause training!")
 
     plotter = utils.Plotter(
         threshold=0.01, labels=data.get_labels(), interval=data.time_step, columns=4

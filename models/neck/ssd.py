@@ -41,7 +41,7 @@ class SSDNeck(nn.Module):
             dropout (float, optional): Defaults to 0.5.
         """
         super().__init__()
-        self.net = self.make_layers(self.cfgs[type], in_channels, batch_norm, dropout)
+        self.make_layers(self.cfgs[type], in_channels, batch_norm, dropout)
 
         if init_weights:
             for m in self.modules():
@@ -59,22 +59,23 @@ class SSDNeck(nn.Module):
         in_channels: int,
         batch_norm: bool,
         dropout: int,
-    ) -> snn.SequentialState:
+    ) -> None:
         layers: List[nn.Module] = [nn.Identity()]
         conv_kernel = 3
-        self.return_idx: List[int] = []
+        return_idx: List[int] = []
+        state_layer: List[int] = []
         for v in cfg:
             if v == "M":
-                layers += [snn.Lift(nn.MaxPool2d(kernel_size=2, stride=2))]
+                layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
             elif v == "A":
-                layers += [snn.Lift(nn.AvgPool2d(kernel_size=2, stride=2))]
+                layers += [nn.AvgPool2d(kernel_size=2, stride=2)]
             elif v == "S":
                 conv_kernel = 1
             elif v == "D":
-                layers += [snn.Lift(nn.Dropout(p=dropout))]
+                layers += [nn.Dropout(p=dropout)]
             elif v == "R":
                 self.out_shape.append(in_channels)
-                self.return_idx.append(len(layers) - 1)
+                return_idx.append(len(layers) - 1)
             else:
                 v = cast(int, v)
                 conv2d = nn.Conv2d(
@@ -85,15 +86,25 @@ class SSDNeck(nn.Module):
                 )
                 if batch_norm:
                     layers += [
-                        snn.Lift(conv2d),
-                        snn.Lift(nn.BatchNorm2d(v)),
-                        snn.LIF(),
+                        snn.conv2d,
+                        snn.nn.BatchNorm2d(v),
+                        snn.LIFCell(),
                     ]
                 else:
-                    layers += [snn.Lift(conv2d), snn.LIF()]
+                    layers += [conv2d, snn.LIFCell()]
+                state_layer.append(len(layers) - 1)
                 in_channels = v
                 conv_kernel = 3
-        return snn.SequentialState(*layers, return_hidden=True)
+        self.state_full = [idx in state_layer for idx in range(len(layers))]
+        self.return_layer = []
+        layer_idx = 0
+        for idx in range(len(layers)):
+            if idx in return_idx:
+                self.return_layer.append(layer_idx)
+                layer_idx += 1
+            else:
+                self.return_layer.append(None)
+        self.net = nn.ModuleList(layers)
 
     def forward(self, X: torch.Tensor) -> List[torch.Tensor]:
         """
@@ -102,5 +113,16 @@ class SSDNeck(nn.Module):
         Returns:
             List[torch.Tensor]: Shape - [ts, batch, in_channels, h, w] a list of several feature maps of different sizes
         """
-        maps, state = self.net(X)
-        return [maps[idx] for idx in self.return_idx]
+        states = [None] * len(self.net)
+        spikes_list = [[] for _ in range(len(self.out_shape))]
+        for ts in range(X.shape[0]):
+            Z = X[ts]
+            for idx, layer in enumerate(self.net):
+                if self.state_full[idx]:
+                    Z, states[idx] = layer(Z, states[idx])
+                else:
+                    Z = layer(Z)
+                layer_idx = self.return_layer[idx]
+                if layer_idx is not None:
+                    spikes_list[layer_idx].append(Z)
+        return [torch.stack(spikes) for spikes in spikes_list]
