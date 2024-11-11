@@ -34,7 +34,7 @@ class VGGBackbone(nn.Module):
         """
         super().__init__()
 
-        self.net = self.make_layers(self.cfgs[layers], batch_norm, in_channels)
+        self.make_layers(self.cfgs[layers], batch_norm, in_channels)
 
         if init_weights:
             for m in self.modules():
@@ -48,28 +48,46 @@ class VGGBackbone(nn.Module):
 
     def make_layers(
         self, cfg: List[Union[str, int]], batch_norm: bool, in_channels: int
-    ) -> snn.SequentialState:
+    ) -> None:
+        state_layer: List[int] = []
         layers: List[nn.Module] = []
         for v in cfg:
             if v == "M":
-                layers += [snn.Lift(nn.MaxPool2d(kernel_size=2, stride=2))]
+                layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
             elif v == "A":
-                layers += [snn.Lift(nn.AvgPool2d(kernel_size=2, stride=2))]
+                layers += [nn.AvgPool2d(kernel_size=2, stride=2)]
             else:
                 v = cast(int, v)
                 conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
                 if batch_norm:
                     layers += [
-                        snn.Lift(conv2d),
-                        snn.Lift(nn.BatchNorm2d(v)),
-                        snn.LIF(),
+                        conv2d,
+                        nn.BatchNorm2d(v),
+                        snn.LIFCell(),
                     ]
                 else:
-                    layers += [snn.Lift(conv2d), snn.LIF()]
+                    layers += [conv2d, snn.LIFCell()]
+                state_layer.append(len(layers) - 1)
                 in_channels = v
         self.out_channels = in_channels
-        return snn.SequentialState(*layers)
+        self.state_full = [idx in state_layer for idx in range(len(layers))]
+        self.net = nn.ModuleList(layers)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        spikes, state = self.net(x)
-        return spikes
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+            X (torch.Tensor): [ts, batch, p, h, w]
+        Returns:
+            torch.Tensor: [ts, batch, p, h, w]
+        """
+        states = [None] * len(self.net)
+        spikes = []
+        for ts in range(X.shape[0]):
+            Z = X[ts]
+            for idx, layer in enumerate(self.net):
+                if self.state_full[idx]:
+                    Z, states[idx] = layer(Z, states[idx])
+                else:
+                    Z = layer(Z)
+            spikes.append(Z)
+        return torch.stack(spikes)
