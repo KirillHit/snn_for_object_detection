@@ -12,9 +12,7 @@ import itertools
 
 
 class PropheseeDataModule(DataModule):
-    """Event-Based Dataset to date"""
-
-    name: str
+    """Base class for Prophesee dataset data modules"""
 
     def __init__(self, root="./data", batch_size=32, num_steps=16, num_workers=4):
         super().__init__(root, num_workers=num_workers, batch_size=batch_size)
@@ -58,26 +56,19 @@ class PropheseeDataModule(DataModule):
             + " dataset..."
         )
 
-    def create_dataset(
-        self, gt_files: List[str], data_files: List[str]
-    ) -> IterableDataset:
-        return PropheseeDataset(
-            gt_files,
-            data_files,
-            self.time_step,
-            self.num_steps,
-            self.num_load_file,
-            self.name
-        )
 
+class MTProphesee(PropheseeDataModule):
+    """
+    Prophesee's gen1 and 1mpx datasets. The packages are provided in a multi-target form,
+    meaning that one example can contain target labels at multiple time steps.
+    Records are split into fixed-step chunks that are returned sequentially.
 
-class Gen1(PropheseeDataModule):
-    """Returns a sequence of event histograms with a fixed time step"""
-
-    name: str = "gen1"
+    Intended for testing. There is one-target dataset for training.
+    """
 
     def __init__(
         self,
+        name: str,
         root="./data",
         batch_size=32,
         num_steps=16,
@@ -85,17 +76,43 @@ class Gen1(PropheseeDataModule):
         num_load_file=50,
         num_workers=4,
     ):
+        self.name = name
         super().__init__(root, batch_size, num_steps, num_workers)
         self.time_step, self.num_load_file = time_step, num_load_file
 
+        match self.name:
+            case "gen1":
+                self.labels_name = ("car", "person")
+            case "1mpx":
+                self.labels_name = (
+                    "pedestrians",
+                    "two wheelers",
+                    "cars",
+                    "trucks",
+                    "buses",
+                    "signs",
+                    "traffic lights",
+                )
+            case _:
+                raise ValueError(f'[ERROR]: The split parameter cannot be "{name}"!')
+
     def get_labels(self):
-        names = ("car", "person")
-        return names
+        return self.labels_name
+
+    def create_dataset(
+        self, gt_files: List[str], data_files: List[str]
+    ) -> IterableDataset:
+        return MTPropheseeDataset(
+            gt_files,
+            data_files,
+            self.time_step,
+            self.num_steps,
+            self.num_load_file,
+            self.name,
+        )
 
 
 class Megapixel(PropheseeDataModule):
-    """Returns a sequence of event histograms with a fixed time step"""
-
     name: str = "1mpx"
 
     def __init__(
@@ -122,15 +139,129 @@ class Megapixel(PropheseeDataModule):
         )
         return names
 
+    def create_dataset(
+        self, gt_files: List[str], data_files: List[str]
+    ) -> IterableDataset:
+        return PropheseeDataset(
+            gt_files,
+            data_files,
+            self.time_step,
+            self.num_steps,
+            self.num_load_file,
+            self.name,
+        )
+
 
 class PropheseeDataset(IterableDataset):
-    """A customized dataset to load the banana detection dataset."""
+    """Base class for Prophesee dataset iterators"""
 
     record_time = 60000000  # ns
     width: int
     height: int
     time_step_name: str
 
+    def __init__(
+        self,
+        gt_files: List[str],
+        data_files: List[str],
+        num_load_file: int,
+        name: str,
+    ):
+        """
+        Args:
+            gt_files (List[str]): List of ground truth file paths
+            data_files (List[str]): List of data file paths
+            num_load_file (int): Number of examples loaded at a time
+            name (str): "gen1" or "1mpx"
+        """
+        assert num_load_file > 0, "The number of loaded files must be more than zero"
+
+        self.gt_files, self.data_files = gt_files, data_files
+        self.num_load_file = num_load_file
+
+        match name:
+            case "gen1":
+                self.width = 304
+                self.height = 240
+                self.time_step_name = "ts"
+            case "1mpx":
+                self.width = 1280
+                self.height = 720
+                self.time_step_name = "t"
+            case _:
+                raise ValueError(f'[ERROR]: The split parameter cannot be "{name}"!')
+
+    def __iter__(self) -> Iterator[tuple[torch.Tensor, torch.Tensor]]:
+        return iter(self.samples_generator())
+
+    def load_generator(
+        self,
+    ) -> Generator[tuple[List[torch.Tensor], List[PSEELoader]], None, None]:
+        """Loads num_load_file new samples from the list.
+        This is necessary when working with a large number of files."""
+
+        worker_info = get_worker_info()
+        id = worker_info.id
+        num_workers = worker_info.num_workers
+        per_worker = len(self.gt_files) // num_workers
+
+        # Shuffle loaded files
+        shuffle_file_idx = list(range(per_worker * id, per_worker * (id + 1)))
+        shuffle(shuffle_file_idx)
+        idx_file_iter = itertools.cycle(iter(shuffle_file_idx))
+
+        while True:
+            labels: List[np.ndarray] = []
+            loaders: List[PSEELoader] = []
+            for count, file_idx in enumerate(idx_file_iter):
+                if count >= self.num_load_file:
+                    break
+                labels.append(np.load(self.gt_files[file_idx]))
+                loaders.append(PSEELoader(self.data_files[file_idx]))
+            yield self.labels_prepare(labels), loaders
+
+    def labels_prepare(self, labels: List[np.ndarray]) -> List[torch.Tensor]:
+        """Converts labels from numpy.ndarray format to torch.
+        Args:
+            labels (List[np.ndarray]): Labels in numpy format
+                * Numpy format ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
+                * Tensor format (ts [ms], class id (0 car, 1 person), xlu, ylu, xrd, yrd)
+        Returns:
+            List[torch.Tensor]: Labels in torch format
+        """
+        return [
+            torch.from_numpy(
+                np.array(
+                    [
+                        gt_boxes[:][self.time_step_name] // (self.time_step_ns),
+                        gt_boxes[:]["class_id"],
+                        gt_boxes[:]["x"] / self.width,
+                        gt_boxes[:]["y"] / self.height,
+                        (gt_boxes[:]["x"] + gt_boxes[:]["w"]) / self.width,
+                        (gt_boxes[:]["y"] + gt_boxes[:]["h"]) / self.height,
+                    ],
+                    dtype=np.float32,
+                )
+            ).t()
+            for gt_boxes in labels
+        ]
+
+    def __len__(self) -> int:
+        raise NotImplementedError
+
+    def samples_generator(
+        self,
+    ) -> Generator[tuple[torch.Tensor, torch.Tensor], None, None]:
+        raise NotImplementedError
+
+    def parse_data(
+        self, gt_boxes: torch.Tensor, events_loader: PSEELoader
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Transforms events into a video stream"""
+        raise NotImplementedError
+
+
+class MTPropheseeDataset(PropheseeDataset):
     def __init__(
         self,
         gt_files: List[str],
@@ -147,30 +278,14 @@ class PropheseeDataset(IterableDataset):
             time_step (int): Duration for one frame (ms)
             num_steps (int): Number of time steps
             num_load_file (int): Number of examples loaded at a time
+            name (str): "gen1" or "1mpx"
         """
         assert num_load_file > 0, "The number of loaded files must be more than zero"
-
-        self.gt_files, self.data_files = gt_files, data_files
+        super().__init__(gt_files, data_files, num_load_file, name)
         self.num_steps, self.time_step = num_steps, time_step
-        self.num_load_file = num_load_file
         self.time_step_ns = self.time_step * 1000
         self.duration_ns = self.time_step_ns * self.num_steps
         self.record_steps = self.record_time // self.duration_ns
-        
-        match name:
-            case "gen1":
-                self.width = 304
-                self.height = 240
-                self.time_step_name = "ts"
-            case "1mpx":
-                self.width = 1280
-                self.height = 720
-                self.time_step_name = "t"
-            case _:
-                raise ValueError(f'[ERROR]: The split parameter cannot be "{name}"!')
-
-    def __iter__(self) -> Iterator[tuple[torch.Tensor, torch.Tensor]]:
-        return iter(self.samples_generator())
 
     def __len__(self) -> int:
         return len(self.gt_files) * self.record_steps
@@ -225,56 +340,3 @@ class PropheseeDataset(IterableDataset):
         labels[:, 0] -= start_time
 
         return (features, labels)
-
-    def load_generator(
-        self,
-    ) -> Generator[tuple[List[torch.Tensor], List[PSEELoader]], None, None]:
-        """Loads num_load_file new samples from the list.
-        This is necessary when working with a large number of files."""
-
-        worker_info = get_worker_info()
-        id = worker_info.id
-        num_workers = worker_info.num_workers
-        per_worker = len(self.gt_files) // num_workers
-
-        # Shuffle loaded files
-        shuffle_file_idx = list(range(per_worker * id, per_worker * (id + 1)))
-        shuffle(shuffle_file_idx)
-        idx_file_iter = itertools.cycle(iter(shuffle_file_idx))
-
-        while True:
-            labels: List[np.ndarray] = []
-            loaders: List[PSEELoader] = []
-            for count, file_idx in enumerate(idx_file_iter):
-                if count >= self.num_load_file:
-                    break
-                labels.append(np.load(self.gt_files[file_idx]))
-                loaders.append(PSEELoader(self.data_files[file_idx]))
-            yield self.labels_prepare(labels), loaders
-
-    def labels_prepare(self, labels: List[np.ndarray]) -> List[torch.Tensor]:
-        """Converts labels from numpy.ndarray format to torch.
-        Args:
-            labels (List[np.ndarray]): Labels in numpy format
-                * Numpy format ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
-                * Tensor format (ts [ms], class id (0 car, 1 person), xlu, ylu, xrd, yrd)
-        Returns:
-            List[torch.Tensor]: Labels in torch format
-        """
-
-        return [
-            torch.from_numpy(
-                np.array(
-                    [
-                        gt_boxes[:][self.time_step_name] // (self.time_step_ns),
-                        gt_boxes[:]["class_id"],
-                        gt_boxes[:]["x"] / self.width,
-                        gt_boxes[:]["y"] / self.height,
-                        (gt_boxes[:]["x"] + gt_boxes[:]["w"]) / self.width,
-                        (gt_boxes[:]["y"] + gt_boxes[:]["h"]) / self.height,
-                    ],
-                    dtype=np.float32,
-                )
-            ).t()
-            for gt_boxes in labels
-        ]
