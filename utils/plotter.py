@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import torch
+from typing import List, Optional
 
 
 class Plotter:
@@ -9,22 +10,30 @@ class Plotter:
     def __init__(self, threshold=0.8, labels=None, interval=200, columns=4):
         self.threshold = int(threshold * 100)
         self.labels = labels
-        self.colors = [(0, 255, 0), (0, 0, 255)]
+        self.colors = [
+            (0, 0, 255),
+            (0, 255, 0),
+            (255, 0, 0),
+            (255, 255, 0),
+            (255, 0, 255),
+            (0, 255, 255),
+        ]
         self.interval = interval
         self.columns = columns
 
     def display(
         self,
-        images,
-        predictions: torch.Tensor = None,
-        target: list[torch.Tensor] = None,
+        images: torch.Tensor,
+        predictions: Optional[torch.Tensor],
+        target: Optional[List[torch.Tensor]],
     ):
-        """Plays video from tensor
+        """
+        Plays video from tensor
         Args:
             images (torch.Tensor): Shape [ts, batch, p, h, w]
-            predictions (torch.Tensor): Shape [ts, batch, anchors, 6].
+            predictions (Optional[torch.Tensor]): Shape [ts, batch, anchors, 6].
                 One label contains [class, iou, xlu, ylu, xrd, yrd]
-            target (list[torch.Tensor]): The length of the list is equal to the number of packs.
+            target (Optional[List[torch.Tensor]]): The length of the list is equal to the number of packs.
                 One Tensor contains [count_box, 6]
                 One label contains [ts, class id, xlu, ylu, xrd, yrd]
         """
@@ -34,8 +43,11 @@ class Plotter:
         grey_imgs[plt_images[..., 0] > 0] = 0
         grey_imgs[plt_images[..., 1] > 0] = 255
         con_video = self.concatenate_video(grey_imgs)
-        prep_target = self.prepare_targets(target, h, w)
-        prep_preds = self.prepare_preds(predictions, h, w)
+        prep_target, prep_preds = None, None
+        if target is not None:
+            prep_target = self.prepare_targets(target, h, w)
+        if predictions is not None:
+            prep_preds = self.prepare_preds(predictions, h, w)
         while self.show_video(con_video, prep_preds, prep_target):
             pass
 
@@ -89,10 +101,10 @@ class Plotter:
         predictions[..., 1] *= 100
         return torch.flatten(predictions, start_dim=1, end_dim=2).type(torch.int32)
 
-    def prepare_targets(self, target: list[torch.Tensor], hight: int, wight: int):
+    def prepare_targets(self, target: List[torch.Tensor], hight: int, wight: int):
         """Changes the coordinates of the boxes according to the position of the batch
         Args:
-            target (list[torch.Tensor]): The length of the list is equal to the number of packs.
+            target (List[torch.Tensor]): The length of the list is equal to the number of packs.
                 One Tensor contains [count_box, 6]
                 One label contains [ts, class id, xlu, ylu, xrd, yrd]
         Returns:
@@ -101,14 +113,21 @@ class Plotter:
         """
         for batch_idx, t_batch in enumerate(target):
             t_batch[:, [2, 4]] = (
-                t_batch[:, [2, 4]] * wight + (batch_idx % self.columns) * wight
+                torch.clamp(t_batch[:, [2, 4]], min=0.0, max=1.0) * wight
+                + (batch_idx % self.columns) * wight
             )
             t_batch[:, [3, 5]] = (
-                t_batch[:, [3, 5]] * hight + (batch_idx // self.columns) * hight
+                torch.clamp(t_batch[:, [3, 5]], min=0.0, max=1.0) * hight
+                + (batch_idx // self.columns) * hight
             )
         return torch.concatenate(target, dim=0).type(torch.int32)
 
-    def show_video(self, video: np.ndarray, preds: torch.Tensor, target: torch.Tensor):
+    def show_video(
+        self,
+        video: np.ndarray,
+        preds: Optional[torch.Tensor],
+        target: Optional[torch.Tensor],
+    ):
         """Playing video
         Args:
             video (np.ndarray): Shape [ts, h, w, c]
@@ -120,9 +139,11 @@ class Plotter:
             bool: Returns false if "q" is pressed
         """
         for ts, capture in enumerate(video):
-            img = self.draw_target_boxes(capture, target[target[:, 0] == ts])
-            img = self.draw_preds_box(img, preds[ts])
-            cv2.imshow("Res", img)
+            if target is not None:
+                capture = self.draw_target_boxes(capture, target[target[:, 0] == ts])
+            if preds is not None:
+                capture = self.draw_preds_box(capture, preds[ts])
+            cv2.imshow("Res", capture)
             if cv2.waitKey(self.interval) == ord("q"):
                 cv2.destroyWindow("Res")
                 return False
@@ -172,7 +193,11 @@ class Plotter:
             start_point = (box[2].item(), box[3].item())
             end_point = (box[4].item(), box[5].item())
             cv2.rectangle(
-                image, start_point, end_point, color=self.colors[box[1]], thickness=2
+                image,
+                start_point,
+                end_point,
+                color=self.colors[box[1] % len(self.colors)],
+                thickness=2,
             )
             cv2.putText(
                 image,

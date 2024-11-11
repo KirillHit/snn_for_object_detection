@@ -73,5 +73,5 @@ def stack_data(batch):
     labels = [sample[1] for sample in batch]
     # Return features format (ts, batch, p, h, w)
     # Return labels format list[torch.Tensor]. Len = batch
-    # One label contains (ts, class id (0 car, 1 person), xlu, ylu, xrd, yrd)
+    # One label contains (ts, class id, xlu, ylu, xrd, yrd)
     return features, labels
