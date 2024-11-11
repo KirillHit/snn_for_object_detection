@@ -86,8 +86,8 @@ class SSDNeck(nn.Module):
                 )
                 if batch_norm:
                     layers += [
-                        snn.conv2d,
-                        snn.nn.BatchNorm2d(v),
+                        conv2d,
+                        nn.BatchNorm2d(v),
                         snn.LIFCell(),
                     ]
                 else:
