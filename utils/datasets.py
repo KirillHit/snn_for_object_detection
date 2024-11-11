@@ -6,13 +6,15 @@ from torch.utils.data import IterableDataset, get_worker_info
 from engine.data import DataModule
 from prophesee_toolbox.src.io.psee_loader import PSEELoader
 from random import shuffle
-from typing import Generator, Iterator
+from typing import Generator, Iterator, List
 from tqdm import tqdm
 import itertools
 
 
-class Gen1DataModule(DataModule):
+class PropheseeDataModule(DataModule):
     """Event-Based Dataset to date"""
+
+    name: str
 
     def __init__(self, root="./data", batch_size=32, num_steps=16, num_workers=4):
         super().__init__(root, num_workers=num_workers, batch_size=batch_size)
@@ -20,7 +22,7 @@ class Gen1DataModule(DataModule):
 
     def read_data(self, split: str):
         # Data dir: ./data/gen1/<test, train, val>
-        data_dir = os.path.join(self._root, "gen1", split)
+        data_dir = os.path.join(self._root, self.name, split)
         # Get files name
         gt_files = glob.glob(data_dir + "/*_bbox.npy")
         data_files = [p.replace("_bbox.npy", "_td.dat") for p in gt_files]
@@ -30,7 +32,8 @@ class Gen1DataModule(DataModule):
                 f"[WARN]: Directory '{data_dir}' does not contain data or data is invalid! I'm expecting: "
                 f"./data/{data_dir}/*_bbox.npy (and *_td.dat). "
                 "The dataset can be downloaded from this link: "
-                "https://www.prophesee.ai/2020/01/24/prophesee-gen1-automotive-detection-dataset/"
+                "https://www.prophesee.ai/2020/01/24/prophesee-gen1-automotive-detection-dataset/ or"
+                "https://www.prophesee.ai/2020/11/24/automotive-megapixel-event-based-dataset/"
             )
 
         dataset = self.create_dataset(gt_files, data_files)
@@ -46,21 +49,32 @@ class Gen1DataModule(DataModule):
                 raise ValueError(f'[ERROR]: The split parameter cannot be "{split}"!')
 
         print(
-            "[INFO]: " + str(len(data_files)) + " " + split + " samples loaded from Gen1 dataset..."
+            "[INFO]: "
+            + str(len(data_files))
+            + " "
+            + split
+            + " samples loaded from "
+            + self.name
+            + " dataset..."
         )
 
     def create_dataset(
-        self, gt_files: list[str], data_files: list[str]
+        self, gt_files: List[str], data_files: List[str]
     ) -> IterableDataset:
-        raise NotImplementedError
+        return PropheseeDataset(
+            gt_files,
+            data_files,
+            self.time_step,
+            self.num_steps,
+            self.num_load_file,
+            self.name
+        )
 
-    def get_labels(self):
-        names = ("car", "person")
-        return names
 
-
-class Gen1Fixed(Gen1DataModule):
+class Gen1(PropheseeDataModule):
     """Returns a sequence of event histograms with a fixed time step"""
+
+    name: str = "gen1"
 
     def __init__(
         self,
@@ -74,37 +88,62 @@ class Gen1Fixed(Gen1DataModule):
         super().__init__(root, batch_size, num_steps, num_workers)
         self.time_step, self.num_load_file = time_step, num_load_file
 
-    def create_dataset(
-        self, gt_files: list[str], data_files: list[str]
-    ) -> IterableDataset:
-        return Gen1FixedDataset(
-            gt_files,
-            data_files,
-            self.time_step,
-            self.num_steps,
-            self.num_load_file,
-        )
+    def get_labels(self):
+        names = ("car", "person")
+        return names
 
 
-class Gen1FixedDataset(IterableDataset):
-    """A customized dataset to load the banana detection dataset."""
+class Megapixel(PropheseeDataModule):
+    """Returns a sequence of event histograms with a fixed time step"""
 
-    record_time = 60000000  # ns
-    width: int = 304
-    height: int = 240
+    name: str = "1mpx"
 
     def __init__(
         self,
-        gt_files: list[str],
-        data_files: list[str],
+        root="./data",
+        batch_size=32,
+        num_steps=16,
+        time_step=100,
+        num_load_file=50,
+        num_workers=4,
+    ):
+        super().__init__(root, batch_size, num_steps, num_workers)
+        self.time_step, self.num_load_file = time_step, num_load_file
+
+    def get_labels(self):
+        names = (
+            "pedestrians",
+            "two wheelers",
+            "cars",
+            "trucks",
+            "buses",
+            "signs",
+            "traffic lights",
+        )
+        return names
+
+
+class PropheseeDataset(IterableDataset):
+    """A customized dataset to load the banana detection dataset."""
+
+    record_time = 60000000  # ns
+    width: int
+    height: int
+    time_step_name: str
+
+    def __init__(
+        self,
+        gt_files: List[str],
+        data_files: List[str],
         time_step: int,
         num_steps: int,
         num_load_file: int,
+        name: str,
     ):
         """
         Args:
-            gt_files (list[str]): List of ground truth file paths
-            data_files (list[str]): List of data file paths
+            gt_files (List[str]): List of ground truth file paths
+            data_files (List[str]): List of data file paths
             time_step (int): Duration for one frame (ms)
             num_steps (int): Number of time steps
             num_load_file (int): Number of examples loaded at a time
@@ -117,6 +156,18 @@ class Gen1FixedDataset(IterableDataset):
         self.time_step_ns = self.time_step * 1000
         self.duration_ns = self.time_step_ns * self.num_steps
         self.record_steps = self.record_time // self.duration_ns
+        
+        match name:
+            case "gen1":
+                self.width = 304
+                self.height = 240
+                self.time_step_name = "ts"
+            case "1mpx":
+                self.width = 1280
+                self.height = 720
+                self.time_step_name = "t"
+            case _:
+                raise ValueError(f'[ERROR]: The split parameter cannot be "{name}"!')
 
     def __iter__(self) -> Iterator[tuple[torch.Tensor, torch.Tensor]]:
         return iter(self.samples_generator())
@@ -177,23 +228,23 @@ class Gen1FixedDataset(IterableDataset):
 
     def load_generator(
         self,
-    ) -> Generator[tuple[list[torch.Tensor], list[PSEELoader]], None, None]:
+    ) -> Generator[tuple[List[torch.Tensor], List[PSEELoader]], None, None]:
         """Loads num_load_file new samples from the list.
         This is necessary when working with a large number of files."""
-        
+
         worker_info = get_worker_info()
         id = worker_info.id
         num_workers = worker_info.num_workers
         per_worker = len(self.gt_files) // num_workers
-        
+
         # Shuffle loaded files
         shuffle_file_idx = list(range(per_worker * id, per_worker * (id + 1)))
         shuffle(shuffle_file_idx)
         idx_file_iter = itertools.cycle(iter(shuffle_file_idx))
 
         while True:
-            labels: list[np.ndarray] = []
-            loaders: list[PSEELoader] = []
+            labels: List[np.ndarray] = []
+            loaders: List[PSEELoader] = []
             for count, file_idx in enumerate(idx_file_iter):
                 if count >= self.num_load_file:
                     break
@@ -201,21 +252,21 @@ class Gen1FixedDataset(IterableDataset):
                 loaders.append(PSEELoader(self.data_files[file_idx]))
             yield self.labels_prepare(labels), loaders
 
-    def labels_prepare(self, labels: list[np.ndarray]) -> list[torch.Tensor]:
+    def labels_prepare(self, labels: List[np.ndarray]) -> List[torch.Tensor]:
         """Converts labels from numpy.ndarray format to torch.
         Args:
-            labels (list[np.ndarray]): Labels in numpy format
+            labels (List[np.ndarray]): Labels in numpy format
                 * Numpy format ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
                 * Tensor format (ts [ms], class id (0 car, 1 person), xlu, ylu, xrd, yrd)
         Returns:
-            list[torch.Tensor]: Labels in torch format
+            List[torch.Tensor]: Labels in torch format
         """
 
         return [
             torch.from_numpy(
                 np.array(
                     [
-                        gt_boxes[:]["ts"] // (self.time_step_ns),
+                        gt_boxes[:][self.time_step_name] // (self.time_step_ns),
                         gt_boxes[:]["class_id"],
                         gt_boxes[:]["x"] / self.width,
                         gt_boxes[:]["y"] / self.height,
@@ -227,23 +278,3 @@ class Gen1FixedDataset(IterableDataset):
             ).t()
             for gt_boxes in labels
         ]
-
-
-class Gen1Adaptive(Gen1DataModule):
-    """Returns a sequence of event histograms with an adaptive time step"""
-
-    def __init__(
-        self,
-        root="./data",
-        batch_size=32,
-        num_steps=16,
-        event_step=100,
-    ):
-        super().__init__(root, batch_size, num_steps)
-        self.event_step = event_step
-
-    def create_dataset(
-        self, events_loaders: list[PSEELoader], gt_boxes_list: list[np.ndarray]
-    ) -> IterableDataset:
-        # TODO
-        raise NotImplementedError

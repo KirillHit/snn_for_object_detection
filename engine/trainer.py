@@ -130,10 +130,10 @@ class Trainer:
             self.val_batch_idx += 1
 
     def test_model(self, plotter: Plotter):
-        tensors, target = next(self.test_dataloader_iter)
+        tensors, _ = next(self.test_dataloader_iter)
         if self.gpus:
             tensors = tensors.to(self.gpus[0])
         predictions = self.model.predict(tensors).to(devices.cpu())
         if self.gpus:
             tensors = tensors.to(devices.cpu())
-        plotter.display(tensors, predictions, target)
+        plotter.display(tensors, predictions, None)

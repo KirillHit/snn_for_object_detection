@@ -1,5 +1,5 @@
-from .datasets import Gen1Fixed, Gen1Adaptive
+from .datasets import Gen1, Megapixel
 from .progress_board import ProgressBoard
 from .plotter import Plotter
 
-__all__ = "ProgressBoard", "Plotter", "Gen1Fixed", "Gen1Adaptive"
+__all__ = "ProgressBoard", "Plotter", "Gen1", "Megapixel"
