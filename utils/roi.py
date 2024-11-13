@@ -12,8 +12,8 @@ class RoI:
             iou_threshold (float): Minimum acceptable iou. TODO
         """
         self.iou_threshold = iou_threshold
-
-    def target(
+    
+    def __call__(
         self, anchors: torch.Tensor, labels: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Label anchor boxes using ground-truth bounding boxes

@@ -32,11 +32,11 @@ def ask_dataset(default: str = "gf"):
     if choice == "":
         choice = default
     if choice == "gf":
-        return utils.MTProphesee(
+        return utils.STProphesee(
             "gen1",
             batch_size=4,
             time_step=16,
-            num_steps=128,
+            num_steps=32,
             num_load_file=16,
             num_workers=4,
         ), "gen1"
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     neck_name = "ssd3"
     params_file = f"{backbone_name}-{neck_name}-{dataset_name}"
 
-    model = generate_model(backbone_name, neck_name, batch_norm=True, init_weights=True)
+    model = generate_model(backbone_name, neck_name, init_weights=True)
     print("Number of parameters: ", p2v(model.parameters()).numel())
 
     model.to(utils.devices.gpu())

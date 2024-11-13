@@ -6,7 +6,7 @@ from torch.utils.data import IterableDataset, get_worker_info
 from engine.data import DataModule
 from prophesee_toolbox.src.io.psee_loader import PSEELoader
 from random import shuffle
-from typing import Generator, Iterator, List
+from typing import Generator, Iterator, List, Optional
 from tqdm import tqdm
 import itertools
 
@@ -14,12 +14,30 @@ import itertools
 class PropheseeDataModule(DataModule):
     """Base class for Prophesee dataset data modules"""
 
-    def __init__(self, root="./data", batch_size=32, num_steps=16, num_workers=4):
+    def __init__(self, name: str, root="./data", batch_size=32, num_workers=4):
         super().__init__(root, num_workers=num_workers, batch_size=batch_size)
-        self.num_steps = num_steps
+        self.name = name
+        match self.name:
+            case "gen1":
+                self.labels_name = ("car", "person")
+            case "1mpx":
+                self.labels_name = (
+                    "pedestrians",
+                    "two wheelers",
+                    "cars",
+                    "trucks",
+                    "buses",
+                    "signs",
+                    "traffic lights",
+                )
+            case _:
+                raise ValueError(f'[ERROR]: The split parameter cannot be "{name}"!')
+
+    def get_labels(self):
+        return self.labels_name
 
     def read_data(self, split: str):
-        # Data dir: ./data/gen1/<test, train, val>
+        # Data dir: ./data/<gen1, 1mpx>/<test, train, val>
         data_dir = os.path.join(self._root, self.name, split)
         # Get files name
         gt_files = glob.glob(data_dir + "/*_bbox.npy")
@@ -56,48 +74,33 @@ class PropheseeDataModule(DataModule):
             + " dataset..."
         )
 
+    def create_dataset(
+        self, gt_files: List[str], data_files: List[str]
+    ) -> IterableDataset:
+        raise NotImplementedError
+
 
 class MTProphesee(PropheseeDataModule):
     """
-    Prophesee's gen1 and 1mpx datasets. The packages are provided in a multi-target form,
+    Multi-target Prophesee's gen1 and 1mpx datasets. The packages are provided in a multi-target form,
     meaning that one example can contain target labels at multiple time steps.
     Records are split into fixed-step chunks that are returned sequentially.
-
-    Intended for testing. There is one-target dataset for training.
+    Intended for testing. There is single-target dataset for training.
     """
 
     def __init__(
         self,
         name: str,
         root="./data",
-        batch_size=32,
-        num_steps=16,
-        time_step=100,
-        num_load_file=50,
+        batch_size=4,
+        num_steps=128,
+        time_step=16,
+        num_load_file=8,
         num_workers=4,
     ):
-        self.name = name
-        super().__init__(root, batch_size, num_steps, num_workers)
+        super().__init__(name, root, batch_size, num_workers)
         self.time_step, self.num_load_file = time_step, num_load_file
-
-        match self.name:
-            case "gen1":
-                self.labels_name = ("car", "person")
-            case "1mpx":
-                self.labels_name = (
-                    "pedestrians",
-                    "two wheelers",
-                    "cars",
-                    "trucks",
-                    "buses",
-                    "signs",
-                    "traffic lights",
-                )
-            case _:
-                raise ValueError(f'[ERROR]: The split parameter cannot be "{name}"!')
-
-    def get_labels(self):
-        return self.labels_name
+        self.num_steps = num_steps
 
     def create_dataset(
         self, gt_files: List[str], data_files: List[str]
@@ -112,37 +115,30 @@ class MTProphesee(PropheseeDataModule):
         )
 
 
-class Megapixel(PropheseeDataModule):
-    name: str = "1mpx"
+class STProphesee(PropheseeDataModule):
+    """
+    Single-target Prophesee gen1 and 1mpx datasets. Labeling is provided for the last time step only.
+    Intended for training.
+    """
 
     def __init__(
         self,
+        name: str,
         root="./data",
-        batch_size=32,
+        batch_size=4,
         num_steps=16,
-        time_step=100,
-        num_load_file=50,
+        time_step=16,
+        num_load_file=8,
         num_workers=4,
     ):
-        super().__init__(root, batch_size, num_steps, num_workers)
+        super().__init__(name, root, batch_size, num_workers)
         self.time_step, self.num_load_file = time_step, num_load_file
-
-    def get_labels(self):
-        names = (
-            "pedestrians",
-            "two wheelers",
-            "cars",
-            "trucks",
-            "buses",
-            "signs",
-            "traffic lights",
-        )
-        return names
+        self.num_steps = num_steps
 
     def create_dataset(
         self, gt_files: List[str], data_files: List[str]
     ) -> IterableDataset:
-        return PropheseeDataset(
+        return STPropheseeDataset(
             gt_files,
             data_files,
             self.time_step,
@@ -152,7 +148,7 @@ class Megapixel(PropheseeDataModule):
         )
 
 
-class PropheseeDataset(IterableDataset):
+class PropheseeDatasetBase(IterableDataset):
     """Base class for Prophesee dataset iterators"""
 
     record_time = 60000000  # ns
@@ -261,7 +257,7 @@ class PropheseeDataset(IterableDataset):
         raise NotImplementedError
 
 
-class MTPropheseeDataset(PropheseeDataset):
+class MTPropheseeDataset(PropheseeDatasetBase):
     def __init__(
         self,
         gt_files: List[str],
@@ -286,9 +282,6 @@ class MTPropheseeDataset(PropheseeDataset):
         self.time_step_ns = self.time_step * 1000
         self.duration_ns = self.time_step_ns * self.num_steps
         self.record_steps = self.record_time // self.duration_ns
-
-    def __len__(self) -> int:
-        return len(self.gt_files) * self.record_steps
 
     def samples_generator(
         self,
@@ -340,3 +333,86 @@ class MTPropheseeDataset(PropheseeDataset):
         labels[:, 0] -= start_time
 
         return (features, labels)
+
+
+class STPropheseeDataset(PropheseeDatasetBase):
+    def __init__(
+        self,
+        gt_files: List[str],
+        data_files: List[str],
+        time_step: int,
+        num_steps: int,
+        num_load_file: int,
+        name: str,
+    ):
+        """
+        Args:
+            gt_files (List[str]): List of ground truth file paths
+            data_files (List[str]): List of data file paths
+            time_step (int): Duration for one frame (ms)
+            num_steps (int): Number of time steps
+            num_load_file (int): Number of examples loaded at a time
+            name (str): "gen1" or "1mpx"
+        """
+        assert num_load_file > 0, "The number of loaded files must be more than zero"
+        super().__init__(gt_files, data_files, num_load_file, name)
+        self.time_step, self.num_steps = time_step, num_steps
+        self.time_step_ns = self.time_step * 1000
+        self.duration_ns = self.time_step_ns * self.num_steps
+
+    def samples_generator(
+        self,
+    ) -> Generator[tuple[torch.Tensor, torch.Tensor], None, None]:
+        if not self.gt_files:
+            raise RuntimeError("Attempt to access unloaded part of dataset")
+        file_loader = self.load_generator()
+        while True:
+            gt_boxes_list, events_loaders = next(file_loader)
+            shuffle_idx = list(range(self.num_load_file))
+            while shuffle_idx:
+                new_shuffle_idx = []
+                for idx in shuffle_idx:
+                    res = self.parse_data(gt_boxes_list[idx], events_loaders[idx])
+                    if res is not None:
+                        new_shuffle_idx.append(idx)
+                        yield res
+                shuffle_idx = new_shuffle_idx
+                shuffle(shuffle_idx)
+
+    def parse_data(
+        self, gt_boxes: torch.Tensor, events_loader: PSEELoader
+    ) -> Optional[tuple[torch.Tensor, torch.Tensor]]:
+        """Transforms events into a video stream"""
+        if events_loader.done:
+            return None
+
+        ############ Labels preparing ############
+        # Return labels format (class id (0 car, 1 person), xlu, ylu, xrd, yrd)
+        # Box update frequency 1-4 Hz
+        start_time = events_loader.current_time
+        gt_boxes = gt_boxes[gt_boxes[:, 0].gt(start_time + self.duration_ns)]
+        if not gt_boxes.numel():
+            return None
+        labels = gt_boxes[gt_boxes[:, 0] == gt_boxes[0, 0]]
+
+        ############ Features preparing ############
+        # Return features format (ts, c [0-negative, 1-positive], h, w)
+        features = torch.zeros(
+            [self.num_steps, 2, self.height, self.width],
+            dtype=torch.float32,
+        )
+        # Events format ('t' [us], 'x', 'y', 'p' [1-positive/0-negative])
+        events = events_loader.load_delta_t(labels[0, 0] - start_time)
+        time_stamps = (events[:]["t"] - start_time) // self.time_step_ns
+
+        if not time_stamps.size:
+            return None
+
+        features[
+            time_stamps[:],
+            events[:]["p"].astype(np.uint32),
+            events[:]["y"].astype(np.uint32),
+            events[:]["x"].astype(np.uint32),
+        ] = 1
+
+        return (features, labels[:, 1:])
