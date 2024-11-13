@@ -94,7 +94,7 @@ class Decoder(nn.Module):
         li_params = LIParameters()
         if train_li_layer:
             self.li_grad_params = torch.nn.Parameter(li_params.tau_mem_inv)
-        self.li = snn.LI(p=li_params)
+        self.li = snn.LICell(p=li_params)
         
         self.box_conv = nn.Conv2d(in_channels, box_out, kernel_size=1)
         self.cls_conv = nn.Conv2d(in_channels, cls_out, kernel_size=1)

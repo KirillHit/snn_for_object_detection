@@ -36,7 +36,7 @@ class SODa(Module):
     def loss(
         self,
         preds: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
-        labels_batch: list[torch.Tensor],
+        labels: torch.Tensor,
     ) -> torch.Tensor:
         """
         Args:
@@ -44,41 +44,24 @@ class SODa(Module):
                 anchors (torch.Tensor): [all_anchors, 4]
                 cls_preds (torch.Tensor): [ts, num_batch, all_anchors,(num_classes + 1)]
                 bbox_preds (torch.Tensor): [ts, num_batch, all_anchors * 4]
-            labels_batch (list[torch.Tensor]):
-                The length of the list is equal to the number of butch
-                One label contains (ts, class id (0 car, 1 person), xlu, ylu, xrd, yrd)
+            labels [torch.Tensor]:
+                Tensor shape [num_labels, 5]
+                    One label contains: [class id (0 car, 1 person), xlu, ylu, xrd, yrd]
         Returns:
             torch.Tensor: loss
         """
         anchors, ts_cls_preds, ts_bbox_preds = preds
-        _, batch_size, _, _ = ts_cls_preds.shape
-        loss = torch.zeros(
-            (batch_size), dtype=ts_cls_preds.dtype, device=ts_cls_preds.device
-        )
-        for batch_idx, labels in enumerate(labels_batch):
-            ts_list: torch.Tensor = torch.unique(labels[..., 0])
-            loss_ts = torch.zeros(
-                (max(ts_list.shape[0], 1)),
-                dtype=ts_cls_preds.dtype,
-                device=ts_cls_preds.device,
-            )
-            for ts_idx, ts in enumerate(ts_list):
-                masked_labels = labels[..., 1:]
-                masked_labels = masked_labels[labels[..., 0] == ts]
-                bbox_offset, bbox_mask, class_labels = self.roi_blk.target(
-                    anchors, masked_labels
-                )
-                cls = self.cls_loss.forward(
-                    ts_cls_preds[ts.type(torch.uint32), batch_idx],
-                    class_labels,
-                ).mean()
-                bbox = self.box_loss.forward(
-                    ts_bbox_preds[ts.type(torch.uint32), batch_idx] * bbox_mask,
-                    bbox_offset * bbox_mask,
-                ).mean()
-                loss_ts[ts_idx] = cls + bbox
-            loss[batch_idx] = loss_ts.mean()
-        return loss.mean()
+        bbox_offset, bbox_mask, class_labels = self.roi_blk(anchors, labels)
+        _, _, num_classes = ts_cls_preds.shape
+
+        cls = self.cls_loss.forward(
+            ts_cls_preds[-1].reshape(-1, num_classes), class_labels
+        ).mean()
+        bbox = self.box_loss.forward(
+            ts_bbox_preds[-1] * bbox_mask, bbox_offset * bbox_mask
+        ).mean()
+
+        return cls + bbox
 
     def training_step(
         self, batch: tuple[torch.Tensor, list[torch.Tensor]]
