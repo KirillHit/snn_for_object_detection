@@ -1,6 +1,7 @@
 from matplotlib import pyplot as plt
 from pynput import keyboard
 from torch.nn.utils import parameters_to_vector as p2v
+from torch.nn import Module
 
 import engine
 import models
@@ -34,10 +35,10 @@ def ask_dataset(default: str = "gf"):
     if choice == "gf":
         return utils.STProphesee(
             "gen1",
-            batch_size=4,
+            batch_size=16,
             time_step=16,
             num_steps=32,
-            num_load_file=16,
+            num_load_file=8,
             num_workers=4,
         ), "gen1"
     raise ValueError("Invalid dataset value!")
@@ -47,6 +48,7 @@ def on_press_construct(trainer: engine.Trainer):
     def on_press():
         print("[INFO]: Pause training")
         trainer.stop()
+
     return on_press
 
 
@@ -75,14 +77,25 @@ def generate_model(
     return models.SODa(backbone, neck, num_classes=2)
 
 
+def print_info(backbone_name: str, neck_name: str, dataset_name: str, model: Module):
+    print(
+        "[INFO]: Model information: \n"
+        "\tModel architecture: \n"
+        f"\t\tBackbone: {backbone_name} \n"
+        f"\t\tNeck: {neck_name} \n"
+        f"\tDataset name: {dataset_name} \n"
+        f"\tNumber of parameters: {p2v(model.parameters()).numel()}"
+    )
+
+
 if __name__ == "__main__":
     data, dataset_name = ask_dataset()
     backbone_name = "vgg3"
     neck_name = "ssd3"
     params_file = f"{backbone_name}-{neck_name}-{dataset_name}"
 
-    model = generate_model(backbone_name, neck_name, init_weights=True)
-    print("Number of parameters: ", p2v(model.parameters()).numel())
+    model = generate_model(backbone_name, neck_name, init_weights=True, batch_norm=True)
+    print_info(backbone_name, neck_name, dataset_name, model)
 
     model.to(utils.devices.gpu())
     board = utils.ProgressBoard(
@@ -90,10 +103,10 @@ if __name__ == "__main__":
         xlabel="Batch idx",
         ylabel="Average loss",
         display=True,
-        ylim=(1.2, 0.01),
+        ylim=(1.2, 0.1),
         every_n=4,
     )
-    trainer = engine.Trainer(board, num_gpus=1, epoch_size=60)
+    trainer = engine.Trainer(board, num_gpus=1, epoch_size=200)
     trainer.prepare(model, data)
 
     # model_graph = draw_graph(model, input_size=(8, 3, 256, 256), expand_nested=True, save_graph=True)

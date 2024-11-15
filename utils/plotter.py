@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import torch
-from typing import List, Optional
+from typing import List, Optional, Union
 
 
 class Plotter:
@@ -25,7 +25,7 @@ class Plotter:
         self,
         images: torch.Tensor,
         predictions: Optional[torch.Tensor],
-        target: Optional[List[torch.Tensor]],
+        target: Optional[Union[List[torch.Tensor], torch.Tensor]],
     ):
         """
         Plays video from tensor
@@ -33,9 +33,12 @@ class Plotter:
             images (torch.Tensor): Shape [ts, batch, p, h, w]
             predictions (Optional[torch.Tensor]): Shape [ts, batch, anchors, 6].
                 One label contains [class, iou, xlu, ylu, xrd, yrd]
-            target (Optional[List[torch.Tensor]]): The length of the list is equal to the number of packs.
+            target (List[Tensor] | Tensor | None): The length of the list is equal to the number of batch.
                 One Tensor contains [count_box, 6]
                 One label contains [ts, class id, xlu, ylu, xrd, yrd]
+                or
+                One Tensor contains [count_box, 5]
+                One label contains [class id, xlu, ylu, xrd, yrd]
         """
         ts, b, _, h, w = images.shape
         plt_images = images.permute(0, 1, 3, 4, 2)
@@ -45,11 +48,30 @@ class Plotter:
         con_video = self.concatenate_video(grey_imgs)
         prep_target, prep_preds = None, None
         if target is not None:
+            if isinstance(target, torch.Tensor):
+                target = self.transform_targets(target, images.shape[0] - 1)
             prep_target = self.prepare_targets(target, h, w)
         if predictions is not None:
             prep_preds = self.prepare_preds(predictions, h, w)
         while self.show_video(con_video, prep_preds, prep_target):
-            pass
+            cmd = cv2.waitKey()
+            if cmd == ord("q"):
+                cv2.destroyWindow("Res")
+                break
+
+    def transform_targets(
+        self, target: torch.Tensor, time_step: int
+    ) -> List[torch.Tensor]:
+        """Transform targets from [batch_size, num_box, 5] [class id, xlu, ylu, xrd, yrd]
+        to List[torch.Tensor[num_box, 6]] [ts, class id, xlu, ylu, xrd, yrd]
+        """
+        new_target = []
+        for batch_idx in range(target.shape[0]):
+            batch = target[batch_idx]
+            batch = batch[batch[:, 0] >= 0]
+            time_tens = torch.ones((batch.shape[0], 1)) * time_step
+            new_target.append(torch.concatenate((time_tens, batch), dim=1))
+        return new_target
 
     def concatenate_video(self, video: np.ndarray):
         """Combines a batch of videos into one

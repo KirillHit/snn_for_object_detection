@@ -39,13 +39,11 @@ class Trainer:
         self.model = model
 
     def prepare_batch(
-        self, batch: tuple[torch.Tensor, list[torch.Tensor]]
-    ) -> tuple[torch.Tensor, list[torch.Tensor]]:
+        self, batch: tuple[torch.Tensor, torch.Tensor]
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         if not self.gpus:
             return batch
-        return batch[0].to(self.gpus[0]), [
-            labels.to(self.gpus[0]) for labels in batch[1]
-        ]
+        return batch[0].to(self.gpus[0]), batch[1].to(self.gpus[0])
 
     def plot(self, loss, split):
         match split:
@@ -92,13 +90,6 @@ class Trainer:
                 return
             batch = next(self.train_dataloader_iter)
             train_loss = self.model.training_step(self.prepare_batch(batch))
-            if not train_loss.requires_grad:
-                tqdm.write(
-                    "[WARN]: The loss tensor does not require a gradient. \n"
-                    "        Not a single sample from the pack contains targets."
-                )
-                self.train_batch_idx += 1
-                continue
             self.optim.zero_grad()
             with torch.no_grad():
                 train_loss.backward()
@@ -130,10 +121,10 @@ class Trainer:
             self.val_batch_idx += 1
 
     def test_model(self, plotter: Plotter):
-        tensors, _ = next(self.test_dataloader_iter)
+        tensors, targets = next(self.test_dataloader_iter)
         if self.gpus:
             tensors = tensors.to(self.gpus[0])
         predictions = self.model.predict(tensors).to(devices.cpu())
         if self.gpus:
             tensors = tensors.to(devices.cpu())
-        plotter.display(tensors, predictions, None)
+        plotter.display(tensors, predictions, targets)
