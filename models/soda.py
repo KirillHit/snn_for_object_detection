@@ -30,7 +30,7 @@ class SODa(Module):
         self.box_loss = nn.L1Loss(reduction="none")
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
-        return torch.optim.Adamax(self.parameters(), lr=0.001)
+        return torch.optim.Adamax(self.parameters(), lr=0.002)
         # return torch.optim.SGD(self.parameters(), lr=0.2, weight_decay=5e-4)
 
     def loss(
@@ -52,30 +52,31 @@ class SODa(Module):
         """
         anchors, ts_cls_preds, ts_bbox_preds = preds
         bbox_offset, bbox_mask, class_labels = self.roi_blk(anchors, labels)
-        _, _, num_classes = ts_cls_preds.shape
+        _, _, _, num_classes = ts_cls_preds.shape
+
+        prob_preds = F.softmax(ts_cls_preds[-1], dim=2)
+        low_activity_penalty = torch.abs(
+            -1 * torch.log(5 * torch.mean(prob_preds[..., 1:-1]))
+        )
 
         cls = self.cls_loss.forward(
-            ts_cls_preds[-1].reshape(-1, num_classes), class_labels
+            ts_cls_preds[-1].reshape(-1, num_classes), class_labels.reshape(-1)
         ).mean()
         bbox = self.box_loss.forward(
             ts_bbox_preds[-1] * bbox_mask, bbox_offset * bbox_mask
         ).mean()
 
-        return cls + bbox
+        return cls + bbox + low_activity_penalty
 
-    def training_step(
-        self, batch: tuple[torch.Tensor, list[torch.Tensor]]
-    ) -> torch.Tensor:
+    def training_step(self, batch: tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
         preds = self.forward(batch[0])
         loss = self.loss(preds, batch[1])
         return loss
 
-    def test_step(self, batch: tuple[torch.Tensor, list[torch.Tensor]]) -> torch.Tensor:
+    def test_step(self, batch: tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
         return self.training_step(batch)
 
-    def validation_step(
-        self, batch: tuple[torch.Tensor, list[torch.Tensor]]
-    ) -> torch.Tensor:
+    def validation_step(self, batch: tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
         return self.training_step(batch)
 
     def forward(

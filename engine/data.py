@@ -1,4 +1,5 @@
 from torch.utils.data import IterableDataset, DataLoader
+from torch.nn.utils.rnn import pad_sequence
 import torch
 
 
@@ -70,8 +71,12 @@ class DataModule:
 
 def stack_data(batch):
     features = torch.stack([sample[0] for sample in batch], dim=1)
-    labels = [sample[1] for sample in batch]
+    targets = pad_sequence(
+        [sample[1] for sample in batch],
+        batch_first=True,
+        padding_value=-1,
+    )
     # Return features format (ts, batch, p, h, w)
-    # Return labels format list[torch.Tensor]. Len = batch
-    # One label contains (ts, class id, xlu, ylu, xrd, yrd)
-    return features, labels
+    # Return targets format torch.Tensor.
+    # One targets contains (class id, xlu, ylu, xrd, yrd)
+    return features, targets

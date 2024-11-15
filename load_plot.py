@@ -35,7 +35,7 @@ if __name__ == "__main__":
         every_n=10,
     )
 
-    board.load_plot("20241106-192729")
+    board.load_plot("20241113-103530")
     
     plt.show()
 
