@@ -31,7 +31,7 @@ class PropheseeDataModule(DataModule):
                     "traffic lights",
                 )
             case _:
-                raise ValueError(f'[ERROR]: The split parameter cannot be "{name}"!')
+                raise ValueError(f'[ERROR]: The name parameter cannot be "{name}"!')
 
     def get_labels(self):
         return self.labels_name
@@ -188,7 +188,7 @@ class PropheseeDatasetBase(IterableDataset):
                 self.height = 720
                 self.time_step_name = "t"
             case _:
-                raise ValueError(f'[ERROR]: The split parameter cannot be "{name}"!')
+                raise ValueError(f'[ERROR]: The dataset parameter cannot be "{name}"!')
 
     def __iter__(self) -> Iterator[Tuple[torch.Tensor, torch.Tensor]]:
         return iter(self.samples_generator())
