@@ -1,5 +1,5 @@
 ### Basic
-Mode: 2               # 1 - interactive, 2 - train
+Mode: 1               # 1 - interactive, 2 - train
 
 ### Train mode
 LoadParameters: false
@@ -14,13 +14,14 @@ NeckVersion: 3
 BatchNorm: true 
 InitWeights: true
 Dropout: false
+LossRatio: 0.08
 
 ### Dataset parameters
 Dataset: gen1
 # Train dataset
-BatchSize: 16
+BatchSize: 8
 TimeStep: 16
-NumSteps: 32
+NumSteps: 64
 NumLoadFile: 8
 NumWorkers: 4
 # Test dataset

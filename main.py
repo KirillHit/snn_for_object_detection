@@ -11,7 +11,7 @@ if __name__ == "__main__":
     trainer.prepare(model, data)
     params_file = model_loader.get_params_file_name()
 
-    match model_loader.get_data("Mode"):
+    match model_loader.get("Mode"):
         case 1:
             run.interactive_spin(model, trainer, model_loader.get_plotter(data), params_file)
         case 2:
@@ -19,9 +19,9 @@ if __name__ == "__main__":
                 model,
                 trainer,
                 params_file,
-                model_loader.get_data("LoadParameters"),
-                model_loader.get_data("NumTrainRounds"),
-                model_loader.get_data("NumRoundEpoch"),
+                model_loader.get("LoadParameters"),
+                model_loader.get("NumTrainRounds"),
+                model_loader.get("NumRoundEpoch"),
             )
         case _:
             raise RuntimeError("Wrong mode!")

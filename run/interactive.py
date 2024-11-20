@@ -2,6 +2,7 @@ from matplotlib import pyplot as plt
 from pynput import keyboard
 import engine
 from utils.plotter import Plotter
+from tqdm import tqdm
 
 
 def ask_question(question, default="y"):
@@ -24,14 +25,14 @@ def ask_question(question, default="y"):
 
 def on_press_construct(trainer: engine.Trainer):
     def on_press():
-        print("[INFO]: Pause training")
+        tqdm.write("[INFO]: Pause training")
         trainer.stop()
 
     return on_press
 
 
 def interactive_spin(
-    model: engine.Module, trainer: engine.trainer, plotter: Plotter, params_file: str
+    model: engine.Module, trainer: engine.Trainer, plotter: Plotter, params_file: str
 ):
     key_listener = keyboard.GlobalHotKeys({"<ctrl>+q": on_press_construct(trainer)})
     key_listener.start()
