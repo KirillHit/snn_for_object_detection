@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from typing import cast, Dict, List, Union
 import norse.torch as snn
+from models.modules import SumPool2d
 
 
 class SSDNeck(nn.Module):
@@ -10,15 +11,16 @@ class SSDNeck(nn.Module):
     int: Number of output convolution layers
     "M": MaxPool2d(kernel_size=2, stride=2)
     "A": AvgPool2d(kernel_size=2, stride=2)
+    "S": SumPool2d(kernel_size=2, stride=2)
     "R": Appends a feature map to the returned list
-    "S": The next convolution will have a 1*1 kernel, the rest 3*3
+    "O": The next convolution will have a 1*1 kernel, the rest 3*3
     "D": Dropout
     """
     cfgs: Dict[str, List[Union[str, int]]] = {
-        "s10": ["R", "M", 1024, "S", 1024, "R", "M", "S", 256, 512, "R", "M", "S",
-                128, 256, "R", "M", "S", 128, 256, "R", "M", "S", 128, 256, "R"], # Standard head. See https://arxiv.org/pdf/1512.02325
-        "6": ["R", "A", 512, "S", 512, "R", "A", "S", 128, 256, "R", "A", "S", 128, 256, "R"],
-        "3": ["R", 128, "A", "R", 128, "A", "R", 128, "A", "R"],
+        "s10": ["R", "M", 1024, "O", 1024, "R", "M", "O", 256, 512, "R", "M", "O",
+                128, 256, "R", "M", "O", 128, 256, "R", "M", "O", 128, 256, "R"], # Standard head. See https://arxiv.org/pdf/1512.02325
+        "6": ["R", "S", 512, "O", 512, "R", "S", "O", 128, 256, "R", "S", "O", 128, 256, "R"],
+        "3": ["R", 128, "S", "R", 128, "S", "R", 128, "S", "R"],
     }
     # fmt: on
 
@@ -70,6 +72,8 @@ class SSDNeck(nn.Module):
             elif v == "A":
                 layers += [nn.AvgPool2d(kernel_size=2, stride=2)]
             elif v == "S":
+                layers += [SumPool2d(kernel_size=2, stride=2)]
+            elif v == "O":
                 conv_kernel = 1
             elif v == "D":
                 layers += [nn.Dropout(p=dropout)]

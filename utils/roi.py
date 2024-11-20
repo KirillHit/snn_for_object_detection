@@ -12,7 +12,7 @@ class RoI:
             iou_threshold (float): Minimum acceptable iou. TODO
         """
         self.iou_threshold = iou_threshold
-    
+
     def __call__(
         self, anchors: torch.Tensor, labels: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -43,7 +43,7 @@ class RoI:
             indices_true = torch.nonzero(anchors_bbox_map >= 0)
             bb_idx = anchors_bbox_map[indices_true]
             class_labels[indices_true] = label[bb_idx, 0].long() + 1
-            assigned_bb[indices_true] = label[bb_idx, 1:].type(dtype=torch.float32)
+            assigned_bb[indices_true] = label[bb_idx, 1:]
             # Offset transformation
             offset = box.offset_boxes(anchors, assigned_bb) * bbox_mask
             batch_offset.append(offset)

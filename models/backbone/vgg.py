@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from typing import cast, Dict, List, Union
 import norse.torch as snn
-
+from models.modules import SumPool2d
 
 class VGGBackbone(nn.Module):
     # fmt: off
@@ -11,8 +11,8 @@ class VGGBackbone(nn.Module):
         "s13": [64, 64, "M", 128, 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
         "s16": [64, 64, "M", 128, 128, "M", 256, 256, 256, "M", 512, 512, 512, "M", 512, 512, 512, "M"],
         "s19": [64, 64, "M", 128, 128, "M", 256, 256, 256, 256, "M", 512, 512, 512, 512, "M", 512, 512, 512, 512, "M"],
-        "6": [32, "A", 64, "A", 128, 128, "A", 256, 256, "A"],
-        "3": [8, "A", 32, "A", 64, "A"]
+        "6": [32, "S", 64, "S", 128, 128, "S", 256, 256, "S"],
+        "3": [8, "S", 32, "S", 64, "S"]
     }
     # fmt: on
 
@@ -56,6 +56,8 @@ class VGGBackbone(nn.Module):
                 layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
             elif v == "A":
                 layers += [nn.AvgPool2d(kernel_size=2, stride=2)]
+            elif v == "S":
+                layers += [SumPool2d(kernel_size=2, stride=2)]
             else:
                 v = cast(int, v)
                 conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)

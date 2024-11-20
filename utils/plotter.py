@@ -17,6 +17,7 @@ class Plotter:
             (255, 255, 0),
             (255, 0, 255),
             (0, 255, 255),
+            (0, 128, 128),
         ]
         self.interval = interval
         self.columns = columns
@@ -188,7 +189,7 @@ class Plotter:
                 image,
                 start_point,
                 end_point,
-                color=self.colors[box[0]],
+                color=self.colors[box[0] % len(self.colors)],
                 thickness=1,
             )
             cv2.putText(
