@@ -23,5 +23,11 @@ if __name__ == "__main__":
                 model_loader.get("NumTrainRounds"),
                 model_loader.get("NumRoundEpoch"),
             )
+        case 3:
+            data_loader = data.test_dataloader()
+            dataloader_iter = iter(data_loader)
+            tensors, targets = next(dataloader_iter)
+            plotter = model_loader.get_plotter(data)
+            plotter.display(tensors, None, targets)
         case _:
             raise RuntimeError("Wrong mode!")
