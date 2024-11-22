@@ -126,7 +126,7 @@ class ModelLoader:
             f"\t\tBatchNorm: {self.get("BatchNorm")}\n"
             f"\t\tInitWeights: {self.get("InitWeights")}\n"
             f"\t\tDropout: {self.get("Dropout")}\n"
-            f"\t\LossRatio: {self.get("LossRatio")}\n"
+            f"\t\tLossRatio: {self.get("LossRatio")}\n"
             f"\tDataset: {self.get("Dataset")}\n"
             f"\t\tBatchSize: {self.get("BatchSize")}\n"
             f"\t\tTimeStep: {self.get("TimeStep")}\n"

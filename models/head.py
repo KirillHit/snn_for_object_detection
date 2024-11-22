@@ -33,7 +33,7 @@ class Head(nn.Module):
             setattr(
                 self,
                 f"decoder_{idx}",
-                Decoder(channels, num_box_out, num_class_out, 3),
+                Decoder(channels, num_box_out, num_class_out, 3, True),
             )
 
     def forward(

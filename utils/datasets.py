@@ -337,7 +337,7 @@ class MTPropheseeDataset(PropheseeDatasetBase):
 
 
 class STPropheseeDataset(PropheseeDatasetBase):
-    events_threshold = 1000
+    events_threshold = 2000
     
     def __init__(
         self,

@@ -77,7 +77,7 @@ class Trainer:
 
     def fit(self, num_epochs=1):
         self.stop_flag = False
-        for self.epoch in tqdm(range(num_epochs), leave=False, desc="Epoch"):
+        for self.epoch in tqdm(range(num_epochs), leave=False, desc="[Epoch]"):
             if self.stop_flag:
                 return
             self.fit_epoch()
@@ -85,7 +85,7 @@ class Trainer:
 
     def fit_epoch(self):
         self.model.train()
-        for _ in tqdm(range(self.epoch_size), leave=False, desc="Train: "):
+        for _ in (pbar := tqdm(range(self.epoch_size), leave=False, desc="[Train]")):
             if self.stop_flag:
                 return
             batch = next(self.train_dataloader_iter)
@@ -95,11 +95,12 @@ class Trainer:
                 train_loss.backward()
                 self.optim.step()
                 self.plot(train_loss, split="train")
+                pbar.set_description("[Train] Loss %.4f / Progress " % train_loss)
             self.train_batch_idx += 1
 
     def test(self):
         self.model.eval()
-        for _ in tqdm(range(self.epoch_size), leave=False, desc="Test: "):
+        for _ in tqdm(range(self.epoch_size), leave=False, desc="[Test]"):
             if self.stop_flag:
                 return
             batch = next(self.test_dataloader_iter)
@@ -111,7 +112,7 @@ class Trainer:
     def validation(self):
         self.stop_flag = False
         self.model.eval()
-        for _ in tqdm(range(self.epoch_size), leave=False, desc="Val: "):
+        for _ in tqdm(range(self.epoch_size), leave=False, desc="[Val] "):
             if self.stop_flag:
                 return
             batch = next(self.val_dataloader_iter)

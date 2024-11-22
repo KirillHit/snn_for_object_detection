@@ -1,20 +1,20 @@
 ### Basic
-Mode: 1               # 1 - interactive, 2 - train
+Mode: 1               # 1 - interactive, 2 - train, 3 - test dataloader
 
 ### Train mode
 LoadParameters: false
-NumTrainRounds: -1    # -1 - infinite
-NumRoundEpoch: 60
+NumTrainRounds: 10    # -1 - infinite
+NumRoundEpoch: 15
 
 ### Model parameters
 BackboneName: vgg
 BackboneVersion: 3
 NeckName: ssd
-NeckVersion: 3 
+NeckVersion: 3
 BatchNorm: true 
 InitWeights: true
 Dropout: false
-LossRatio: 0.08
+LossRatio: 0.07
 
 ### Dataset parameters
 Dataset: gen1
