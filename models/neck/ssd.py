@@ -87,6 +87,7 @@ class SSDNeck(nn.Module):
                     v,
                     kernel_size=conv_kernel,
                     padding=int(conv_kernel == 3),
+                    bias=False,
                 )
                 if batch_norm:
                     layers += [

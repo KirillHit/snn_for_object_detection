@@ -86,18 +86,22 @@ class Decoder(nn.Module):
     ) -> None:
         assert kernel_size % 2 == 1, "Kernel size must be odd"
         super().__init__()
-        
+
         self.conv2d = nn.Conv2d(
-            in_channels, in_channels, kernel_size=kernel_size, padding=kernel_size // 2
+            in_channels,
+            in_channels,
+            kernel_size=kernel_size,
+            padding=kernel_size // 2,
+            bias=False,
         )
-        
+
         li_params = LIParameters()
         if train_li_layer:
             self.li_grad_params = torch.nn.Parameter(li_params.tau_mem_inv)
         self.li = snn.LICell(p=li_params)
-        
-        self.box_conv = nn.Conv2d(in_channels, box_out, kernel_size=1)
-        self.cls_conv = nn.Conv2d(in_channels, cls_out, kernel_size=1)
+
+        self.box_conv = nn.Conv2d(in_channels, box_out, kernel_size=1, bias=False)
+        self.cls_conv = nn.Conv2d(in_channels, cls_out, kernel_size=1, bias=False)
 
     def forward(self, X: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """

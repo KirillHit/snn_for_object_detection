@@ -54,7 +54,8 @@ class Plotter:
             prep_target = self.prepare_targets(target, h, w)
         if predictions is not None:
             prep_preds = self.prepare_preds(predictions, h, w)
-        while self.show_video(con_video, prep_preds, prep_target):
+        boxed_video = self.apply_boxes(con_video, prep_preds, prep_target)
+        while self.show_video(boxed_video):
             cmd = cv2.waitKey()
             if cmd == ord("q"):
                 cv2.destroyWindow("Res")
@@ -147,10 +148,27 @@ class Plotter:
 
     def show_video(
         self,
+        video: np.ndarray
+    ):
+        """Playing video
+        Args:
+            video (np.ndarray): Shape [ts, h, w, c]
+        Returns:
+            bool: Returns false if "q" is pressed
+        """
+        for img in video:
+            cv2.imshow("Res", img)
+            if cv2.waitKey(self.interval) == ord("q"):
+                cv2.destroyWindow("Res")
+                return False
+        return True
+    
+    def apply_boxes(
+        self,
         video: np.ndarray,
         preds: Optional[torch.Tensor],
         target: Optional[torch.Tensor],
-    ):
+    ) -> np.ndarray:
         """Playing video
         Args:
             video (np.ndarray): Shape [ts, h, w, c]
@@ -161,18 +179,18 @@ class Plotter:
         Returns:
             bool: Returns false if "q" is pressed
         """
-        for ts, capture in enumerate(video):
+        if (target is None) and (preds is None):
+            return video
+        boxed_video = np.empty_like(video, dtype=video.dtype)
+        for ts, img in enumerate(video):
             if target is not None:
-                capture = self.draw_target_boxes(capture, target[target[:, 0] == ts])
+                self.draw_target_boxes(img, target[target[:, 0] == ts])
             if preds is not None:
-                capture = self.draw_preds_box(capture, preds[ts])
-            cv2.imshow("Res", capture)
-            if cv2.waitKey(self.interval) == ord("q"):
-                cv2.destroyWindow("Res")
-                return False
-        return True
+                self.draw_preds_box(img, preds[ts])
+            boxed_video[ts] = img
+        return boxed_video
 
-    def draw_preds_box(self, image: np.ndarray, preds: torch.Tensor) -> np.ndarray:
+    def draw_preds_box(self, image: np.ndarray, preds: torch.Tensor) -> None:
         """Draw bounding boxes for preds
         Args:
             image (np.ndarray): Shape [h, w, c]
@@ -201,9 +219,8 @@ class Plotter:
                 thickness=2,
                 color=(255, 0, 0),
             )
-        return image
 
-    def draw_target_boxes(self, image: np.ndarray, target: torch.Tensor) -> np.ndarray:
+    def draw_target_boxes(self, image: np.ndarray, target: torch.Tensor) -> None:
         """Draw bounding boxes for targets
         Args:
             image (np.ndarray): Image for drawing
@@ -231,4 +248,3 @@ class Plotter:
                 thickness=2,
                 color=(255, 0, 0),
             )
-        return image

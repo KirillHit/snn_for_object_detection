@@ -4,6 +4,7 @@ from typing import cast, Dict, List, Union
 import norse.torch as snn
 from models.modules import SumPool2d
 
+
 class VGGBackbone(nn.Module):
     # fmt: off
     cfgs: Dict[str, List[Union[str, int]]] = {
@@ -60,7 +61,7 @@ class VGGBackbone(nn.Module):
                 layers += [SumPool2d(kernel_size=2, stride=2)]
             else:
                 v = cast(int, v)
-                conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
+                conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1, bias=False)
                 if batch_norm:
                     layers += [
                         conv2d,
