@@ -19,7 +19,7 @@ class SSDNeck(nn.Module):
     cfgs: Dict[str, List[Union[str, int]]] = {
         "s10": ["R", "M", 1024, "O", 1024, "R", "M", "O", 256, 512, "R", "M", "O",
                 128, 256, "R", "M", "O", 128, 256, "R", "M", "O", 128, 256, "R"], # Standard head. See https://arxiv.org/pdf/1512.02325
-        "6": ["R", 512, "O", 512, "S", 512, "O", 512, "S", "R", 512, "O", 512, "S", "R"],
+        "6": ["R", 512, "O", 512, "S", "R", 512, "O", 512, "S", "R", 512, "O", 512, "S", "R"],
         "3": ["R", 128, "S", "R", 128, "S", "R", 128, "S", "R"],
     }
     # fmt: on
@@ -48,7 +48,7 @@ class SSDNeck(nn.Module):
         if init_weights:
             for m in self.modules():
                 if isinstance(m, nn.Conv2d):
-                    nn.init.normal_(m.weight, mean=0.5, std=0.1)
+                    nn.init.normal_(m.weight, mean=0.9, std=0.1)
                     if m.bias is not None:
                         nn.init.constant_(m.bias, 0)
                 elif isinstance(m, nn.BatchNorm2d):

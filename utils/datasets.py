@@ -175,7 +175,7 @@ class PropheseeDatasetBase(IterableDataset):
 
         self.gt_files, self.data_files = gt_files, data_files
         self.num_load_file = num_load_file
-        self.time_step =  time_step
+        self.time_step = time_step
         self.time_step_us = self.time_step * 1000
 
         match name:
@@ -227,6 +227,8 @@ class PropheseeDatasetBase(IterableDataset):
         Returns:
             List[torch.Tensor]: Labels in torch format
         """
+        for gt_boxes in labels:
+            gt_boxes[:]["x"].clip(0, self.width - 1)
         return [
             torch.from_numpy(
                 np.array(
@@ -337,8 +339,8 @@ class MTPropheseeDataset(PropheseeDatasetBase):
 
 
 class STPropheseeDataset(PropheseeDatasetBase):
-    events_threshold = 2000
-    
+    events_threshold = 4000
+
     def __init__(
         self,
         gt_files: List[str],
@@ -405,14 +407,13 @@ class STPropheseeDataset(PropheseeDatasetBase):
             dtype=torch.float32,
         )
         # Events format ('t' [us], 'x', 'y', 'p' [1-positive/0-negative])
-        first_label_time_us = (labels[0, 0].item() * self.time_step_us)
+        first_label_time_us = labels[0, 0].item() * self.time_step_us
         first_event_time_us = first_label_time_us - (self.time_step_us * self.num_steps)
         events = events_loader.load_delta_t(first_label_time_us - start_time_us)
         events = events[events[:]["t"] >= first_event_time_us]
-        #tqdm.write(str(events.shape[0] // self.num_steps))
         if (events.shape[0] // self.num_steps) < self.events_threshold:
             return None, True
-        
+
         time_stamps = (events[:]["t"] - first_event_time_us) // self.time_step_us
 
         if not time_stamps.size:

@@ -114,11 +114,11 @@ class Plotter:
         """
         for batch_idx in range(predictions.shape[1]):
             predictions[:, batch_idx, :, [2, 4]] = (
-                predictions[:, batch_idx, :, [2, 4]] * wight
+                torch.clamp(predictions[:, batch_idx, :, [2, 4]], min=0.0, max=1.0) * wight
                 + (batch_idx % self.columns) * wight
             )
             predictions[:, batch_idx, :, [3, 5]] = (
-                predictions[:, batch_idx, :, [3, 5]] * hight
+                torch.clamp(predictions[:, batch_idx, :, [3, 5]], min=0.0, max=1.0) * hight
                 + (batch_idx // self.columns) * hight
             )
         predictions[..., 1] *= 100
