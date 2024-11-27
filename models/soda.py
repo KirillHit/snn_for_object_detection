@@ -17,12 +17,15 @@ class SODa(Module):
     Spike Object Detector.
     """
 
+    start_time = 0
+
     def __init__(
         self,
         backbone: Union[VGGBackbone],
         neck: Union[SSDNeck],
         num_classes: int,
         loss_ratio: int,
+        time_window: int = 0,
     ):
         super().__init__()
         self.loss_ratio = loss_ratio
@@ -30,6 +33,7 @@ class SODa(Module):
         self.neck_net = neck
         self.head_net = Head(num_classes, neck.out_shape)
         self.roi_blk = RoI(iou_threshold=0.3)
+        self.time_window = time_window
 
         self.cls_loss = nn.CrossEntropyLoss(reduction="none")
         self.box_loss = nn.L1Loss(reduction="none")
@@ -69,11 +73,21 @@ class SODa(Module):
         mask = class_labels.reshape(-1) > 0
         gt_loss = cls[mask].mean()
         background_loss = cls[~mask].mean()
-        
-        return gt_loss * self.loss_ratio + background_loss * (1 - self.loss_ratio) + bbox.mean()
+
+        return (
+            gt_loss * self.loss_ratio
+            + background_loss * (1 - self.loss_ratio)
+            + bbox.mean()
+        )
 
     def training_step(self, batch: tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
-        preds = self.forward(batch[0])
+        if self.time_window:
+            preds = self.forward(batch[0][self.start_time :])
+            self.start_time = torch.randint(
+                0, self.time_window, (1,), requires_grad=False, dtype=torch.uint32
+            )
+        else:
+            preds = self.forward(batch[0])
         loss = self.loss(preds, batch[1])
         return loss
 

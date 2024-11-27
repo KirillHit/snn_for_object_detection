@@ -74,6 +74,7 @@ class ModelLoader:
             neck_net,
             num_classes=num_classes,
             loss_ratio=self.get("LossRatio"),
+            time_window=self.get("TimeWindow"),
         )
         print(f"[INFO]: Number of model parameters: {p2v(model.parameters()).numel()}")
 
