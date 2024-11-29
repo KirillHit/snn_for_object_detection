@@ -1,4 +1,5 @@
-from .yolo import YOLO
-from .spike_yolo import SpikeYOLO
+from .soda import SODa
+from .backbone.vgg import VGGBackbone
+from .neck.ssd import SSDNeck
 
-__all__ = "YOLO", "SpikeYOLO"
+__all__ = "SODa", "VGGBackbone", "SSDNeck"
