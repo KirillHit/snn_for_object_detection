@@ -3,7 +3,7 @@ Mode: 1               # 1 - interactive, 2 - train, 3 - test dataloader
 
 ### Train mode
 LoadParameters: false
-NumTrainRounds: 12    # -1 - infiniteq
+NumTrainRounds: 12    # -1 - infinite
 NumRoundEpoch: 15
 
 ### Model parameters
@@ -11,17 +11,17 @@ BackboneName: vgg
 BackboneVersion: 3
 NeckName: ssd
 NeckVersion: 3
-BatchNorm: false 
+BatchNorm: false
 InitWeights: false
 Dropout: false
-LossRatio: 0.07
+LossRatio: 0.06
 
 ### Dataset parameters
 Dataset: gen1
 # Train dataset
-BatchSize: 16
+BatchSize: 4
 TimeStep: 16
-NumSteps: 32
+NumSteps: 128
 TimeWindow: 16
 NumLoadFile: 8
 NumWorkers: 4
@@ -37,8 +37,8 @@ Display: True
 EveryN: 4
 
 ### Plotter parameters
-PlotterThreshold: 0.01
-PlotterColumns: 4
+PlotterThreshold: 0.9
+PlotterColumns: 2
 
 ### Trainer board parameters
 NumGpus: 1
