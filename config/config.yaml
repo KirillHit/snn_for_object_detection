@@ -11,7 +11,7 @@ BackboneName: vgg
 BackboneVersion: 3
 NeckName: ssd
 NeckVersion: 3
-BatchNorm: false
+BatchNorm: true
 InitWeights: false
 Dropout: false
 LossRatio: 0.06
@@ -19,9 +19,9 @@ LossRatio: 0.06
 ### Dataset parameters
 Dataset: gen1
 # Train dataset
-BatchSize: 4
+BatchSize: 16
 TimeStep: 16
-NumSteps: 128
+NumSteps: 32
 TimeWindow: 16
 NumLoadFile: 8
 NumWorkers: 4
@@ -37,8 +37,8 @@ Display: True
 EveryN: 4
 
 ### Plotter parameters
-PlotterThreshold: 0.9
-PlotterColumns: 2
+PlotterThreshold: 0.01
+PlotterColumns: 4
 
 ### Trainer board parameters
 NumGpus: 1
