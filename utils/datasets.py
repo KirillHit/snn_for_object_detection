@@ -330,7 +330,7 @@ class MTPropheseeDataset(PropheseeDatasetBase):
         ] = 1
 
         ############ Labels preparing ############
-        # Return labels format (ts, class id (0 car, 1 person), xlu, ylu, xrd, yrd)
+        # Return labels format (ts, class id, xlu, ylu, xrd, yrd)
         # Box update frequency 1-4 Hz
         labels = gt_boxes[(gt_boxes[:, 0] >= start_time) & (gt_boxes[:, 0] < end_time)]
         labels[:, 0] -= start_time
@@ -391,7 +391,7 @@ class STPropheseeDataset(PropheseeDatasetBase):
             return None, False
 
         ############ Labels preparing ############
-        # Return labels format (class id (0 car, 1 person), xlu, ylu, xrd, yrd)
+        # Return labels format (class id, xlu, ylu, xrd, yrd)
         # Box update frequency 1-4 Hz
         start_time_us = events_loader.current_time
         start_step = start_time_us // self.time_step_us

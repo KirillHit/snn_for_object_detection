@@ -76,7 +76,4 @@ def stack_data(batch):
         batch_first=True,
         padding_value=-1,
     )
-    # Return features format (ts, batch, p, h, w)
-    # Return targets format torch.Tensor.
-    # One targets contains (class id, xlu, ylu, xrd, yrd)
     return features, targets

@@ -129,3 +129,12 @@ class Trainer:
         if self.gpus:
             tensors = tensors.to(devices.cpu())
         plotter.display(tensors, predictions, targets)
+        
+    def eval_model(self):
+        tensors, targets = next(self.test_dataloader_iter)
+        if self.gpus:
+            tensors = tensors.to(self.gpus[0])
+        predictions = self.model.predict(tensors).to(devices.cpu())
+        if self.gpus:
+            tensors = tensors.to(devices.cpu())
+        
