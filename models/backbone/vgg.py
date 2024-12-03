@@ -63,9 +63,11 @@ class VGGBackbone(nn.Module):
                 v = cast(int, v)
                 conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1, bias=False)
                 if batch_norm:
+                    norm_layer = nn.BatchNorm2d(v)
+                    norm_layer.bias = None
                     layers += [
                         conv2d,
-                        nn.BatchNorm2d(v),
+                        norm_layer,
                         snn.LIFCell(),
                     ]
                 else:
