@@ -227,8 +227,6 @@ class PropheseeDatasetBase(IterableDataset):
         Returns:
             List[torch.Tensor]: Labels in torch format
         """
-        for gt_boxes in labels:
-            gt_boxes[:]["x"].clip(0, self.width - 1)
         return [
             torch.from_numpy(
                 np.array(
@@ -419,6 +417,9 @@ class STPropheseeDataset(PropheseeDatasetBase):
         if not time_stamps.size:
             return None, False
 
+        # For some reason in 1mpx there are events that go beyond the frame boundaries
+        events[:]["x"].clip(0, self.width - 1)
+        
         features[
             time_stamps[:],
             events[:]["p"].astype(np.uint32),

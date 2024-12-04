@@ -103,7 +103,7 @@ class Plotter:
         return np.stack(con_imgs)[..., None].repeat(3, axis=-1)
 
     def prepare_preds(
-        self, predictions: torch.Tensor, hight: int, wight: int
+        self, predictions: torch.Tensor, height: int, width: int
     ) -> torch.Tensor:
         """Changes the coordinates of the boxes according to the position of the batch
         Args:
@@ -115,17 +115,17 @@ class Plotter:
         """
         for batch_idx in range(predictions.shape[1]):
             predictions[:, batch_idx, :, [2, 4]] = (
-                torch.clamp(predictions[:, batch_idx, :, [2, 4]], min=0.0, max=1.0) * wight
-                + (batch_idx % self.columns) * wight
+                torch.clamp(predictions[:, batch_idx, :, [2, 4]], min=0.0, max=1.0) * width
+                + (batch_idx % self.columns) * width
             )
             predictions[:, batch_idx, :, [3, 5]] = (
-                torch.clamp(predictions[:, batch_idx, :, [3, 5]], min=0.0, max=1.0) * hight
-                + (batch_idx // self.columns) * hight
+                torch.clamp(predictions[:, batch_idx, :, [3, 5]], min=0.0, max=1.0) * height
+                + (batch_idx // self.columns) * height
             )
         predictions[..., 1] *= 100
         return torch.flatten(predictions, start_dim=1, end_dim=2).type(torch.int32)
 
-    def prepare_targets(self, target: List[torch.Tensor], hight: int, wight: int):
+    def prepare_targets(self, target: List[torch.Tensor], height: int, width: int):
         """Changes the coordinates of the boxes according to the position of the batch
         Args:
             target (List[torch.Tensor]): The length of the list is equal to the number of packs.
@@ -137,12 +137,12 @@ class Plotter:
         """
         for batch_idx, t_batch in enumerate(target):
             t_batch[:, [2, 4]] = (
-                torch.clamp(t_batch[:, [2, 4]], min=0.0, max=1.0) * wight
-                + (batch_idx % self.columns) * wight
+                torch.clamp(t_batch[:, [2, 4]], min=0.0, max=1.0) * width
+                + (batch_idx % self.columns) * width
             )
             t_batch[:, [3, 5]] = (
-                torch.clamp(t_batch[:, [3, 5]], min=0.0, max=1.0) * hight
-                + (batch_idx // self.columns) * hight
+                torch.clamp(t_batch[:, [3, 5]], min=0.0, max=1.0) * height
+                + (batch_idx // self.columns) * height
             )
         return torch.concatenate(target, dim=0).type(torch.int32)
 

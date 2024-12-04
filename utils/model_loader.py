@@ -12,7 +12,7 @@ class ModelLoader:
     def __init__(self, cfg_path="config/config.yaml"):
         with open(cfg_path, "r") as f:
             self.data = yaml.load(f, Loader=yaml.SafeLoader)
-        if self.get("Mode") == 2:
+        if self.get("Mode") != 1:
             self.data["Display"] = False
         self.print_info()
 
@@ -30,10 +30,10 @@ class ModelLoader:
         return utils.MTProphesee(
             self.get("Dataset"),
             batch_size=self.get("TestBatchSize"),
-            time_step=self.get("TestTimeStep"),
+            time_step=self.get("TimeStep"),
             num_steps=self.get("TestNumSteps"),
-            num_load_file=self.get("TestNumLoadFile"),
-            num_workers=self.get("TestNumWorkers"),
+            num_load_file=self.get("NumLoadFile"),
+            num_workers=self.get("NumWorkers"),
         )
 
     def get_model(self) -> engine.Module:
@@ -108,9 +108,12 @@ class ModelLoader:
         return utils.Plotter(
             threshold=self.get("PlotterThreshold"),
             labels=data.get_labels(),
-            interval=data.time_step,
+            interval=self.get("TimeStep"),
             columns=self.get("PlotterColumns"),
         )
+
+    def get_evaluate(self, data: engine.DataModule) -> utils.Plotter:
+        return utils.SODAeval(labelmap=data.get_labels())
 
     def get(self, str):
         return self.data[str]
