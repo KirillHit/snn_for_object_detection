@@ -1,10 +1,12 @@
 ### Basic
-Mode: 1               # 1 - interactive, 2 - train, 3 - test dataloader
+Mode: 3               # 1 - interactive, 2 - train, 3 - eval
 
 ### Train mode
-LoadParameters: false
-NumTrainRounds: 12    # -1 - infinite
+LoadParameters: true
+NumTrainRounds: -1    # -1 - infinite
 NumRoundEpoch: 15
+### Eval mode
+NumEvalRounds: 4
 
 ### Model parameters
 BackboneName: vgg
@@ -18,19 +20,16 @@ LossRatio: 0.06
 
 ### Dataset parameters
 Dataset: gen1
-# Train dataset
-BatchSize: 16
 TimeStep: 16
-NumSteps: 32
 TimeWindow: 16
 NumLoadFile: 8
 NumWorkers: 4
+# Train dataset
+BatchSize: 16
+NumSteps: 32
 # Test dataset
 TestBatchSize: 1
-TestTimeStep: 16
 TestNumSteps: 128
-TestNumLoadFile: 8
-TestNumWorkers: 4
 
 ### Progress board parameters
 Display: True

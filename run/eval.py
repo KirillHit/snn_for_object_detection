@@ -1,33 +1,25 @@
-
-
 import engine
-import time
+from tqdm import tqdm
+from utils.evaluate import SODAeval
 
 
-def train_spin(
+def eval_spin(
     model: engine.Module,
     trainer: engine.Trainer,
+    eval: SODAeval,
     params_file: str,
-    load_parameters=True,
-    num_train_rounds=-1,
-    num_round_epochs=60,
+    num_eval_rounds: int,
 ):
-    if load_parameters:
-        model.load_params(params_file)
-    idx = 1
-    valid = True
-    while valid and (num_train_rounds == -1 or idx <= num_train_rounds):
-        print(f"[INFO]: Starting round {idx}  of {num_round_epochs} epoch")
+    model.load_params(params_file)
+    for _ in tqdm(range(num_eval_rounds), leave=False, desc="[Eval]"):
         try:
-            trainer.fit(num_round_epochs)
+            trainer.eval_model(eval)
         except KeyboardInterrupt:
-            print("[INFO]: Training was stopped!")
-            valid = False
+            tqdm.write("[INFO]: Eval was stopped!")
+            break
         except Exception as exc:
-            print("Error description: ", exc)
-            print("[ERROR]: Training stopped due to unexpected error!")
-            valid = False
-        timestr = time.strftime("%Y%m%d-%H%M%S")
-        print(f"[INFO]: Round {idx} fineshed at " + timestr)
-        idx += 1
-    print("[INFO]: Training complete")
+            tqdm.write("Error description: ", exc)
+            tqdm.write("[ERROR]: Eval stopped due to unexpected error!")
+            break
+    eval.get_eval()
+    print("[INFO]: Eval complete")

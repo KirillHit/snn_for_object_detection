@@ -4,6 +4,7 @@ from engine.model import Module
 import utils.devices as devices
 from utils.progress_board import ProgressBoard
 from utils.plotter import Plotter
+from utils.evaluate import SODAeval
 from tqdm import tqdm
 
 
@@ -130,11 +131,12 @@ class Trainer:
             tensors = tensors.to(devices.cpu())
         plotter.display(tensors, predictions, targets)
         
-    def eval_model(self):
+    def eval_model(self, eval: SODAeval):
         tensors, targets = next(self.test_dataloader_iter)
         if self.gpus:
             tensors = tensors.to(self.gpus[0])
         predictions = self.model.predict(tensors).to(devices.cpu())
         if self.gpus:
             tensors = tensors.to(devices.cpu())
+        eval.add(targets, predictions[-1], tensors[-1])
         
