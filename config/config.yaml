@@ -1,8 +1,8 @@
 ### Basic
-Mode: 3               # 1 - interactive, 2 - train, 3 - eval
+Mode: 1               # 1 - interactive, 2 - train, 3 - eval
 
 ### Train mode
-LoadParameters: true
+LoadParameters: false
 NumTrainRounds: -1    # -1 - infinite
 NumRoundEpoch: 15
 ### Eval mode
@@ -16,7 +16,7 @@ NeckVersion: 3
 BatchNorm: true
 InitWeights: false
 Dropout: false
-LossRatio: 0.06
+LossRatio: 0.05
 
 ### Dataset parameters
 Dataset: gen1

@@ -12,15 +12,16 @@ class Head(nn.Module):
         super().__init__()
         self.num_classes = num_classes
 
-        sizes = (
-            [0.062, 0.078, 0.094],
-            [0.125, 0.156, 0.188],
-            [0.250, 0.312, 0.375],
-            [0.500, 0.625, 0.750],
+        max = 0.75
+        min = 0.06
+        size_per_pix = 3
+        sizes = torch.arange(
+            min, max, (max - min) / (len(in_shape) * size_per_pix), dtype=torch.float32
         )
-        ratios = (0.7, 1, 1.3)
+        sizes = sizes.reshape((-1, size_per_pix))
+        ratios = torch.tensor((0.5, 1.0, 2), dtype=torch.float32)
 
-        num_anchors = len(sizes[0]) + len(ratios) - 1
+        num_anchors = size_per_pix * len(ratios)
         num_class_out = num_anchors * (self.num_classes + 1)
         num_box_out = num_anchors * 4
 

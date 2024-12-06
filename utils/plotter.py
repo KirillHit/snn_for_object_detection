@@ -209,15 +209,17 @@ class Plotter:
                 end_point,
                 color=self.colors[box[0] % len(self.colors)],
                 thickness=1,
+                lineType=cv2.LINE_AA,
             )
             cv2.putText(
                 image,
                 text="%.2f %s" % (box[1].item() / 100, self.labels[box[0]]),
                 org=(box[2].item(), box[3].item() - 4),
                 fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale=0.5,
-                thickness=2,
+                fontScale=0.4,
+                thickness=1,
                 color=(255, 0, 0),
+                lineType=cv2.LINE_AA,
             )
 
     def draw_target_boxes(self, image: np.ndarray, target: torch.Tensor) -> None:
@@ -236,8 +238,9 @@ class Plotter:
                 image,
                 start_point,
                 end_point,
-                color=self.colors[box[1] % len(self.colors)],
+                color= [c / 2 for c in self.colors[box[1] % len(self.colors)]],
                 thickness=2,
+                lineType=cv2.LINE_AA,
             )
             cv2.putText(
                 image,
@@ -247,4 +250,5 @@ class Plotter:
                 fontScale=0.5,
                 thickness=2,
                 color=(255, 0, 0),
+                lineType=cv2.LINE_AA,
             )

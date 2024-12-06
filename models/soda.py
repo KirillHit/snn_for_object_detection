@@ -32,7 +32,7 @@ class SODa(Module):
         self.base_net = backbone
         self.neck_net = neck
         self.head_net = Head(num_classes, neck.out_shape)
-        self.roi_blk = RoI(iou_threshold=0.4)
+        self.roi_blk = RoI(iou_threshold=0.5)
         self.time_window = time_window
 
         self.cls_loss = nn.CrossEntropyLoss(reduction="none")
