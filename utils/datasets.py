@@ -418,7 +418,7 @@ class STPropheseeDataset(PropheseeDatasetBase):
             return None, False
 
         # For some reason in 1mpx there are events that go beyond the frame boundaries
-        events[:]["x"].clip(0, self.width - 1)
+        events[:]["x"] = events[:]["x"].clip(0, self.width - 1)
         
         features[
             time_stamps[:],
