@@ -3,20 +3,20 @@ Mode: 1               # 1 - interactive, 2 - train, 3 - eval
 
 ### Train mode
 LoadParameters: false
-NumTrainRounds: -1    # -1 - infinite
+NumTrainRounds: 8     # -1 - infinite
 NumRoundEpoch: 15
 ### Eval mode
-NumEvalRounds: 4
+NumEvalRounds: 10
 
 ### Model parameters
-BackboneName: vgg
-BackboneVersion: 3
+BackboneName: resnet     # vgg, resnet
+BackboneVersion: m
 NeckName: ssd
 NeckVersion: 3
 BatchNorm: true
 InitWeights: false
 Dropout: false
-LossRatio: 0.05
+LossRatio: 0.08
 
 ### Dataset parameters
 Dataset: gen1
@@ -25,7 +25,7 @@ TimeWindow: 16
 NumLoadFile: 8
 NumWorkers: 4
 # Train dataset
-BatchSize: 16
+BatchSize: 2
 NumSteps: 32
 # Test dataset
 TestBatchSize: 1

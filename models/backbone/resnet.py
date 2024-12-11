@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import norse.torch as snn
 from torch import Tensor
-from models.modules import SumPool2d
+from models.modules import SumPool2d, BatchNorm2dNoBias
 
 
 def conv3x3(
@@ -46,7 +46,7 @@ class BasicBlock(nn.Module):
     ) -> None:
         super().__init__()
         if norm_layer is None:
-            norm_layer = nn.BatchNorm2d
+            norm_layer = BatchNorm2dNoBias
         if groups != 1 or base_width != 64:
             raise ValueError("BasicBlock only supports groups=1 and base_width=64")
         if dilation > 1:
@@ -66,7 +66,7 @@ class BasicBlock(nn.Module):
     ) -> Tuple[Tensor, Tuple[Tensor, Tensor]]:
         if state is None:
             state = (None, None)
-        new_state = (None, None)
+        new_state = [None, None]
         identity = x
 
         out = self.conv1(x)
@@ -107,7 +107,7 @@ class Bottleneck(nn.Module):
     ) -> None:
         super().__init__()
         if norm_layer is None:
-            norm_layer = nn.BatchNorm2d
+            norm_layer = BatchNorm2dNoBias
         width = int(planes * (base_width / 64.0)) * groups
         # Both self.conv2 and self.downsample layers downsample the input when stride != 1
         self.conv1 = conv1x1(inplanes, width)
@@ -129,7 +129,7 @@ class Bottleneck(nn.Module):
     ) -> Tuple[Tensor, Tuple[Tensor, Tensor, Tensor]]:
         if state is None:
             state = (None, None, None)
-        new_state = (None, None, None)
+        new_state = [None, None, None]
         identity = x
 
         out = self.conv1(x)
@@ -153,35 +153,39 @@ class Bottleneck(nn.Module):
 
 
 class ResNetBackbone(nn.Module):
-    # fmt: off
     # Config contains [block, layers, groups, width_per_group]
     cfgs: Dict[str, tuple[nn.Module, List[int], int, int]] = {
-        "18": (BasicBlock, [2, 2, 2, 2], 1, 64),            # resnet
+        "m": (Bottleneck, [1, 1, 1, 1], 1, 64),
+        "18": (BasicBlock, [2, 2, 2, 2], 1, 64),  # resnet
         "34": (BasicBlock, [3, 4, 6, 3], 1, 64),
         "50": (Bottleneck, [3, 4, 6, 3], 1, 64),
         "101": (Bottleneck, [3, 4, 23, 3], 1, 64),
         "152": (Bottleneck, [3, 8, 36, 3], 1, 64),
-        "50_32x4d": (Bottleneck, [3, 4, 6, 3], 32, 4),      # resnext 
+        "50_32x4d": (Bottleneck, [3, 4, 6, 3], 32, 4),  # resnext
         "101_32x8d": (Bottleneck, [3, 4, 23, 3], 32, 8),
         "101_64x4d": (Bottleneck, [3, 4, 23, 3], 64, 4),
-        "50_2": (Bottleneck, [3, 4, 6, 3], 1, 64 * 2),         # wide_resnet
+        "50_2": (Bottleneck, [3, 4, 6, 3], 1, 64 * 2),  # wide_resnet
         "101_2": (Bottleneck, [3, 4, 23, 3], 1, 64 * 2),
     }
-    # fmt: on
+    
+    out_channels: int = 0
 
     def __init__(
         self,
-        type: str,
-        num_classes: int = 1000,
+        cfg: str,
+        in_channels=2,
+        init_weights=False,
+        batch_norm=False,
         zero_init_residual: bool = False,
         replace_stride_with_dilation: Optional[List[bool]] = None,
-        norm_layer: Optional[Callable[..., nn.Module]] = None,
+        norm_layer: Optional[Callable[..., nn.Module]] = BatchNorm2dNoBias,
     ) -> None:
         super().__init__()
-        block, layers, groups, width_per_group = self.cfgs[type]
+        block, layers, groups, width_per_group = self.cfgs[cfg]
+        self.out_channels = 512 * block.expansion
 
-        if norm_layer is None:
-            norm_layer = nn.BatchNorm2d
+        if not batch_norm:
+            norm_layer = nn.Identity
         self._norm_layer = norm_layer
 
         self.inplanes = 64
@@ -198,7 +202,7 @@ class ResNetBackbone(nn.Module):
         self.groups = groups
         self.base_width = width_per_group
         self.conv1 = nn.Conv2d(
-            3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False
+            in_channels, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False
         )
         self.bn1 = norm_layer(self.inplanes)
         self.lif = snn.LIFCell()
@@ -208,20 +212,21 @@ class ResNetBackbone(nn.Module):
             block, 128, layers[1], stride=2, dilate=replace_stride_with_dilation[0]
         )
         self.layer3 = self._make_layer(
-            block, 256, layers[2], stride=2, dilate=replace_stride_with_dilation[1]
+            block, 256, layers[2], stride=1, dilate=replace_stride_with_dilation[1]
         )
         self.layer4 = self._make_layer(
-            block, 512, layers[3], stride=2, dilate=replace_stride_with_dilation[2]
+            block, 512, layers[3], stride=1, dilate=replace_stride_with_dilation[2]
         )
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(512 * block.expansion, num_classes)
 
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
-            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
+        if init_weights:
+            for m in self.modules():
+                if isinstance(m, nn.Conv2d):
+                    nn.init.kaiming_normal_(
+                        m.weight, mode="fan_out", nonlinearity="relu"
+                    )
+                elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+                    nn.init.constant_(m.weight, 1)
+                    nn.init.constant_(m.bias, 0)
 
         # Zero-initialize the last BN in each residual branch,
         # so that the residual branch starts with zeros, and each residual block behaves like an identity.
@@ -286,14 +291,11 @@ class ResNetBackbone(nn.Module):
     ) -> Tuple[Tensor, List[Tensor]]:
         if state is None:
             state = [None] * len(layer)
-        new_state = []
-        spikes = []
-        out = x
+        new_state = [None] * len(layer)
+        
         for idx, block in enumerate(layer):
-            out, state = block(out, state[idx])
-            spikes.append(out)
-            new_state.append(state)
-        return torch.stack(spikes), new_state
+            x, new_state[idx] = block(x, state[idx])
+        return x, new_state
 
     def _forward_impl(self, X: Tensor) -> Tensor:
         # See note [TorchScript super()]
@@ -310,7 +312,6 @@ class ResNetBackbone(nn.Module):
             x, s3 = self._process_layer(x, self.layer3, s3)
             x, s4 = self._process_layer(x, self.layer4, s4)
 
-            x = self.avgpool(x)
             spikes.append(x)
 
         return torch.stack(spikes)

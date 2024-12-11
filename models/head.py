@@ -13,7 +13,7 @@ class Head(nn.Module):
         self.num_classes = num_classes
 
         max = 0.75
-        min = 0.06
+        min = 0.08
         size_per_pix = 3
         sizes = torch.arange(
             min, max, (max - min) / (len(in_shape) * size_per_pix), dtype=torch.float32

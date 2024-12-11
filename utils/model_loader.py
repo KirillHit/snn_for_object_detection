@@ -40,6 +40,8 @@ class ModelLoader:
         match self.get("BackboneName"):
             case "vgg":
                 backbone = models.VGGBackbone
+            case "resnet":
+                backbone = models.ResNetBackbone
             case _:
                 raise RuntimeError("Wrong backbone name")
         match self.get("NeckName"):
@@ -50,6 +52,7 @@ class ModelLoader:
 
         backbone_net = backbone(
             str(self.get("BackboneVersion")),
+            in_channels=2,
             batch_norm=self.get("BatchNorm"),
             init_weights=self.get("InitWeights"),
         )
