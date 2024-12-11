@@ -13,7 +13,8 @@ class VGGBackbone(nn.Module):
         "s16": [64, 64, "M", 128, 128, "M", 256, 256, 256, "M", 512, 512, 512, "M", 512, 512, 512, "M"],
         "s19": [64, 64, "M", 128, 128, "M", 256, 256, 256, 256, "M", 512, 512, 512, 512, "M", 512, 512, 512, 512, "M"],
         "6": [16, "S", 64, "S", 128, "S"],
-        "3": [8, "S", 32, "S", 64, "S"]
+        "3": [8, "S", 32, "S", 64, "S"],
+        "m3": ["S", "S", 8, "S", 32, "S", 64, "S"]
     }
     # fmt: on
 
@@ -21,21 +22,21 @@ class VGGBackbone(nn.Module):
 
     def __init__(
         self,
-        layers: str,
+        cfg: str,
         in_channels=2,
         init_weights=True,
         batch_norm=False,
     ) -> None:
         """
         Args:
-            layers (str): s11, s13, s16, s19, 6 available
+            cfg (str): s11, s13, s16, s19, 6 available
             in_channels (int, optional): Defaults to 2.
             init_weights (bool, optional): Defaults to True.
             batch_norm (bool, optional): Defaults to False.
         """
         super().__init__()
 
-        self.make_layers(self.cfgs[layers], batch_norm, in_channels)
+        self.make_layers(self.cfgs[cfg], batch_norm, in_channels)
 
         if init_weights:
             for m in self.modules():
@@ -45,7 +46,6 @@ class VGGBackbone(nn.Module):
                         nn.init.constant_(m.bias, 0)
                 elif isinstance(m, nn.BatchNorm2d):
                     nn.init.constant_(m.weight, 1)
-                    nn.init.constant_(m.bias, 0)
 
     def make_layers(
         self, cfg: List[Union[str, int]], batch_norm: bool, in_channels: int

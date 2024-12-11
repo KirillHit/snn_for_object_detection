@@ -247,8 +247,8 @@ class Plotter:
                 text=self.labels[box[1]],
                 org=(box[2].item(), box[3].item() - 4),
                 fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale=0.5,
-                thickness=2,
-                color=(255, 0, 0),
+                fontScale=0.4,
+                thickness=1,
+                color=(0, 60, 0),
                 lineType=cv2.LINE_AA,
             )
