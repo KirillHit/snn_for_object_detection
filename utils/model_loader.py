@@ -37,31 +37,15 @@ class ModelLoader:
         )
 
     def get_model(self) -> engine.Module:
-        match self.get("BackboneName"):
-            case "vgg":
-                backbone = models.VGGBackbone
-            case "resnet":
-                backbone = models.ResNetBackbone
-            case _:
-                raise RuntimeError("Wrong backbone name")
-        match self.get("NeckName"):
-            case "ssd":
-                neck = models.SSDNeck
-            case _:
-                raise RuntimeError("Wrong neck name")
-
-        backbone_net = backbone(
-            str(self.get("BackboneVersion")),
+        backbone_net = models.BackboneGen(
+            str(self.get("Backbone")),
             in_channels=2,
-            batch_norm=self.get("BatchNorm"),
             init_weights=self.get("InitWeights"),
         )
-        neck_net = neck(
-            str(self.get("NeckVersion")),
+        neck_net = models.NeckGen(
+            str(self.get("Neck")),
             backbone_net.out_channels,
-            batch_norm=self.get("BatchNorm"),
             init_weights=self.get("InitWeights"),
-            dropout=self.get("Dropout"),
         )
 
         match self.get("Dataset"):
@@ -95,9 +79,7 @@ class ModelLoader:
 
     def get_params_file_name(self) -> str:
         return (
-            f"{self.get("BackboneName")}{self.get("BackboneVersion")}-"
-            f"{self.get("NeckName")}{self.get("NeckVersion")}-"
-            f"{self.get("Dataset")}"
+            f"{self.get("Backbone")}-" f"{self.get("Neck")}-" f"{self.get("Dataset")}"
         )
 
     def get_trainer(self):
@@ -128,11 +110,9 @@ class ModelLoader:
             f"\tNumTrainRounds:{self.get("NumTrainRounds")}\n"
             f"\tNumRoundEpoch:{self.get("NumRoundEpoch")}\n"
             "\tModel architecture:\n"
-            f"\t\tBackbone: {self.get("BackboneName")}{self.get("BackboneVersion")}\n"
-            f"\t\tNeck: {self.get("NeckName")}{self.get("NeckVersion")}\n"
-            f"\t\tBatchNorm: {self.get("BatchNorm")}\n"
+            f"\t\tBackbone: {self.get("Backbone")}\n"
+            f"\t\tNeck: {self.get("Neck")}\n"
             f"\t\tInitWeights: {self.get("InitWeights")}\n"
-            f"\t\tDropout: {self.get("Dropout")}\n"
             f"\t\tLossRatio: {self.get("LossRatio")}\n"
             f"\tDataset: {self.get("Dataset")}\n"
             f"\t\tBatchSize: {self.get("BatchSize")}\n"

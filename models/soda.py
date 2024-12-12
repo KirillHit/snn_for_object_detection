@@ -1,14 +1,13 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
-from typing import Union
 
 from engine.model import Module
 from utils.roi import RoI
 import utils.box as box
 
-from .backbone.vgg import VGGBackbone
-from .neck.ssd import SSDNeck
+from .backbone import BackboneGen
+from .neck import NeckGen
 from .head import Head
 
 
@@ -21,8 +20,8 @@ class SODa(Module):
 
     def __init__(
         self,
-        backbone: Union[VGGBackbone],
-        neck: Union[SSDNeck],
+        backbone: BackboneGen,
+        neck: NeckGen,
         num_classes: int,
         loss_ratio: int,
         time_window: int = 0,
