@@ -9,14 +9,10 @@ NumRoundEpoch: 15
 NumEvalRounds: 10
 
 ### Model parameters
-BackboneName: resnet     # vgg, resnet
-BackboneVersion: m
-NeckName: ssd
-NeckVersion: 3
-BatchNorm: true
+Backbone: res5
+Neck: ssd3
 InitWeights: false
-Dropout: false
-LossRatio: 0.08
+LossRatio: 0.06
 
 ### Dataset parameters
 Dataset: gen1
@@ -25,7 +21,7 @@ TimeWindow: 16
 NumLoadFile: 8
 NumWorkers: 4
 # Train dataset
-BatchSize: 2
+BatchSize: 4
 NumSteps: 32
 # Test dataset
 TestBatchSize: 1
