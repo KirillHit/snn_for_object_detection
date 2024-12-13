@@ -22,7 +22,7 @@ class SODa(Module):
         self,
         backbone: BackboneGen,
         neck: NeckGen,
-        num_classes: int,
+        head: Head,
         loss_ratio: int,
         time_window: int = 0,
     ):
@@ -30,7 +30,7 @@ class SODa(Module):
         self.loss_ratio = loss_ratio
         self.base_net = backbone
         self.neck_net = neck
-        self.head_net = Head(num_classes, neck.out_shape)
+        self.head_net = head
         self.roi_blk = RoI(iou_threshold=0.5)
         self.time_window = time_window
 

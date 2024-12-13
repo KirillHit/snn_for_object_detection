@@ -69,7 +69,7 @@ def resnet() -> Dict[str, ListGen]:
     # fmt: off
     cfgs: Dict[str, ListGen] = {
         "res5": [Conv(32, 7), Norm(), LIF(), Pool("S"), res_block(64, 5), res_block(64),
-                 Pool("S"), res_block(128), Pool("S")],
+                 Pool("S"), res_block(128)],
     }
     # fmt: on
     return cfgs

@@ -36,7 +36,7 @@ class ModelLoader:
             num_workers=self.get("NumWorkers"),
         )
 
-    def get_model(self) -> engine.Module:
+    def get_model(self, data: engine.DataModule) -> engine.Module:
         backbone_net = models.BackboneGen(
             str(self.get("Backbone")),
             in_channels=2,
@@ -47,19 +47,17 @@ class ModelLoader:
             backbone_net.out_channels,
             init_weights=self.get("InitWeights"),
         )
-
-        match self.get("Dataset"):
-            case "gen1":
-                num_classes = 2
-            case "1mpx":
-                num_classes = 7
-            case _:
-                raise RuntimeError("Wrong dataset name")
+        head_net = models.Head(
+            self.get("Head"),
+            len(data.get_labels()),
+            neck_net.out_shape,
+            self.get("InitWeights"),
+        )
 
         model = models.SODa(
             backbone_net,
             neck_net,
-            num_classes=num_classes,
+            head_net,
             loss_ratio=self.get("LossRatio"),
             time_window=self.get("TimeWindow"),
         )
@@ -112,6 +110,7 @@ class ModelLoader:
             "\tModel architecture:\n"
             f"\t\tBackbone: {self.get("Backbone")}\n"
             f"\t\tNeck: {self.get("Neck")}\n"
+            f"\t\tHead: {self.get("Head")}\n"
             f"\t\tInitWeights: {self.get("InitWeights")}\n"
             f"\t\tLossRatio: {self.get("LossRatio")}\n"
             f"\tDataset: {self.get("Dataset")}\n"

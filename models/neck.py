@@ -9,15 +9,26 @@ from models.modules import *
 
 
 class NeckGen(ModelGen):
-    out_shape: List[int] = []
-    
-    def __init__(self, cfg, in_channels=2, init_weights=False):
+    out_shape: List[int]
+
+    def __init__(
+        self, cfg: str | ListGen, in_channels: int = 2, init_weights: bool = False
+    ):
         super().__init__(cfg, in_channels, init_weights)
-        
-        # TODO out_shape
+        self.out_shape = self.search_out(self.net_cfg)
+
+    def search_out(self, cfg: str | ListGen) -> List[int]:
+        out: List[int] = []
+        for module in cfg:
+            if isinstance(module, Return):
+                out.append(module.out_channels)
+            elif isinstance(module, list):
+                out += self.search_out(module)
+        return out
 
     def _load_cfg(self):
         self.default_cfgs.update(ssd())
+        self.default_cfgs.update(pyramid())
 
     def forward_impl(
         self, X: List[torch.Tensor], state: ListState | None
@@ -36,15 +47,16 @@ class NeckGen(ModelGen):
         Returns:
             torch.Tensor.
         """
-        storage: List[List[torch.Tensor]] = []
+        storage: List[List[torch.Tensor]] = [[] for _ in self.out_shape]
         state = None
         for time_step_x in X:
             Y, state = self.forward_impl(time_step_x, state)
-            storage.append(Y)
+            for idx, res in enumerate(Y):
+                storage[idx].append(res)
         out: List[torch.Tensor] = []
-        for idx in range(len(storage[0])):
-            out.append(torch.stack(storage[:][idx]))
-        return torch.stack(out)
+        for ret_layer in storage:
+            out.append(torch.stack(ret_layer))
+        return out
 
 
 #####################################################################
@@ -56,10 +68,47 @@ def ssd() -> Dict[str, ListGen]:
     def ssd_block(out_channels: int, kernel: int = 3):
         return Conv(out_channels, kernel), Norm(), LIF()
 
-    # fmt: off
     cfgs: Dict[str, ListGen] = {
-        "ssd3": [Return(), *ssd_block(128), Pool("S"), Return(), *ssd_block(128), Pool("S"), Return(),
-                 *ssd_block(128), Pool("S"), Return()],
+        "ssd3": [
+            Return(),
+            *ssd_block(128),
+            Pool("S"),
+            Return(),
+            *ssd_block(128),
+            Pool("S"),
+            Return(),
+            *ssd_block(128),
+            Pool("S"),
+            Return(),
+        ],
     }
-    # fmt: on
+    return cfgs
+
+
+def pyramid() -> Dict[str, ListGen]:
+    def block(out_channels: int, kernel: int = 3):
+        return Conv(out_channels, kernel), Norm(), LIF()
+
+    cfgs: Dict[str, ListGen] = {
+        "pyramid": [
+            Return(),
+            *block(128, 7),
+            [
+                [
+                    Pool("S"),
+                    *block(256, 5),
+                    [
+                        [Pool("S"), *block(256, 5), Return(), Up()],
+                        [Conv(256, 1)],
+                    ],
+                    *block(256, 5),
+                    Return(),
+                    Up(),
+                ],
+                [Conv(256, 1)],
+            ],
+            *block(256, 5),
+            Return(),
+        ],
+    }
     return cfgs

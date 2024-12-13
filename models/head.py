@@ -1,14 +1,25 @@
 import torch
 from torch import nn
-import norse.torch as snn
-from norse.torch.functional.leaky_integrator import LIParameters
-from typing import List
+from typing import List, Tuple, Dict
+from models.modules import *
 
 from utils.anchors import AnchorGenerator
 
 
+#####################################################################
+#                          Head descriptor                          #
+#       Applies a head model to multiple maps and merges them       #
+#####################################################################
+
+
 class Head(nn.Module):
-    def __init__(self, num_classes: int, in_shape: List[int]) -> None:
+    def __init__(
+        self,
+        cfg: str | ListGen,
+        num_classes: int,
+        in_shape: List[int],
+        init_weights=False,
+    ) -> None:
         super().__init__()
         self.num_classes = num_classes
 
@@ -33,8 +44,8 @@ class Head(nn.Module):
             )
             setattr(
                 self,
-                f"decoder_{idx}",
-                Decoder(channels, num_box_out, num_class_out, 3, True),
+                f"model_{idx}",
+                HeadGen(cfg, num_box_out, num_class_out, channels, init_weights),
             )
 
     def forward(
@@ -54,7 +65,7 @@ class Head(nn.Module):
 
         for idx, map in enumerate(X):
             anchors.append(getattr(self, f"anchor_gen_{idx}")(map))
-            boxes, classes = getattr(self, f"decoder_{idx}")(map)
+            boxes, classes = getattr(self, f"model_{idx}")(map)
             bbox_preds.append(boxes)
             cls_preds.append(classes)
 
@@ -76,35 +87,43 @@ class Head(nn.Module):
         return torch.cat([self.flatten_pred(p) for p in preds], dim=2)
 
 
-class Decoder(nn.Module):
+#####################################################################
+#                          Head Generator                           #
+#####################################################################
+
+
+class HeadGen(ModelGen):
     def __init__(
         self,
-        in_channels: int,
+        cfg: str | ListGen,
         box_out: int,
         cls_out: int,
-        kernel_size: int,
-        train_li_layer=False,
-    ) -> None:
-        assert kernel_size % 2 == 1, "Kernel size must be odd"
-        super().__init__()
+        in_channels: int = 2,
+        init_weights=False,
+    ):
+        self.box_out = box_out
+        self.cls_out = cls_out
+        super().__init__(cfg, in_channels, init_weights)
 
-        self.conv2d = nn.Conv2d(
-            in_channels,
-            in_channels,
-            kernel_size=kernel_size,
-            padding=kernel_size // 2,
-            bias=False,
-        )
+    def _net_generator(self, in_channels: int) -> None:
+        self.base_net = BlockGen(in_channels, [self.net_cfg[0]])
+        self.box_net = BlockGen(in_channels, [self.net_cfg[2]])
+        self.cls_net = BlockGen(in_channels, [self.net_cfg[1]])
 
-        li_params = LIParameters()
-        if train_li_layer:
-            self.li_grad_params = torch.nn.Parameter(li_params.tau_mem_inv)
-        self.li = snn.LICell(p=li_params)
+    def _load_cfg(self):
+        self.default_cfgs.update(main_cfg(self.box_out, self.cls_out))
 
-        self.box_conv = nn.Conv2d(in_channels, box_out, kernel_size=1, bias=False)
-        self.cls_conv = nn.Conv2d(in_channels, cls_out, kernel_size=1, bias=False)
+    def forward_impl(
+        self, X: List[torch.Tensor], state: ListState | None
+    ) -> Tuple[torch.Tensor, ListState]:
+        state = [None] * 3 if state is None else state
+        Y, state[0] = self.base_net(X, state[0])
+        box, state[1] = self.box_net(Y, state[1])
+        cls, state[2] = self.cls_net(Y, state[2])
 
-    def forward(self, X: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        return box, cls, state
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
         """
         Args:
             X (torch.Tensor): img [ts, batch, in_channels, h, w]
@@ -113,12 +132,22 @@ class Decoder(nn.Module):
                 boxes (torch.Tensor): predicted boxes [ts, batch, box_out, h, w]
                 classes (torch.Tensor): predicted classes [ts, batch, cls_out, h, w]
         """
-        li_state = None
-        box_preds, cls_preds = [], []
-        for ts in range(X.shape[0]):
-            Z = X[ts]
-            Z = self.conv2d(Z)
-            Z, li_state = self.li(Z, li_state)
-            box_preds.append(self.box_conv(Z))
-            cls_preds.append(self.cls_conv(Z))
-        return torch.stack(box_preds), torch.stack(cls_preds)
+        boxes, clses = [], []
+        state = None
+        for time_step_x in X:
+            box, cls, state = self.forward_impl(time_step_x, state)
+            boxes.append(box)
+            clses.append(cls)
+        return torch.stack(boxes), torch.stack(clses)
+
+
+#####################################################################
+#                       Model configurations                        #
+#####################################################################
+
+
+def main_cfg(box_out: int, cls_out: int) -> Dict[str, ListGen]:
+    cfgs: Dict[str, ListGen] = {
+        "main": [[Conv(), LI()], [Conv(box_out, 1)], [Conv(cls_out, 1)]],
+    }
+    return cfgs

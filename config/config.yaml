@@ -10,14 +10,15 @@ NumEvalRounds: 10
 
 ### Model parameters
 Backbone: res5
-Neck: ssd3
+Neck: pyramid
+Head: main
 InitWeights: false
-LossRatio: 0.06
+LossRatio: 0.05
 
 ### Dataset parameters
 Dataset: gen1
 TimeStep: 16
-TimeWindow: 16
+TimeWindow: 8
 NumLoadFile: 8
 NumWorkers: 4
 # Train dataset
@@ -37,4 +38,4 @@ PlotterColumns: 4
 
 ### Trainer board parameters
 NumGpus: 1
-EpochSize: 200
+EpochSize: 60
