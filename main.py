@@ -6,7 +6,7 @@ import run
 if __name__ == "__main__":
     model_loader = utils.ModelLoader()
     data = model_loader.get_train_dataset()
-    model = model_loader.get_model()
+    model = model_loader.get_model(data)
     model.to(utils.devices.gpu())
     trainer = model_loader.get_trainer()
     trainer.prepare(model, data)

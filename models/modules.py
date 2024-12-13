@@ -15,7 +15,10 @@ __all__ = (
     "Conv",
     "Norm",
     "LIF",
+    "LI",
+    "ReLU",
     "Pool",
+    "Up",
     "Return",
     "BlockGen",
     "ModelGen",
@@ -54,7 +57,9 @@ class Storage(nn.Module):
         return X
 
     def get_storage(self):
-        return self.storage
+        temp = self.storage
+        self.storage = None
+        return temp
 
 
 #####################################################################
@@ -77,15 +82,16 @@ class Pass(LayerGen):
 
 
 class Conv(LayerGen):
-    def __init__(self, out_channels: int, kernel_size: int = 3, stride: int = 1):
+    def __init__(self, out_channels: int = None, kernel_size: int = 3, stride: int = 1):
         self.out_channels = out_channels
         self.kernel_size = kernel_size
         self.stride = stride
 
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
+        out = in_channels if self.out_channels is None else self.out_channels 
         return nn.Conv2d(
             in_channels,
-            self.out_channels,
+            out,
             kernel_size=self.kernel_size,
             padding=int(self.kernel_size / 2),
             stride=self.stride,
@@ -111,6 +117,15 @@ class Pool(LayerGen):
         return self.pool(self.kernel_size, self.stride), in_channels
 
 
+class Up(LayerGen):
+    def __init__(self, scale: int = 2, mode: str = "bilinear"):
+        self.scale = scale
+        self.mode = mode
+
+    def get(self, in_channels: int) -> Tuple[nn.Module, int]:
+        return nn.Upsample(scale_factor=self.scale, mode=self.mode), in_channels
+
+
 class Norm(LayerGen):
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
         norm_layer = nn.BatchNorm2d(in_channels)
@@ -121,10 +136,22 @@ class Norm(LayerGen):
 class LIF(LayerGen):
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
         return snn.LIFCell(), in_channels
+    
+class LI(LayerGen):
+    def get(self, in_channels: int) -> Tuple[nn.Module, int]:
+        return snn.LICell(), in_channels
+
+
+class ReLU(LayerGen):
+    def get(self, in_channels: int) -> Tuple[nn.Module, int]:
+        return nn.ReLU(), in_channels
 
 
 class Return(LayerGen):
+    out_channels: int
+
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
+        self.out_channels = in_channels
         return Storage(), in_channels
 
 
@@ -227,24 +254,26 @@ class ModelGen(nn.Module):
     def __init__(
         self,
         cfg: str | ListGen,
-        in_channels=2,
-        init_weights=False,
+        in_channels: int = 2,
+        init_weights: bool = False,
     ) -> None:
         super().__init__()
 
         self._load_cfg()
+        self.net_cfg = cfg if isinstance(cfg, list) else self.default_cfgs[cfg]
 
-        self.net = BlockGen(
-            in_channels, [cfg] if isinstance(cfg, list) else [self.default_cfgs[cfg]]
-        )
-        self.out_channels = self.net.out_channels
-
+        self._net_generator(in_channels)
+        
         if init_weights:
             for m in self.modules():
                 if isinstance(m, nn.Conv2d):
                     nn.init.normal_(m.weight, mean=0.9, std=0.1)
                 elif isinstance(m, nn.BatchNorm2d):
                     nn.init.constant_(m.weight, 1)
+
+    def _net_generator(self, in_channels: int) -> None:
+        self.net = BlockGen(in_channels, [self.net_cfg])
+        self.out_channels = self.net.out_channels
 
     def _load_cfg(self):
         raise NotImplementedError
