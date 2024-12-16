@@ -107,8 +107,8 @@ class HeadGen(ModelGen):
 
     def _net_generator(self, in_channels: int) -> None:
         self.base_net = BlockGen(in_channels, [self.net_cfg[0]])
-        self.box_net = BlockGen(in_channels, [self.net_cfg[2]])
-        self.cls_net = BlockGen(in_channels, [self.net_cfg[1]])
+        self.box_net = BlockGen(self.base_net.out_channels, [self.net_cfg[1]])
+        self.cls_net = BlockGen(self.base_net.out_channels, [self.net_cfg[2]])
 
     def _load_cfg(self):
         self.default_cfgs.update(main_cfg(self.box_out, self.cls_out))
@@ -147,7 +147,12 @@ class HeadGen(ModelGen):
 
 
 def main_cfg(box_out: int, cls_out: int) -> Dict[str, ListGen]:
+    fun = SELU
     cfgs: Dict[str, ListGen] = {
-        "main": [[Conv(), LI()], [Conv(box_out, 1)], [Conv(cls_out, 1)]],
+        "main": [
+            [Conv(None, 1), Norm(), LI()],
+            [Conv(None, 1), Norm(True), fun(), Conv(box_out, 1)],
+            [Conv(None, 1), Norm(True), fun(), Conv(cls_out, 1)],
+        ],
     }
     return cfgs

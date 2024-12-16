@@ -39,8 +39,9 @@ class BackboneGen(ModelGen):
 
 
 def vgg() -> Dict[str, ListGen]:
+    fun = LIF
     def vgg_block(out_channels: int, kernel: int = 3):
-        return Conv(out_channels, kernel), Norm(), LIF()
+        return Conv(out_channels, kernel), Norm(), fun()
 
     # fmt: off
     cfgs: Dict[str, ListGen] = {
@@ -53,23 +54,23 @@ def vgg() -> Dict[str, ListGen]:
 
 
 def resnet() -> Dict[str, ListGen]:
+    fun = LIF
     def res_block(out_channels: int, kernel: int = 3):
         return [
             [
                 Conv(out_channels, kernel),
                 Norm(),
-                LIF(),
+                fun(),
                 Conv(out_channels, 1),
                 Norm(),
-                LIF(),
+                fun(),
             ],
             [Conv(out_channels, 1)],
         ]
 
     # fmt: off
     cfgs: Dict[str, ListGen] = {
-        "res5": [Conv(32, 7), Norm(), LIF(), Pool("S"), res_block(64, 5), res_block(64),
-                 Pool("S"), res_block(128)],
+        "res5": [Conv(32, 7), Norm(), fun(), Pool("S"), res_block(64, 5), Pool("S"), res_block(128)],
     }
     # fmt: on
     return cfgs
