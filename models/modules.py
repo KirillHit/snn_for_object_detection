@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 from norse.torch.utils.state import _is_module_stateful
 import norse.torch as snn
 
@@ -17,6 +17,8 @@ __all__ = (
     "LIF",
     "LI",
     "ReLU",
+    "SELU",
+    "LSTM",
     "Pool",
     "Up",
     "Return",
@@ -60,6 +62,16 @@ class Storage(nn.Module):
         temp = self.storage
         self.storage = None
         return temp
+    
+
+class LSTMCellState(nn.LSTMCell):
+    def forward(
+        self, X: torch.Tensor, state: Optional[Tuple[torch.Tensor, torch.Tensor]] = None
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        shape = X.shape
+        X = X.flatten(1)
+        hx, cx = super().forward(X, state)
+        return hx.reshape(shape), (hx, cx)
 
 
 #####################################################################
@@ -88,7 +100,7 @@ class Conv(LayerGen):
         self.stride = stride
 
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
-        out = in_channels if self.out_channels is None else self.out_channels 
+        out = in_channels if self.out_channels is None else self.out_channels
         return nn.Conv2d(
             in_channels,
             out,
@@ -96,7 +108,7 @@ class Conv(LayerGen):
             padding=int(self.kernel_size / 2),
             stride=self.stride,
             bias=False,
-        ), self.out_channels
+        ), out
 
 
 class Pool(LayerGen):
@@ -127,16 +139,21 @@ class Up(LayerGen):
 
 
 class Norm(LayerGen):
+    def __init__(self, bias: bool = False):
+        self.bias = bias
+        
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
         norm_layer = nn.BatchNorm2d(in_channels)
-        norm_layer.bias = None
+        if not self.bias:
+            norm_layer.bias = None
         return norm_layer, in_channels
 
 
 class LIF(LayerGen):
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
         return snn.LIFCell(), in_channels
-    
+
+
 class LI(LayerGen):
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
         return snn.LICell(), in_channels
@@ -145,6 +162,19 @@ class LI(LayerGen):
 class ReLU(LayerGen):
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
         return nn.ReLU(), in_channels
+
+
+class SELU(LayerGen):
+    def get(self, in_channels: int) -> Tuple[nn.Module, int]:
+        return nn.SELU(), in_channels
+
+
+class LSTM(LayerGen):
+    def __init__(self, hidden_size):
+        self.hidden_size = hidden_size
+
+    def get(self, in_channels: int) -> Tuple[nn.Module, int]:
+        return LSTMCellState(in_channels, self.hidden_size, bias=False), in_channels
 
 
 class Return(LayerGen):
@@ -263,7 +293,7 @@ class ModelGen(nn.Module):
         self.net_cfg = cfg if isinstance(cfg, list) else self.default_cfgs[cfg]
 
         self._net_generator(in_channels)
-        
+
         if init_weights:
             for m in self.modules():
                 if isinstance(m, nn.Conv2d):

@@ -65,20 +65,23 @@ class NeckGen(ModelGen):
 
 
 def ssd() -> Dict[str, ListGen]:
+    fun = LIF
+
     def ssd_block(out_channels: int, kernel: int = 3):
-        return Conv(out_channels, kernel), Norm(), LIF()
+        return Conv(out_channels, kernel), Norm(), fun()
 
     cfgs: Dict[str, ListGen] = {
         "ssd3": [
+            *ssd_block(128, 7),
             Return(),
-            *ssd_block(128),
             Pool("S"),
+            *ssd_block(128, 5),
             Return(),
-            *ssd_block(128),
             Pool("S"),
+            *ssd_block(128),
             Return(),
-            *ssd_block(128),
             Pool("S"),
+            *ssd_block(128),
             Return(),
         ],
     }
@@ -86,8 +89,10 @@ def ssd() -> Dict[str, ListGen]:
 
 
 def pyramid() -> Dict[str, ListGen]:
+    fun = LIF
+
     def block(out_channels: int, kernel: int = 3):
-        return Conv(out_channels, kernel), Norm(), LIF()
+        return Conv(out_channels, kernel), Norm(), fun()
 
     cfgs: Dict[str, ListGen] = {
         "pyramid": [

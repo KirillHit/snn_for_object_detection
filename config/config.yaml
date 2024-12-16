@@ -1,19 +1,19 @@
 ### Basic
-Mode: 1               # 1 - interactive, 2 - train, 3 - eval
+Mode: 2               # 1 - interactive, 2 - train, 3 - eval
 
 ### Train mode
 LoadParameters: false
-NumTrainRounds: 8     # -1 - infinite
+NumTrainRounds: -1     # -1 - infinite
 NumRoundEpoch: 15
 ### Eval mode
 NumEvalRounds: 10
 
 ### Model parameters
 Backbone: res5
-Neck: pyramid
+Neck: ssd3
 Head: main
 InitWeights: false
-LossRatio: 0.05
+LossRatio: 0.06
 
 ### Dataset parameters
 Dataset: gen1
@@ -30,7 +30,7 @@ TestNumSteps: 128
 
 ### Progress board parameters
 Display: True
-EveryN: 4
+EveryN: 60
 
 ### Plotter parameters
 PlotterThreshold: 0.01
