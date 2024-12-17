@@ -17,7 +17,7 @@ __all__ = (
     "LIF",
     "LI",
     "ReLU",
-    "SELU",
+    "SiLU",
     "LSTM",
     "Pool",
     "Up",
@@ -64,14 +64,12 @@ class Storage(nn.Module):
         return temp
     
 
-class LSTMCellState(nn.LSTMCell):
+class LSTMStated(nn.LSTMCell):
     def forward(
         self, X: torch.Tensor, state: Optional[Tuple[torch.Tensor, torch.Tensor]] = None
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        shape = X.shape
-        X = X.flatten(1)
         hx, cx = super().forward(X, state)
-        return hx.reshape(shape), (hx, cx)
+        return hx, (hx, cx)
 
 
 #####################################################################
@@ -90,7 +88,7 @@ type ListState = List[torch.Tensor | None | ListState]
 
 class Pass(LayerGen):
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
-        return nn.Identity, in_channels
+        return nn.Identity(), in_channels
 
 
 class Conv(LayerGen):
@@ -164,9 +162,9 @@ class ReLU(LayerGen):
         return nn.ReLU(), in_channels
 
 
-class SELU(LayerGen):
+class SiLU(LayerGen):
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
-        return nn.SELU(), in_channels
+        return nn.SiLU(), in_channels
 
 
 class LSTM(LayerGen):
@@ -174,7 +172,7 @@ class LSTM(LayerGen):
         self.hidden_size = hidden_size
 
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
-        return LSTMCellState(in_channels, self.hidden_size, bias=False), in_channels
+        return LSTMStated(in_channels, self.hidden_size, bias=False), in_channels
 
 
 class Return(LayerGen):

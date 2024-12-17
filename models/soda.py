@@ -38,8 +38,7 @@ class SODa(Module):
         self.box_loss = nn.L1Loss(reduction="none")
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
-        return torch.optim.Adamax(self.parameters(), lr=0.002)
-        #return torch.optim.SGD(self.parameters(), lr=0.001, weight_decay=5e-4)
+        return torch.optim.Adamax(self.parameters(), lr=0.001)
 
     def loss(
         self,
