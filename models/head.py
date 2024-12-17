@@ -147,12 +147,30 @@ class HeadGen(ModelGen):
 
 
 def main_cfg(box_out: int, cls_out: int) -> Dict[str, ListGen]:
-    fun = SELU
+    def conv(
+        fun=LIF, bias=False, out_channels: int = None, kernel: int = 1, stride: int = 1
+    ):
+        return [
+            [
+                Conv(out_channels, stride=stride, kernel_size=kernel),
+                Norm(bias),
+                fun(),
+            ]
+        ]
+
     cfgs: Dict[str, ListGen] = {
         "main": [
-            [Conv(None, 1), Norm(), LI()],
-            [Conv(None, 1), Norm(True), fun(), Conv(box_out, 1)],
-            [Conv(None, 1), Norm(True), fun(), Conv(cls_out, 1)],
+            [Pass()],
+            [
+                Conv(kernel_size=1),
+                LI(),
+                Conv(box_out, 1),
+            ],
+            [
+                Conv(kernel_size=1),
+                LI(),
+                Conv(cls_out, 1),
+            ],
         ],
     }
     return cfgs

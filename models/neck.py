@@ -29,6 +29,7 @@ class NeckGen(ModelGen):
     def _load_cfg(self):
         self.default_cfgs.update(ssd())
         self.default_cfgs.update(pyramid())
+        self.default_cfgs.update(yolo())
 
     def forward_impl(
         self, X: List[torch.Tensor], state: ListState | None
@@ -65,23 +66,39 @@ class NeckGen(ModelGen):
 
 
 def ssd() -> Dict[str, ListGen]:
-    fun = LIF
-
-    def ssd_block(out_channels: int, kernel: int = 3):
-        return Conv(out_channels, kernel), Norm(), fun()
+    def conv(out_channels: int, kernel: int = 3, stride: int = 1):
+        return [
+            [
+                Conv(out_channels, stride=stride, kernel_size=kernel),
+                Norm(),
+                LIF(),
+            ]
+        ]
+    
+    def res_block(out_channels: int, kernel: int = 3):
+        return [
+            [
+                [
+                    [
+                        Conv(out_channels, kernel),
+                        Norm(),
+                        LIF(),
+                    ],
+                    [Conv(out_channels, 1)],
+                ]
+            ],
+            [Conv(out_channels, 1)],
+        ]
 
     cfgs: Dict[str, ListGen] = {
         "ssd3": [
-            *ssd_block(128, 7),
+            conv(128, 7),
             Return(),
-            Pool("S"),
-            *ssd_block(128, 5),
+            conv(256, 5, stride=2),
+            res_block(256, 5),
             Return(),
-            Pool("S"),
-            *ssd_block(128),
-            Return(),
-            Pool("S"),
-            *ssd_block(128),
+            conv(256, stride=2),
+            res_block(256),
             Return(),
         ],
     }
@@ -113,6 +130,54 @@ def pyramid() -> Dict[str, ListGen]:
                 [Conv(256, 1)],
             ],
             *block(256, 5),
+            Return(),
+        ],
+    }
+    return cfgs
+
+
+def yolo() -> Dict[str, ListGen]:
+    def conv(out_channels: int, kernel: int = 3, stride: int = 1):
+        return [
+            [
+                Conv(out_channels, stride=stride, kernel_size=kernel),
+                Norm(),
+                LIF(),
+            ]
+        ]
+
+    def res_block(out_channels: int):
+        return [
+            [
+                conv(out_channels, 1),
+                [[conv(out_channels)], [Pass()]],
+                conv(out_channels, 1),
+            ]
+        ]
+
+    cfgs: Dict[str, ListGen] = {
+        "yolo8": [
+            res_block(128),
+            [
+                [
+                    conv(256, 3, 2),
+                    res_block(256),
+                    [
+                        [
+                            conv(256, 3, 2),
+                            res_block(256),
+                            Return(),
+                            Up(),
+                        ],
+                        [Pass()],
+                    ],
+                    res_block(256),
+                    Return(),
+                    Up(),
+                ],
+                [Conv(256, 1)],
+            ],
+            res_block(256),
             Return(),
         ],
     }

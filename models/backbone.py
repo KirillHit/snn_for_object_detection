@@ -12,6 +12,7 @@ class BackboneGen(ModelGen):
     def _load_cfg(self):
         self.default_cfgs.update(vgg())
         self.default_cfgs.update(resnet())
+        self.default_cfgs.update(yolo())
 
     def forward_impl(
         self, X: torch.Tensor, state: ListState | None
@@ -40,6 +41,7 @@ class BackboneGen(ModelGen):
 
 def vgg() -> Dict[str, ListGen]:
     fun = LIF
+
     def vgg_block(out_channels: int, kernel: int = 3):
         return Conv(out_channels, kernel), Norm(), fun()
 
@@ -54,23 +56,59 @@ def vgg() -> Dict[str, ListGen]:
 
 
 def resnet() -> Dict[str, ListGen]:
-    fun = LIF
+    def conv(out_channels: int, kernel: int = 3, stride: int = 1):
+        return [
+            [
+                Conv(out_channels, stride=stride, kernel_size=kernel),
+                Norm(),
+                LIF(),
+            ]
+        ]
+
     def res_block(out_channels: int, kernel: int = 3):
         return [
             [
-                Conv(out_channels, kernel),
-                Norm(),
-                fun(),
-                Conv(out_channels, 1),
-                Norm(),
-                fun(),
+                [
+                    [
+                        Conv(out_channels, kernel),
+                        Norm(),
+                        LIF(),
+                    ],
+                    [Conv(out_channels, 1)],
+                ]
             ],
             [Conv(out_channels, 1)],
         ]
 
     # fmt: off
     cfgs: Dict[str, ListGen] = {
-        "res5": [Conv(32, 7), Norm(), fun(), Pool("S"), res_block(64, 5), Pool("S"), res_block(128)],
+        "res5": [conv(64, 7, 2), res_block(64, 5), conv(128, 5, 2), res_block(128)],
+    }
+    # fmt: on
+    return cfgs
+
+
+def yolo() -> Dict[str, ListGen]:
+    def conv(out_channels: int, kernel: int = 3, stride: int = 1):
+        return [
+            [
+                Conv(out_channels, stride=stride, kernel_size=kernel),
+                Norm(),
+                LIF(),
+            ]
+        ]
+
+    def res_block(out_channels: int):
+        return [
+            [
+                [[conv(out_channels)], [Pass()]],
+                conv(out_channels, 1),
+            ]
+        ]
+
+    # fmt: off
+    cfgs: Dict[str, ListGen] = {
+        "yolo8": [conv(64, stride=2), res_block(64), conv(128, stride=2)],
     }
     # fmt: on
     return cfgs
