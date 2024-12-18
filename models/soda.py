@@ -45,17 +45,21 @@ class SODa(Module):
         preds: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
         labels: torch.Tensor,
     ) -> torch.Tensor:
-        """
-        Args:
-            preds (tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
-                anchors (torch.Tensor): [all_anchors, 4]
-                cls_preds (torch.Tensor): [ts, num_batch, all_anchors,(num_classes + 1)]
-                bbox_preds (torch.Tensor): [ts, num_batch, all_anchors * 4]
-            labels [torch.Tensor]:
-                Tensor shape [num_labels, 5]
-                    One label contains: [class id (0 car, 1 person), xlu, ylu, xrd, yrd]
-        Returns:
-            torch.Tensor: loss
+        """Loss calculation function.
+
+        :param preds: Predictions made by a neural network.
+            Contains three tensors:
+
+            1. anchors: Shape [anchor, 4]
+            2. cls_preds: Shape [ts, batch, anchor, num_classes + 1]
+            3. bbox_preds: Shape [ts, batch, anchor, 4]
+        :type preds: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]
+        :param labels: Tensor shape [num_labels, 5].
+
+            One label contains: class id, xlu, ylu, xrd, yrd.
+        :type labels: torch.Tensor
+        :return: Value of losses
+        :rtype: torch.Tensor
         """
         anchors, ts_cls_preds, ts_bbox_preds = preds
         bbox_offset, bbox_mask, class_labels = self.roi_blk(anchors, labels)
@@ -90,10 +94,12 @@ class SODa(Module):
         return loss
 
     def test_step(self, batch: tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
-        return self.training_step(batch)
+        preds = self.forward(batch[0])
+        loss = self.loss(preds, batch[1])
+        return loss
 
     def validation_step(self, batch: tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
-        return self.training_step(batch)
+        return self.test_step(batch)
 
     def forward(
         self, X: torch.Tensor

@@ -160,15 +160,11 @@ def main_cfg(box_out: int, cls_out: int) -> Dict[str, ListGen]:
 
     cfgs: Dict[str, ListGen] = {
         "main": [
-            [Pass()],
+            [Conv(kernel_size=1), Norm(), LSTM()],
             [
-                Conv(kernel_size=1),
-                LI(),
                 Conv(box_out, 1),
             ],
             [
-                Conv(kernel_size=1),
-                LI(),
                 Conv(cls_out, 1),
             ],
         ],
