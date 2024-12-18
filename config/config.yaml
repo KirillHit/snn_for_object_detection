@@ -1,5 +1,5 @@
 ### Basic
-Mode: 2               # 1 - interactive, 2 - train, 3 - eval
+Mode: 1               # 1 - interactive, 2 - train, 3 - eval
 
 ### Train mode
 LoadParameters: false
@@ -22,7 +22,7 @@ TimeWindow: 8
 NumLoadFile: 8
 NumWorkers: 4
 # Train dataset
-BatchSize: 6
+BatchSize: 4
 NumSteps: 32
 # Test dataset
 TestBatchSize: 1

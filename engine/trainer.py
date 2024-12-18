@@ -18,6 +18,15 @@ class Trainer:
     stop_flag: bool = False
 
     def __init__(self, board: ProgressBoard, num_gpus=0, epoch_size=64):
+        """_summary_
+        
+        :param board: _description_
+        :type board: ProgressBoard
+        :param num_gpus: _description_, defaults to 0
+        :type num_gpus: int, optional
+        :param epoch_size: _description_, defaults to 64
+        :type epoch_size: int, optional
+        """
         self.board, self.epoch_size = board, epoch_size
         self.gpus = [devices.gpu(i) for i in range(min(num_gpus, devices.num_gpus()))]
 
