@@ -1,12 +1,13 @@
 ### Basic
-Mode: 1               # 1 - interactive, 2 - train, 3 - eval
+Mode: 3               # 1 - interactive, 2 - train, 3 - eval
+gpu_index: 0
 
 ### Train mode
-LoadParameters: false
+LoadParameters: true
 NumTrainRounds: -1     # -1 - infinite
 NumRoundEpoch: 15
 ### Eval mode
-NumEvalRounds: 10
+NumEvalRounds: 60
 
 ### Model parameters
 Backbone: res5
@@ -33,9 +34,8 @@ Display: True
 EveryN: 4
 
 ### Plotter parameters
-PlotterThreshold: 0.01
+PlotterThreshold: 0.7
 PlotterColumns: 4
 
 ### Trainer board parameters
-NumGpus: 1
 EpochSize: 60

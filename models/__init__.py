@@ -1,3 +1,7 @@
+"""
+SODa Model
+"""
+
 from .soda import SODa
 from .backbone import BackboneGen
 from .neck import NeckGen

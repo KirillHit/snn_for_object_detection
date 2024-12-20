@@ -36,7 +36,7 @@ class ModelLoader:
             num_workers=self.get("NumWorkers"),
         )
 
-    def get_model(self, data: engine.DataModule) -> engine.Module:
+    def get_model(self, data: engine.DataModule) -> engine.Model:
         backbone_net = models.BackboneGen(
             str(self.get("Backbone")),
             in_channels=2,
@@ -83,7 +83,7 @@ class ModelLoader:
     def get_trainer(self):
         return engine.Trainer(
             self.get_progress_board(),
-            num_gpus=self.get("NumGpus"),
+            gpu_index=self.get("gpu_index"),
             epoch_size=self.get("EpochSize"),
         )
 

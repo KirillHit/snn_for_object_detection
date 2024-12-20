@@ -1,3 +1,20 @@
+"""
+Model generation tools
+
+Custom types
+------------
+
+List for recursive model generation
+
+.. data:: ListGen
+    :type: List[LayerGen | ListGen]
+
+List for storing the state of the model
+
+.. data:: ListState
+    :type: List[torch.Tensor | None | ListState]
+"""
+
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -47,20 +64,33 @@ class SumPool2d(nn.Module):
 
 class Storage(nn.Module):
     """
-    Stores the forward pass values. The "get" method returns the stored tensor.
+    Stores the forward pass values
+
     It is intended for use in feature pyramids, where you need to get multiple
     matrices from different places in the network.
     """
 
-    storage: torch.Tensor
+    _storage: torch.Tensor
 
-    def forward(self, X):
-        self.storage = X
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        """Store the input tensor and returns it back
+
+        :param X: Input tensor.
+        :type X: torch.Tensor
+        :return: Input tensor.
+        :rtype: torch.Tensor
+        """
+        self._storage = X
         return X
 
-    def get_storage(self):
-        temp = self.storage
-        self.storage = None
+    def get_storage(self) -> torch.Tensor:
+        """Returns the stored tensor
+
+        :return: Stored tensor.
+        :rtype: torch.Tensor
+        """
+        temp = self._storage
+        self._storage = None
         return temp
 
 
@@ -120,10 +150,6 @@ class ConvLSTM(nn.Module):
 class LayerGen:
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
         raise NotImplementedError
-
-
-type ListGen = List[LayerGen | ListGen]
-type ListState = List[torch.Tensor | None | ListState]
 
 
 class Pass(LayerGen):
@@ -229,6 +255,10 @@ class Return(LayerGen):
 #####################################################################
 
 
+type ListGen = List[LayerGen | ListGen]
+type ListState = List[torch.Tensor | None | ListState]
+
+
 class BlockGen(nn.Module):
     """Network Structural Elements Generator"""
 
@@ -240,9 +270,10 @@ class BlockGen(nn.Module):
         Lists can include blocks from other two-dimensional lists.
         They will be considered recursively.
 
-        Args:
-            in_channels (int): Number of input channels
-            cfgs (ListGen): Two-dimensional lists of layer generators
+        :param in_channels: Number of input channels
+        :type in_channels: int
+        :param cfgs: Two-dimensional lists of layer generators
+        :type cfgs: ListGen
         """
         super().__init__()
         branch_list: List[nn.ModuleList] = []

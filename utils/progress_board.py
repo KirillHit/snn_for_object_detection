@@ -6,7 +6,7 @@ import time
 
 
 class ProgressBoard:
-    """The board that plots data points in animation."""
+    """The board that plots data points in animation"""
 
     log_folder = "./log"
 
