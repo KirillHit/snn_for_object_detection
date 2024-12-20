@@ -14,23 +14,31 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 project = "SODa"
 copyright = "2024, Kirill Hitushkin"
 author = "Kirill Hitushkin"
-release = "v0.3.0"
+release = "v0.4.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["sphinx.ext.duration", "sphinx.ext.autodoc"]
+extensions = [
+    "sphinx.ext.duration",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.intersphinx",
+]
 
+intersphinx_mapping = {
+    "torch": ("https://pytorch.org/docs/stable/", None),
+    "norse": ("https://norse.github.io/norse/", None),
+    "python": ("https://docs.python.org/3.12/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+}
 
-def skip(app, what, name, obj, would_skip, options):
-    if name == "__init__":
-        return False
-    return would_skip
-
-
-def setup(app):
-    app.connect("autodoc-skip-member", skip)
-
+autosummary_generate = True  # Turn on sphinx.ext.autosummary
+autoclass_content = "both"  # Add __init__ doc (ie. params) to class summaries
+autodoc_inherit_docstrings = True  # If no docstring, inherit from base class
+add_module_names = False  # Remove namespaces from class/method signatures
+html_show_sourcelink = False
 
 templates_path = ["_templates"]
 exclude_patterns = []
@@ -39,5 +47,11 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "furo"
+html_theme = "sphinx_book_theme"
 html_static_path = ["_static"]
+
+html_context = {"default_mode": "dark"}
+html_theme_options = {
+    "repository_url": "https://github.com/KirillHit/snn_for_object_detection",
+    "use_repository_button": True,
+}

@@ -1,3 +1,7 @@
+"""
+Interface for data module
+"""
+
 from torch.utils.data import IterableDataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
 import torch
@@ -5,7 +9,7 @@ from typing import List
 
 
 class DataModule:
-    """The base class of data"""
+    """Class of interfaces for data modules"""
 
     def __init__(
         self,
@@ -14,12 +18,12 @@ class DataModule:
         batch_size: int = 1,
     ):
         """
-        :param root: The directory where datasets are stored. Defaults to "./data"
+        :param root: The directory where datasets are stored. Defaults to "./data".
         :type root: str, optional
-        :param num_workers: A positive integer will turn on multi-process data loading with the 
-            specified number of loader worker processes. Defaults to 4
+        :param num_workers: A positive integer will turn on multi-process data loading with the
+            specified number of loader worker processes. Defaults to 4.
         :type num_workers: int, optional
-        :param batch_size: Number of elements in a batch. Defaults to 1
+        :param batch_size: Number of elements in a batch. Defaults to 1.
         :type batch_size: int, optional
         """
         self._root = root
@@ -35,7 +39,7 @@ class DataModule:
             self._get_dataset(split),
             batch_size,
             num_workers=self._num_workers,
-            collate_fn=stack_data,
+            collate_fn=_stack_data,
             persistent_workers=True,
         )
 
@@ -67,7 +71,9 @@ class DataModule:
             self.read_data(split)
 
     def read_data(self, split: str) -> None:
-        """Read the dataset images and labels. This method must be overridden in child classes.
+        """Read the dataset images and labels
+        
+        This method must be overridden in child classes.
 
         :param split: "train", "test" or "val"
         :type split: str
@@ -76,11 +82,11 @@ class DataModule:
         raise NotImplementedError
 
     def get_labels(self) -> List[str]:
-        """Returns a list of class names"""
+        """Returns a list of class names."""
         return []
 
 
-def stack_data(batch):
+def _stack_data(batch):
     """Combines samples into a batch taking into account the time dimension"""
     features = torch.stack([sample[0] for sample in batch], dim=1)
     targets = pad_sequence(

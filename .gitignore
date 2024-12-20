@@ -4,6 +4,7 @@ data/*
 arc
 log
 test.py
+_autosummary
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

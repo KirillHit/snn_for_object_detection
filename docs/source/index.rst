@@ -16,6 +16,8 @@ Welcome to SODa's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   user_guide/index
+   results/index
    api
 
 

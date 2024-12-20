@@ -1,18 +1,24 @@
+"""
+Interface for models
+"""
+
 import os
 import torch
 from torch import nn
 from typing import Tuple, Any
 
 
-class Module(nn.Module):
-    """The base class of models"""
+class Model(nn.Module):
+    """Class of interfaces for networks"""
 
     def loss(
         self,
         preds: Any,
         labels: Any,
     ) -> torch.Tensor:
-        """Loss calculation function. This method must be overridden in child classes.
+        """Loss calculation function
+        
+        This method must be overridden in child classes.
 
         :param preds: Predictions made by a neural network.
         :type preds: Any
@@ -24,10 +30,10 @@ class Module(nn.Module):
         """
         raise NotImplementedError
 
-    def forward(
-        self, X: torch.Tensor
-    ) -> Any:
-        """Direct network pass. This method must be overridden in child classes.
+    def forward(self, X: torch.Tensor) -> Any:
+        """Direct network pass
+        
+        This method must be overridden in child classes.
 
         :param X: Input data
         :type X: torch.Tensor
@@ -37,47 +43,40 @@ class Module(nn.Module):
         """
         raise NotImplementedError
 
-    def training_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor]
-    ) -> torch.Tensor:
-        """Network training step. This method must be overridden in child classes.
+    def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
+        """Network training step
 
         :param batch: Training data. Contains:
 
             1. Input data
             2. Labels
         :type batch: Tuple[torch.Tensor, torch.Tensor]
-        :raises NotImplementedError: This method is not implemented.
         :return: Value of losses
         :rtype: torch.Tensor
         """
         raise NotImplementedError
 
     def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
-        """Network test step. This method must be overridden in child classes.
+        """Network test step
 
         :param batch: Training data. Contains:
 
             1. Input data
             2. Labels
         :type batch: Tuple[torch.Tensor, torch.Tensor]
-        :raises NotImplementedError: This method is not implemented.
         :return: Value of losses
         :rtype: torch.Tensor
         """
         raise NotImplementedError
 
-    def validation_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor]
-    ) -> torch.Tensor:
-        """Network validation step. This method must be overridden in child classes.
+    def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
+        """Network validation step
 
         :param batch: Training data. Contains:
 
             1. Input data
             2. Labels
         :type batch: Tuple[torch.Tensor, torch.Tensor]
-        :raises NotImplementedError: This method is not implemented.
         :return: Value of losses
         :rtype: torch.Tensor
         """
@@ -88,20 +87,19 @@ class Module(nn.Module):
         raise NotImplementedError
 
     def predict(self, X: torch.Tensor) -> torch.Tensor:
-        """Returns the network's predictions based on the input data. 
-            This method must be overridden in child classes.
-        :param X: Input data
+        """Returns the network's predictions based on the input data
+
+        :param X: Input data.
         :type X: torch.Tensor
-        :raises NotImplementedError: This method is not implemented.
-        :return: Network Predictions
+        :return: Network Predictions.
         :rtype: torch.Tensor
         """
         raise NotImplementedError
 
     def save_params(self, name: str) -> None:
-        """Saves network weights.
+        """Saves network weights
 
-        :param name: Parameter file name. The file must be in the ``nets`` folder
+        :param name: Parameters file name. The file will be saved to the ``nets`` folder.
         :type name: str, optional
         """
         os.makedirs("./nets", exist_ok=True)
@@ -112,8 +110,10 @@ class Module(nn.Module):
 
     def load_params(self, name: str) -> None:
         """Loads network weights from a file
+        
+        The file must be in the ``nets`` folder and end with ``.params``
 
-        :param name: Parameter file name. The file will be saved to the ``nets`` folder
+        :param name: Parameters file name. 
         :type name: str
         """
         if not name:

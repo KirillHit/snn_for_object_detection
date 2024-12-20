@@ -23,6 +23,7 @@ class Head(nn.Module):
         super().__init__()
         self.num_classes = num_classes
 
+        # TODO Automatic calculation
         max = 0.75
         min = 0.08
         size_per_pix = 3
