@@ -25,7 +25,7 @@ class Trainer:
         :param board: The board that plots data points in animation.
         :type board: ProgressBoard
         :param gpu_index: CUDA index for the GPU selected for training.
-            See :py:meth:`torch.cuda.device`. Defaults to 0.
+            See :external:ref:`CUDA semantics <cuda-semantics>`. Defaults to 0.
         :type gpu_index: int, optional
         :param epoch_size: Size of one epoch, defaults to 60
         :type epoch_size: int, optional
@@ -70,7 +70,7 @@ class Trainer:
     def _plot(self, loss: torch.Tensor, split: str) -> None:
         match split:
             case "train":
-                x = (self._train_batch_idx,)
+                x = self._train_batch_idx
             case "test":
                 x = (
                     self._train_batch_idx
@@ -81,13 +81,13 @@ class Trainer:
                 x = (
                     self._train_batch_idx
                     - self.epoch_size
-                    + self._val_batch_idx % self.epoch_size,
+                    + self._val_batch_idx % self.epoch_size
                 )
             case _:
                 raise ValueError(f'The split parameter cannot be "{split}"!')
         self.board.draw(
             x,
-            torch.Tensor.to(loss, devices.cpu()).item(),
+            loss.to(devices.cpu()).item(),
             split + " loss",
         )
 

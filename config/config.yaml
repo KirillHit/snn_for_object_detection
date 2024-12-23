@@ -1,5 +1,5 @@
 ### Basic
-Mode: 3               # 1 - interactive, 2 - train, 3 - eval
+Mode: 2               # 1 - interactive, 2 - train, 3 - eval
 gpu_index: 0
 
 ### Train mode
@@ -10,10 +10,10 @@ NumRoundEpoch: 15
 NumEvalRounds: 60
 
 ### Model parameters
-Backbone: res5
-Neck: ssd3
+Backbone: res
+Neck: ssd
 Head: main
-InitWeights: false
+InitWeights: true
 LossRatio: 0.1
 
 ### Dataset parameters
@@ -23,7 +23,7 @@ TimeWindow: 8
 NumLoadFile: 8
 NumWorkers: 4
 # Train dataset
-BatchSize: 4
+BatchSize: 3
 NumSteps: 32
 # Test dataset
 TestBatchSize: 1

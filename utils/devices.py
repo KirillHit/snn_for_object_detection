@@ -16,11 +16,11 @@ def num_gpus() -> torch.device:
     return torch.cuda.device_count()
 
 
-def try_gpu(i: int = 0) -> torch.device:
+def try_gpu(i: int = 0) -> torch.device | None:
     """Return gpu(i) if exists, otherwise return cpu()."""
     if num_gpus() >= i + 1:
         return gpu(i)
-    return cpu()
+    return None
 
 
 def try_all_gpus() -> torch.device:
