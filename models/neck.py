@@ -1,3 +1,7 @@
+"""
+Network neck generator
+"""
+
 import torch
 from typing import Dict, List, Tuple
 from models.modules import *
@@ -9,26 +13,45 @@ from models.modules import *
 
 
 class NeckGen(ModelGen):
+    """Network neck generator
+    
+    Returns a list of tensors that were stored in the 
+    :class:`models.modules.Return` layers.
+    """
+    
     out_shape: List[int]
+    """Stores the format of the output data 
+    
+    - The number of elements is equal to the number of tensors in the output list.
+    - The numeric value is equal to the number of channels of the corresponding tensor.
+    
+    This data is required to initialize :class:`models.head.Head`.
+    """
 
     def __init__(
         self, cfg: str | ListGen, in_channels: int = 2, init_weights: bool = False
     ):
         super().__init__(cfg, in_channels, init_weights)
-        self.out_shape = self.search_out(self.net_cfg)
+        self.out_shape = self._search_out(self.net_cfg)
 
-    def search_out(self, cfg: str | ListGen) -> List[int]:
+    def _search_out(self, cfg: str | ListGen) -> List[int]:
+        """Finds the indices of the layers from which it is necessary to obtain tensors
+
+        :param cfg: Lists of layer generators.
+        :type cfg: str | ListGen
+        :return: List of layer indices from which values will be returned.
+        :rtype: List[int]
+        """
         out: List[int] = []
         for module in cfg:
             if isinstance(module, Return):
                 out.append(module.out_channels)
             elif isinstance(module, list):
-                out += self.search_out(module)
+                out += self._search_out(module)
         return out
 
     def _load_cfg(self):
         self.default_cfgs.update(ssd())
-        self.default_cfgs.update(pyramid())
         self.default_cfgs.update(yolo())
 
     def forward_impl(
@@ -42,12 +65,6 @@ class NeckGen(ModelGen):
         return out, state
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
-        """
-        Args:
-            X (torch.Tensor): Input tensor. Shape is [ts, batch, p, h, w].
-        Returns:
-            torch.Tensor.
-        """
         storage: List[List[torch.Tensor]] = [[] for _ in self.out_shape]
         state = None
         for time_step_x in X:
@@ -66,70 +83,40 @@ class NeckGen(ModelGen):
 
 
 def ssd() -> Dict[str, ListGen]:
+    """Default configuration generator
+
+    Architectures are based on ssd.
+
+    See source code.
+
+    :return: Lists of layer generators.
+    :rtype: Dict[str, ListGen]
+    """
     def conv(out_channels: int, kernel: int = 3, stride: int = 1):
-        return [
-            [
-                Conv(out_channels, stride=stride, kernel_size=kernel),
-                Norm(),
-                LIF(),
-            ]
-        ]
-    
+        return (
+            Conv(out_channels, stride=stride, kernel_size=kernel),
+            Norm(),
+            LIF(),
+        )
+
     def res_block(out_channels: int, kernel: int = 3):
-        return [
+        return (
+            Conv(out_channels, 1),
             [
-                [
-                    [
-                        Conv(out_channels, kernel),
-                        Norm(),
-                        LIF(),
-                    ],
-                    [Conv(out_channels, 1)],
-                ]
+                [*conv(out_channels, kernel)],
+                [Conv(out_channels, 1)],
             ],
-            [Conv(out_channels, 1)],
-        ]
+            Conv(out_channels, 1),
+        )
 
     cfgs: Dict[str, ListGen] = {
-        "ssd3": [
-            conv(128, 7),
+        "ssd": [
             Return(),
-            conv(256, 5, stride=2),
-            res_block(256, 5),
+            *conv(256, stride=2),
+            *res_block(256),
             Return(),
-            conv(256, stride=2),
-            res_block(256),
-            Return(),
-        ],
-    }
-    return cfgs
-
-
-def pyramid() -> Dict[str, ListGen]:
-    fun = LIF
-
-    def block(out_channels: int, kernel: int = 3):
-        return Conv(out_channels, kernel), Norm(), fun()
-
-    cfgs: Dict[str, ListGen] = {
-        "pyramid": [
-            Return(),
-            *block(128, 7),
-            [
-                [
-                    Pool("S"),
-                    *block(256, 5),
-                    [
-                        [Pool("S"), *block(256, 5), Return(), Up()],
-                        [Conv(256, 1)],
-                    ],
-                    *block(256, 5),
-                    Return(),
-                    Up(),
-                ],
-                [Conv(256, 1)],
-            ],
-            *block(256, 5),
+            *conv(256, stride=2),
+            *res_block(256),
             Return(),
         ],
     }
@@ -137,6 +124,15 @@ def pyramid() -> Dict[str, ListGen]:
 
 
 def yolo() -> Dict[str, ListGen]:
+    """Default configuration generator
+
+    Architectures are based on yolo.
+
+    See source code.
+
+    :return: Lists of layer generators.
+    :rtype: Dict[str, ListGen]
+    """
     def conv(out_channels: int, kernel: int = 3, stride: int = 1):
         return [
             [

@@ -1,4 +1,4 @@
 User Guide
 ==========
 
-Here will be a description of how to work with the model.
+Here will be described how to work with the model when the author finishes celebrating the new year.

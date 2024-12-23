@@ -1,7 +1,12 @@
+"""
+Model base generator
+"""
+
 import torch
 from typing import Dict
 from models.modules import *
 from typing import Tuple
+
 
 #####################################################################
 #                        Backbone Generator                         #
@@ -9,10 +14,14 @@ from typing import Tuple
 
 
 class BackboneGen(ModelGen):
+    """Model base generator
+
+    Returns the tensor from the last layer of the network.
+    """
+
     def _load_cfg(self):
         self.default_cfgs.update(vgg())
         self.default_cfgs.update(resnet())
-        self.default_cfgs.update(yolo())
 
     def forward_impl(
         self, X: torch.Tensor, state: ListState | None
@@ -20,12 +29,6 @@ class BackboneGen(ModelGen):
         return self.net(X, state)
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
-        """
-        Args:
-            X (torch.Tensor): Input tensor. Shape is [ts, batch, p, h, w].
-        Returns:
-            torch.Tensor.
-        """
         out = []
         state = None
         for time_step_x in X:
@@ -40,6 +43,15 @@ class BackboneGen(ModelGen):
 
 
 def vgg() -> Dict[str, ListGen]:
+    """Default configuration generator
+
+    Architectures are based on vgg.
+
+    See source code.
+
+    :return: Lists of layer generators.
+    :rtype: Dict[str, ListGen]
+    """
     fun = LIF
 
     def vgg_block(out_channels: int, kernel: int = 3):
@@ -56,59 +68,37 @@ def vgg() -> Dict[str, ListGen]:
 
 
 def resnet() -> Dict[str, ListGen]:
+    """Default configuration generator
+
+    Architectures include residual links.
+
+    See source code.
+
+    :return: Lists of layer generators.
+    :rtype: Dict[str, ListGen]
+    """
+
     def conv(out_channels: int, kernel: int = 3, stride: int = 1):
-        return [
-            [
-                Conv(out_channels, stride=stride, kernel_size=kernel),
-                Norm(),
-                LIF(),
-            ]
-        ]
+        return (
+            Conv(out_channels, stride=stride, kernel_size=kernel),
+            Norm(),
+            LIF(),
+        )
 
     def res_block(out_channels: int, kernel: int = 3):
-        return [
+        return (
+            Conv(out_channels, 1),
             [
                 [
-                    [
-                        Conv(out_channels, kernel),
-                        Norm(),
-                        LIF(),
-                    ],
-                    [Conv(out_channels, 1)],
-                ]
+                    *conv(out_channels, kernel),
+                    [[*conv(out_channels, kernel)], [Conv(out_channels, 1)]],
+                ],
+                [Conv(out_channels, 1)],
             ],
-            [Conv(out_channels, 1)],
-        ]
+            Conv(out_channels, 1),
+        )
 
-    # fmt: off
     cfgs: Dict[str, ListGen] = {
-        "res5": [conv(64, 7, 2), res_block(64, 5), conv(128, 5, 2), res_block(128)],
+        "res": [*conv(64, 7, 2), *res_block(64, 5), *conv(128, 5, 2), *res_block(128)],
     }
-    # fmt: on
-    return cfgs
-
-
-def yolo() -> Dict[str, ListGen]:
-    def conv(out_channels: int, kernel: int = 3, stride: int = 1):
-        return [
-            [
-                Conv(out_channels, stride=stride, kernel_size=kernel),
-                Norm(),
-                LIF(),
-            ]
-        ]
-
-    def res_block(out_channels: int):
-        return [
-            [
-                [[conv(out_channels)], [Pass()]],
-                conv(out_channels, 1),
-            ]
-        ]
-
-    # fmt: off
-    cfgs: Dict[str, ListGen] = {
-        "yolo8": [conv(64, stride=2), res_block(64), conv(128, stride=2)],
-    }
-    # fmt: on
     return cfgs
