@@ -9,7 +9,14 @@ from typing import List
 
 
 class DataModule:
-    """Class of interfaces for data modules"""
+    """Class of interfaces for data modules
+
+    .. warning::
+
+        This class can only be used as a base class for inheritance.
+        
+    read_data and get_labels methods must be overridden in the child class.
+    """
 
     def __init__(
         self,
@@ -72,17 +79,14 @@ class DataModule:
 
     def read_data(self, split: str) -> None:
         """Read the dataset images and labels
-        
-        This method must be overridden in child classes.
 
         :param split: "train", "test" or "val"
         :type split: str
-        :raises NotImplementedError: This method is not implemented.
         """
         raise NotImplementedError
 
     def get_labels(self) -> List[str]:
-        """Returns a list of class names."""
+        """Returns a list of class names"""
         return []
 
 

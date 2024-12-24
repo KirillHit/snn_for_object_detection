@@ -1,14 +1,18 @@
+"""The board that plots data points in animation"""
+
 from matplotlib import pyplot as plt
 import collections
 import json
 import os
 import time
+from typing import Union
 
 
 class ProgressBoard:
     """The board that plots data points in animation"""
 
     log_folder = "./log"
+    """Folder for saving charts"""
 
     def __init__(
         self,
@@ -39,7 +43,16 @@ class ProgressBoard:
         self.axes.set_yscale(yscale)
         self.axes.set_ylim(top=ylim[0], bottom=ylim[1])
 
-    def draw(self, x, y, label: str):
+    def draw(self, x: Union[int, float], y: Union[int, float], label: str) -> None:
+        """Add a new value to the chart
+
+        :param x: Horizontal coordinate of a point
+        :type x: Union[int, float]
+        :param y: Vertical coordinate of the point
+        :type y: Union[int, float]
+        :param label: Name of the line to which to add a point
+        :type label: str
+        """
         Point = collections.namedtuple("Point", ["x", "y"])
 
         if label not in self.raw_points:
@@ -85,8 +98,8 @@ class ProgressBoard:
 
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
-        
-    def draw_loaded(self, data):
+
+    def _draw_loaded(self, data)->None:
         for label in data:
             linep = data[label]
             (line,) = self.axes.plot(
@@ -112,8 +125,9 @@ class ProgressBoard:
 
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
-            
-    def save_plot(self):
+
+    def save_plot(self)->None:
+        """Save the chart to folder :attr:`log_folder`"""
         if not os.path.exists(self.log_folder):
             os.makedirs(self.log_folder)
         timestr = time.strftime("%Y%m%d-%H%M%S")
@@ -121,12 +135,17 @@ class ProgressBoard:
             f.write(json.dumps(self.data))
         print("[INFO]: Training logs saved")
 
-    def load_plot(self, file_name: str):
+    def load_plot(self, file_name: str)->None:
+        """Loads a chart from folder :attr:`log_folder`
+
+        :param file_name: File name
+        :type file_name: str
+        """
         file_path = f"{self.log_folder}/{file_name}.json"
         if not os.path.exists(file_path):
             print("[ERROR]: The plot file does not exist. Check path: " + file_path)
             return
         with open(file_path, "r") as f:
             data = json.loads(f.read())
-        self.draw_loaded(data)
+        self._draw_loaded(data)
         print("[INFO]: Training logs loaded")

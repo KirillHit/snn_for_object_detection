@@ -1,10 +1,9 @@
-import run.eval
-import utils
-import utils.devices
 import run
+import utils.model_loader
+import utils.devices
 
 if __name__ == "__main__":
-    model_loader = utils.ModelLoader()
+    model_loader = utils.model_loader.ModelLoader()
     data = model_loader.get_train_dataset()
     model = model_loader.get_model(data)
     model.to(utils.devices.gpu())

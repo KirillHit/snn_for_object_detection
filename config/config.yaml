@@ -1,5 +1,5 @@
 ### Basic
-Mode: 2               # 1 - interactive, 2 - train, 3 - eval
+Mode: 1               # 1 - interactive, 2 - train, 3 - eval
 gpu_index: 0
 
 ### Train mode
@@ -14,7 +14,7 @@ Backbone: res
 Neck: ssd
 Head: main
 InitWeights: true
-LossRatio: 0.1
+LossRatio: 0.06
 
 ### Dataset parameters
 Dataset: gen1

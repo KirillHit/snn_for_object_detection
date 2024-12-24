@@ -1,13 +1,19 @@
+"""Generates a model and dataset based on parameters from a configuration file"""
+
 import yaml
 from torch.nn.utils import parameters_to_vector as p2v
 import engine
 import models
 import utils
 import utils.devices
+from typing import Any
 
 
 class ModelLoader:
-    """Generates a model and dataset based on parameters from a configuration file"""
+    """Generates a model and dataset based on parameters from a configuration file
+
+    For details see the source code.
+    """
 
     def __init__(self, cfg_path="config/config.yaml"):
         with open(cfg_path, "r") as f:
@@ -95,13 +101,22 @@ class ModelLoader:
             columns=self.get("PlotterColumns"),
         )
 
-    def get_evaluate(self, data: engine.DataModule) -> utils.Plotter:
+    def get_evaluate(self, data: engine.DataModule) -> utils.SODAeval:
         return utils.SODAeval(labelmap=data.get_labels())
 
-    def get(self, str):
-        return self.data[str]
+    def get(self, name: str) -> Any:
+        """Get data from configuration file
+
+        :param name: Parameter name
+        :type name: str
+        :return: Parameter value
+        :rtype: Any
+        :raises KeyError: The key was not found in the set of existing keys
+        """
+        return self.data[name]
 
     def print_info(self) -> None:
+        """Prints basic information from the model configuration"""
         print(
             "[INFO]: Training parameters:\n"
             f"\tMode:{self.get("Mode")}\n"
