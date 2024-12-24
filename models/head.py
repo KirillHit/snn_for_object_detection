@@ -18,7 +18,7 @@ from utils.anchors import AnchorGenerator
 class Head(nn.Module):
     """Head model holder
 
-    Applies a head model to multiple maps and merges them. 
+    Applies a head model to multiple maps and merges them.
     For each input map, its own :class:`HeadGen` model is generated.
     Predictions obtained for different feature maps are combined.
     """
@@ -86,7 +86,7 @@ class Head(nn.Module):
             3. bbox_preds: Shape [ts, batch, anchor, 4]
         :rtype: tuple[torch.Tensor, torch.Tensor, torch.Tensor]
         """
-        
+
         anchors, cls_preds, bbox_preds = [], [], []
 
         for idx, map in enumerate(X):
@@ -120,12 +120,12 @@ class Head(nn.Module):
 
 class HeadGen(ModelGen):
     """Model head generator
-    
+
     The configuration lists for this module look different.
-    
+
     .. code-block::
         :caption: Configuration list example
-        
+
         cfgs: ListGen = [
             [
                 Conv(kernel_size=1),
@@ -143,10 +143,14 @@ class HeadGen(ModelGen):
                 Conv(cls_out, 1),
             ],
         ],
-        
-    The configuration includes three lists. The first one is for data preparation, 
-    the second one is for box prediction, and the third one is for class prediction.
-    Box and class prediction models use the output of the preparation 
+
+    The configuration includes three lists:
+    
+    - The first one is for data preparation
+    - The second one is for box prediction
+    - The third one is for class prediction
+    
+    Box and class prediction models use the output of the preparation
     network as input.
     """
 
@@ -167,7 +171,7 @@ class HeadGen(ModelGen):
         :type cls_out: int
         :param in_channels: Number of input channels. Defaults to 2.
         :type in_channels: int, optional
-        :param init_weights: If ``true`` apply weight initialization function. 
+        :param init_weights: If ``true`` apply weight initialization function.
             Defaults to True.
         :type init_weights: bool, optional
         """

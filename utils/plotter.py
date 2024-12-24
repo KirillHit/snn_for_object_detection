@@ -1,3 +1,5 @@
+"""Tool for displaying images, predictions and boxes"""
+
 import cv2
 import numpy as np
 import torch
@@ -5,9 +7,28 @@ from typing import List, Optional, Union
 
 
 class Plotter:
-    """Displays images, predictions and boxes"""
+    """Tool for displaying images, predictions and boxes
 
-    def __init__(self, threshold=0.8, labels=None, interval=200, columns=4):
+    `OpenCV <https://github.com/opencv/opencv>`_ is used for displaying.
+    """
+
+    def __init__(
+        self,
+        threshold=0.8,
+        labels: Optional[List[str]] = None,
+        interval: int = 200,
+        columns: int = 4,
+    ):
+        """
+        :param threshold: Threshold value for displaying box. Defaults to 0.8.
+        :type threshold: float, optional
+        :param labels: List of class names. Defaults to None.
+        :type labels: Optional[List[str]], optional
+        :param interval: Time interval between frames in milliseconds. Defaults to 200.
+        :type interval: int, optional
+        :param columns: Images are displayed in a grid. This parameter determines its width. Defaults to 4.
+        :type columns: int, optional
+        """
         self.threshold = int(threshold * 100)
         self.labels = labels
         self.colors = [
@@ -28,40 +49,50 @@ class Plotter:
         predictions: Optional[torch.Tensor],
         target: Optional[Union[List[torch.Tensor], torch.Tensor]],
     ):
-        """
-        Plays video from tensor
-        Args:
-            images (torch.Tensor): Shape [ts, batch, p, h, w]
-            predictions (Optional[torch.Tensor]): Shape [ts, batch, anchors, 6].
-                One label contains [class, iou, xlu, ylu, xrd, yrd]
-            target (List[Tensor] | Tensor | None): The length of the list is equal to the number of batch.
-                One Tensor contains [count_box, 6]
-                One label contains [ts, class id, xlu, ylu, xrd, yrd]
-                or
-                One Tensor contains [count_box, 5]
-                One label contains [class id, xlu, ylu, xrd, yrd]
+        """Plays video from tensor
+
+        :param images: Shape [ts, batch, channel, h, w]. Expects 2 channels.
+        :type images: torch.Tensor
+        :param predictions: Shape [ts, batch, anchor, 6].
+
+            One label contains (class, iou, xlu, ylu, xrd, yrd).
+        :type predictions: Optional[torch.Tensor]
+        :param target: Ground Truth. The length of the list is equal to the number of batch.
+
+            Expects format:
+
+                Tensor shape [count_box, 6]
+
+                One label contains (ts, class id, xlu, ylu, xrd, yrd)
+
+            or
+
+                Tensor shape [count_box, 5]
+
+                One label contains (class id, xlu, ylu, xrd, yrd)
+        :type target: Optional[Union[List[torch.Tensor], torch.Tensor]]
         """
         ts, b, _, h, w = images.shape
         plt_images = images.permute(0, 1, 3, 4, 2)
         grey_imgs = 127 * np.ones((ts, b, h, w), dtype=np.uint8)
         grey_imgs[plt_images[..., 0] > 0] = 0
         grey_imgs[plt_images[..., 1] > 0] = 255
-        con_video = self.concatenate_video(grey_imgs)
+        con_video = self._concatenate_video(grey_imgs).repeat(3, axis=-1)
         prep_target, prep_preds = None, None
         if target is not None:
             if isinstance(target, torch.Tensor):
-                target = self.transform_targets(target, images.shape[0] - 1)
-            prep_target = self.prepare_targets(target, h, w)
+                target = self._transform_targets(target, images.shape[0] - 1)
+            prep_target = self._prepare_targets(target, h, w)
         if predictions is not None:
-            prep_preds = self.prepare_preds(predictions, h, w)
-        boxed_video = self.apply_boxes(con_video, prep_preds, prep_target)
-        while self.show_video(boxed_video):
+            prep_preds = self._prepare_preds(predictions, h, w)
+        boxed_video = self._apply_boxes(con_video, prep_preds, prep_target)
+        while self._show_video(boxed_video):
             cmd = cv2.waitKey()
             if cmd == ord("q"):
                 cv2.destroyWindow("Res")
                 break
 
-    def transform_targets(
+    def _transform_targets(
         self, target: torch.Tensor, time_step: int
     ) -> List[torch.Tensor]:
         """Transform targets from [batch_size, num_box, 5] [class id, xlu, ylu, xrd, yrd]
@@ -75,12 +106,13 @@ class Plotter:
             new_target.append(torch.concatenate((time_tens, batch), dim=1))
         return new_target
 
-    def concatenate_video(self, video: np.ndarray):
+    def _concatenate_video(self, video: np.ndarray) -> np.ndarray:
         """Combines a batch of videos into one
-        Args:
-            video (np.ndarray): [ts, b, h, w]
-        Returns:
-            Combines video (np.ndarray): [ts, h, w, c]
+
+        :param video: Shape [ts, b, h, w]
+        :type video: np.ndarray
+        :return: Combines video. Shape [ts, h, w]
+        :rtype: np.ndarray
         """
         b = video.shape[1]
         video = np.pad(
@@ -100,40 +132,59 @@ class Plotter:
                 for idx in range(0, b, self.columns)
             ]
             con_imgs.append(np.concatenate(arr, axis=0))
-        return np.stack(con_imgs)[..., None].repeat(3, axis=-1)
+        return np.stack(con_imgs)[..., None]
 
-    def prepare_preds(
+    def _prepare_preds(
         self, predictions: torch.Tensor, height: int, width: int
     ) -> torch.Tensor:
         """Changes the coordinates of the boxes according to the position of the batch
-        Args:
-            predictions (torch.Tensor): Shape [ts, batch, anchors, 6].
-                One label contains [class, iou, xlu, ylu, xrd, yrd]
-        Returns:
-            torch.Tensor: Shape [ts, count_boxes, 6].
-                One label contains [class, iou, xlu, ylu, xrd, yrd]
+
+        :param predictions: Shape [ts, batch, anchors, 6]
+
+            One label contains (class, iou, xlu, ylu, xrd, yrd)
+        :type predictions: torch.Tensor
+        :param height: height img
+        :type height: int
+        :param width: width img
+        :type width: int
+        :return: Shape [ts, count_boxes, 6]
+
+            One label contains (class, iou, xlu, ylu, xrd, yrd)
+        :rtype: torch.Tensor
         """
         for batch_idx in range(predictions.shape[1]):
             predictions[:, batch_idx, :, [2, 4]] = (
-                torch.clamp(predictions[:, batch_idx, :, [2, 4]], min=0.0, max=1.0) * width
+                torch.clamp(predictions[:, batch_idx, :, [2, 4]], min=0.0, max=1.0)
+                * width
                 + (batch_idx % self.columns) * width
             )
             predictions[:, batch_idx, :, [3, 5]] = (
-                torch.clamp(predictions[:, batch_idx, :, [3, 5]], min=0.0, max=1.0) * height
+                torch.clamp(predictions[:, batch_idx, :, [3, 5]], min=0.0, max=1.0)
+                * height
                 + (batch_idx // self.columns) * height
             )
         predictions[..., 1] *= 100
         return torch.flatten(predictions, start_dim=1, end_dim=2).type(torch.int32)
 
-    def prepare_targets(self, target: List[torch.Tensor], height: int, width: int):
+    def _prepare_targets(
+        self, target: List[torch.Tensor], height: int, width: int
+    ) -> torch.Tensor:
         """Changes the coordinates of the boxes according to the position of the batch
-        Args:
-            target (List[torch.Tensor]): The length of the list is equal to the number of packs.
-                One Tensor contains [count_box, 6]
-                One label contains [ts, class id, xlu, ylu, xrd, yrd]
-        Returns:
-            torch.Tensor: Shape [count_boxes, 6].
-                One label contains [ts, class id, xlu, ylu, xrd, yrd]
+
+        :param target: The length of the list is equal to the number of packs
+
+            Tensor shape [count_box, 6]
+
+            One label contains (ts, class id, xlu, ylu, xrd, yrd)
+        :type target: List[torch.Tensor]
+        :param height: height img
+        :type height: int
+        :param width: width img
+        :type width: int
+        :return: Shape [count_boxes, 6]
+
+            One label contains (ts, class id, xlu, ylu, xrd, yrd)
+        :rtype: torch.Tensor
         """
         for batch_idx, t_batch in enumerate(target):
             t_batch[:, [2, 4]] = (
@@ -146,15 +197,13 @@ class Plotter:
             )
         return torch.concatenate(target, dim=0).type(torch.int32)
 
-    def show_video(
-        self,
-        video: np.ndarray
-    ):
+    def _show_video(self, video: np.ndarray) -> bool:
         """Playing video
-        Args:
-            video (np.ndarray): Shape [ts, h, w, c]
-        Returns:
-            bool: Returns false if "q" is pressed
+
+        :param video: Shape [ts, h, w, channels]
+        :type video: np.ndarray
+        :return: Returns ``False`` if "q" is pressed, otherwise ``True``
+        :rtype: bool
         """
         for img in video:
             cv2.imshow("Res", img)
@@ -162,42 +211,48 @@ class Plotter:
                 cv2.destroyWindow("Res")
                 return False
         return True
-    
-    def apply_boxes(
+
+    def _apply_boxes(
         self,
         video: np.ndarray,
         preds: Optional[torch.Tensor],
         target: Optional[torch.Tensor],
     ) -> np.ndarray:
-        """Playing video
-        Args:
-            video (np.ndarray): Shape [ts, h, w, c]
-            predictions (torch.Tensor): Shape [ts, count_box, 6].
-                One label contains [class, iou, xlu, ylu, xrd, yrd]
-            target (torch.Tensor): Shape [count_box, 6].
-                One label contains [ts, class id (0 car, 1 person), xlu, ylu, xrd, yrd]
-        Returns:
-            bool: Returns false if "q" is pressed
+        """Adds boxes to frames
+
+        :param video: Shape [ts, h, w, channel]
+        :type video: np.ndarray
+        :param preds: Shape [ts, count_box, 6]
+
+            One label contains (class, iou, xlu, ylu, xrd, yrd)
+        :type preds: Optional[torch.Tensor]
+        :param target: Shape [count_box, 6]
+        
+            One label contains (ts, class id, xlu, ylu, xrd, yrd)
+        :type target: Optional[torch.Tensor]
+        :return: Video with boxes
+        :rtype: np.ndarray
         """
         if (target is None) and (preds is None):
             return video
         boxed_video = np.empty_like(video, dtype=video.dtype)
         for ts, img in enumerate(video):
             if target is not None:
-                self.draw_target_boxes(img, target[target[:, 0] == ts])
+                self._draw_target_boxes(img, target[target[:, 0] == ts])
             if preds is not None:
-                self.draw_preds_box(img, preds[ts])
+                self._draw_preds_box(img, preds[ts])
             boxed_video[ts] = img
         return boxed_video
 
-    def draw_preds_box(self, image: np.ndarray, preds: torch.Tensor) -> None:
+    def _draw_preds_box(self, image: np.ndarray, preds: torch.Tensor) -> None:
         """Draw bounding boxes for preds
-        Args:
-            image (np.ndarray): Shape [h, w, c]
-            preds (torch.Tensor): Shape [count_box, 6].
-                One label contains [class, iou, xlu, ylu, xrd, yrd]
-        Returns:
-            np.ndarray: Image with boxes
+
+        :param image: Shape [h, w, channel]
+        :type image: np.ndarray
+        :param preds: Shape [count_box, 6]
+        
+            One label contains (class, iou, xlu, ylu, xrd, yrd)
+        :type preds: torch.Tensor
         """
         mask = (preds[:, 0] >= 0) & (preds[:, 1] >= self.threshold)
         for box in preds[mask]:
@@ -222,14 +277,15 @@ class Plotter:
                 lineType=cv2.LINE_AA,
             )
 
-    def draw_target_boxes(self, image: np.ndarray, target: torch.Tensor) -> None:
+    def _draw_target_boxes(self, image: np.ndarray, target: torch.Tensor) -> None:
         """Draw bounding boxes for targets
-        Args:
-            image (np.ndarray): Image for drawing
-            target (torch.Tensor): Shape [count_box, 7].
-                One label contains [ts, class id, xlu, ylu, xrd, yrd]
-        Returns:
-            np.ndarray: Image with boxes
+
+        :param image: Image for drawing
+        :type image: np.ndarray
+        :param target: Shape [count_box, 7]
+        
+            One label contains (ts, class id, xlu, ylu, xrd, yrd)
+        :type target: torch.Tensor
         """
         for box in target:
             start_point = (box[2].item(), box[3].item())
@@ -238,7 +294,7 @@ class Plotter:
                 image,
                 start_point,
                 end_point,
-                color= [c / 2 for c in self.colors[box[1] % len(self.colors)]],
+                color=[c / 2 for c in self.colors[box[1] % len(self.colors)]],
                 thickness=2,
                 lineType=cv2.LINE_AA,
             )

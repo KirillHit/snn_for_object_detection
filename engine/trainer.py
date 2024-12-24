@@ -5,7 +5,7 @@ Implements tools for training neural networks
 import torch
 from engine.data import DataModule
 from engine.model import Model
-import utils.devices as devices
+from utils import devices
 from utils.progress_board import ProgressBoard
 from tqdm import tqdm
 

@@ -5,7 +5,8 @@
 .. autoclass:: {{ objname }}
    :members:
    :show-inheritance:
-   :special-members: __call__, __add__, __mul__
+   :special-members: __call__, __add__, __mul__, __iter__
+   :undoc-members:
 
    {% block methods %}
    {% if methods %}
