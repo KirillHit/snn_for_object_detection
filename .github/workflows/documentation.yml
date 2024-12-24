@@ -13,12 +13,16 @@ permissions:
 jobs:
   docs:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-      - name: Install dependencies
-        run: |
-          pip install sphinx sphinx-book-theme pynput
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          environment-file: environment.yml
+          activate-environment: soda_env
+          auto-activate-base: false
       - name: Sphinx build
         run: |
           sphinx-build docs/source _build
