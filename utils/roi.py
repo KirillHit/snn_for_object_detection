@@ -1,15 +1,17 @@
+"""Label anchor boxes using ground-truth bounding boxes"""
+
 import torch
 from tqdm import tqdm
 import utils.box as box
 
 
 class RoI:
-    """Label anchor boxes using ground-truth bounding boxes."""
+    """Label anchor boxes using ground-truth bounding boxes"""
 
     def __init__(self, iou_threshold=0.5) -> None:
         """
-        Args:
-            iou_threshold (float): Minimum acceptable iou. TODO
+        :param iou_threshold: Minimum acceptable iou. Defaults to 0.5.
+        :type iou_threshold: float, optional
         """
         self.iou_threshold = iou_threshold
 
@@ -17,20 +19,26 @@ class RoI:
         self, anchors: torch.Tensor, labels: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Label anchor boxes using ground-truth bounding boxes
-        Args:
-            anchors (torch.Tensor): [num_anchors, 4]
-            labels (torch.Tensor): [num_batch, num_gt_boxes, 5 (class, luw, luh, rdw, rdh)]
-        Returns:
-            bbox_offset: [num_batch, num_anchors, 4]. Ground truth offsets for each box
-            bbox_mask: [num_batch, num_anchors, 4]. (0)*4 for background, (1)*4 for object
-            class_labels: [num_batch, num_anchors]. Class of each box (0 - background)
+
+        :param anchors: Shape [anchor, 4]
+        :type anchors: torch.Tensor
+        :param labels: Shape [batch, gt_boxes, 5]
+
+            One label contains (class, luw, luh, rdw, rdh)
+        :type labels: torch.Tensor
+        :return: List of 3 tensors:
+        
+            1. Ground truth offsets for each box. Shape [batch, anchor, 4].
+            2. Box mask. Shape [batch, anchor, 4]. (0)*4 for background, (1)*4 for object.
+            3. Class of each box (0 - background). Shape [batch, anchor]. 
+        :rtype: tuple[torch.Tensor, torch.Tensor, torch.Tensor]
         """
         batch_size = labels.shape[0]
         device, num_anchors = anchors.device, anchors.shape[0]
         batch_offset, batch_mask, batch_class_labels = [], [], []
         for i in range(batch_size):
             label = labels[i, :, :]
-            anchors_bbox_map = self.assign_anchor_to_box(label[:, 1:], anchors)
+            anchors_bbox_map = self._assign_anchor_to_box(label[:, 1:], anchors)
             bbox_mask = ((anchors_bbox_map >= 0).float().unsqueeze(-1)).repeat(1, 4)
             # Initialize class labels and assigned bounding box coordinates with zeros
             class_labels = torch.zeros(num_anchors, dtype=torch.long, device=device)
@@ -54,16 +62,19 @@ class RoI:
         class_labels = torch.stack(batch_class_labels)
         return bbox_offset, bbox_mask, class_labels
 
-    def assign_anchor_to_box(
+    def _assign_anchor_to_box(
         self, ground_truth: torch.Tensor, anchors: torch.Tensor
     ) -> torch.Tensor:
-        """Assign closest ground-truth bounding boxes to anchor boxes.
+        """Assign closest ground-truth bounding boxes to anchor boxes
+        
         see https://d2l.ai/chapter_computer-vision/anchor.html#assigning-ground-truth-bounding-boxes-to-anchor-boxes
-        Args:
-            ground_truth (torch.Tensor): The ground-truth bounding boxes [num_gt_box, 4] - ulw, ulh, drw, drh
-            anchors (torch.Tensor): Anchors boxes [num_anchors, 4] - ulw, ulh, drw, drh
-        Returns:
-            torch.Tensor: Tensor with ground truth box indices [num_anchors]
+
+        :param ground_truth: The ground-truth bounding boxes [gt_box, 4] - ulw, ulh, drw, drh
+        :type ground_truth: torch.Tensor
+        :param anchors: Anchors boxes [anchor, 4] - ulw, ulh, drw, drh
+        :type anchors: torch.Tensor
+        :return: Tensor with ground truth box indices [anchor]
+        :rtype: torch.Tensor
         """
         num_anchors, num_gt_boxes = anchors.shape[0], ground_truth.shape[0]
         # The Jaccard index measures the similarity between two sets [num_anchors, num_gt_box]

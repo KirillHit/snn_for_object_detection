@@ -1,5 +1,9 @@
-from .soda import SODa
-from .backbone.vgg import VGGBackbone
-from .neck.ssd import SSDNeck
+"""
+SODa Model
+"""
 
-__all__ = "SODa", "VGGBackbone", "SSDNeck"
+from .soda import SODa
+from .backbone import BackboneGen
+from .neck import NeckGen
+from .head import Head
+__all__ = "SODa", "BackboneGen", "NeckGen", "Head"

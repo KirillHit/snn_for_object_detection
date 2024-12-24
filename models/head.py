@@ -1,26 +1,61 @@
+"""
+Model head generator
+"""
+
 import torch
 from torch import nn
-import norse.torch as snn
-from norse.torch.functional.leaky_integrator import LIParameters
-from typing import List
+from typing import List, Tuple, Dict
+from models.modules import *
 
 from utils.anchors import AnchorGenerator
 
 
+#####################################################################
+#                          Head descriptor                          #
+#####################################################################
+
+
 class Head(nn.Module):
-    def __init__(self, num_classes: int, in_shape: List[int]) -> None:
+    """Head model holder
+
+    Applies a head model to multiple maps and merges them.
+    For each input map, its own :class:`HeadGen` model is generated.
+    Predictions obtained for different feature maps are combined.
+    """
+
+    def __init__(
+        self,
+        cfg: str | ListGen,
+        num_classes: int,
+        in_shape: List[int],
+        init_weights: bool = True,
+    ) -> None:
+        """
+        :param cfg: Lists of layer generators.
+        :type cfg: str | ListGen
+        :param num_classes: Number of classes.
+        :type num_classes: int
+        :param in_shape: Input data format.
+            Expecting to receive a list of :attr:`models.neck.NeckGen.out_shape`
+        :type in_shape: List[int]
+        :param init_weights: If ``true`` apply weight initialization function.
+            Defaults to True.
+        :type init_weights: bool, optional
+        """
         super().__init__()
         self.num_classes = num_classes
 
-        sizes = (
-            [0.062, 0.078, 0.094],
-            [0.125, 0.156, 0.188],
-            [0.250, 0.312, 0.375],
-            [0.500, 0.625, 0.750],
+        # TODO Automatic calculation
+        max = 0.75
+        min = 0.08
+        size_per_pix = 3
+        sizes = torch.arange(
+            min, max, (max - min) / (len(in_shape) * size_per_pix), dtype=torch.float32
         )
-        ratios = (0.7, 1, 1.3)
+        sizes = sizes.reshape((-1, size_per_pix))
+        ratios = torch.tensor((0.5, 1.0, 2), dtype=torch.float32)
 
-        num_anchors = len(sizes[0]) + len(ratios) - 1
+        num_anchors = size_per_pix * len(ratios)
         num_class_out = num_anchors * (self.num_classes + 1)
         num_box_out = num_anchors * 4
 
@@ -32,92 +67,176 @@ class Head(nn.Module):
             )
             setattr(
                 self,
-                f"decoder_{idx}",
-                Decoder(channels, num_box_out, num_class_out, 3, True),
+                f"model_{idx}",
+                HeadGen(cfg, num_box_out, num_class_out, channels, init_weights),
             )
 
     def forward(
         self, X: List[torch.Tensor]
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """
-        Args:
-            X (List[torch.Tensor]): feature map list. Map shape - [ts, batch, in_channels, h, w]
-        Returns:
-            tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-                anchors (torch.Tensor): [num_anchors, 4]
-                cls_preds (torch.Tensor): [ts, num_batch, all_anchors, (num_classes + 1)]
-                bbox_preds (torch.Tensor): [ts, num_batch, all_anchors, 4]
+        """Direct network pass
+
+        :param X: Feature map list. One map shape [ts, batch, channel, h, w].
+        :type X: List[torch.Tensor]
+        :return: Predictions made by a neural network.
+            Contains three tensors:
+
+            1. anchors: Shape [anchor, 4]
+            2. cls_preds: Shape [ts, batch, anchor, num_classes + 1]
+            3. bbox_preds: Shape [ts, batch, anchor, 4]
+        :rtype: tuple[torch.Tensor, torch.Tensor, torch.Tensor]
         """
 
         anchors, cls_preds, bbox_preds = [], [], []
 
         for idx, map in enumerate(X):
             anchors.append(getattr(self, f"anchor_gen_{idx}")(map))
-            boxes, classes = getattr(self, f"decoder_{idx}")(map)
+            boxes, classes = getattr(self, f"model_{idx}")(map)
             bbox_preds.append(boxes)
             cls_preds.append(classes)
 
         anchors = torch.cat(anchors, dim=0)
-        cls_preds = self.concat_preds(cls_preds)
+        cls_preds = self._concat_preds(cls_preds)
         cls_preds = cls_preds.reshape(
             cls_preds.shape[0], cls_preds.shape[1], -1, self.num_classes + 1
         )
-        bbox_preds = self.concat_preds(bbox_preds)
+        bbox_preds = self._concat_preds(bbox_preds)
         bbox_preds = bbox_preds.reshape(bbox_preds.shape[0], bbox_preds.shape[1], -1, 4)
         return anchors, cls_preds, bbox_preds
 
-    def flatten_pred(self, pred: torch.Tensor) -> torch.Tensor:
+    def _flatten_pred(self, pred: torch.Tensor) -> torch.Tensor:
         """Transforms the tensor so that each pixel retains channels values and smooths each batch"""
         return torch.flatten(torch.permute(pred, (0, 1, 3, 4, 2)), start_dim=2)
 
-    def concat_preds(self, preds: list[torch.Tensor]) -> torch.Tensor:
+    def _concat_preds(self, preds: list[torch.Tensor]) -> torch.Tensor:
         """Concatenating Predictions for Multiple Scales"""
-        return torch.cat([self.flatten_pred(p) for p in preds], dim=2)
+        return torch.cat([self._flatten_pred(p) for p in preds], dim=2)
 
 
-class Decoder(nn.Module):
+#####################################################################
+#                          Head Generator                           #
+#####################################################################
+
+
+class HeadGen(ModelGen):
+    """Model head generator
+
+    The configuration lists for this module look different.
+
+    .. code-block::
+        :caption: Configuration list example
+
+        cfgs: ListGen = [
+            [
+                Conv(kernel_size=1),
+                Norm(),
+                LSTM(),
+            ],
+            [
+                Conv(kernel_size=1),
+                Conv(kernel_size=1),
+                Conv(box_out, 1),
+            ],
+            [
+                Conv(kernel_size=1),
+                Conv(kernel_size=1),
+                Conv(cls_out, 1),
+            ],
+        ],
+
+    The configuration includes three lists:
+    
+    - The first one is for data preparation
+    - The second one is for box prediction
+    - The third one is for class prediction
+    
+    Box and class prediction models use the output of the preparation
+    network as input.
+    """
+
     def __init__(
         self,
-        in_channels: int,
+        cfg: str | ListGen,
         box_out: int,
         cls_out: int,
-        kernel_size: int,
-        train_li_layer=False,
-    ) -> None:
-        assert kernel_size % 2 == 1, "Kernel size must be odd"
-        super().__init__()
-
-        self.conv2d = nn.Conv2d(
-            in_channels,
-            in_channels,
-            kernel_size=kernel_size,
-            padding=kernel_size // 2,
-            bias=False,
-        )
-
-        li_params = LIParameters()
-        if train_li_layer:
-            self.li_grad_params = torch.nn.Parameter(li_params.tau_mem_inv)
-        self.li = snn.LICell(p=li_params)
-
-        self.box_conv = nn.Conv2d(in_channels, box_out, kernel_size=1, bias=False)
-        self.cls_conv = nn.Conv2d(in_channels, cls_out, kernel_size=1, bias=False)
-
-    def forward(self, X: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        in_channels: int = 2,
+        init_weights=False,
+    ):
         """
-        Args:
-            X (torch.Tensor): img [ts, batch, in_channels, h, w]
-        Returns:
-            tuple[torch.Tensor, torch.Tensor]:
-                boxes (torch.Tensor): predicted boxes [ts, batch, box_out, h, w]
-                classes (torch.Tensor): predicted classes [ts, batch, cls_out, h, w]
+        :param cfg: Lists of layer generators.
+        :type cfg: str | ListGen
+        :param box_out: The number of channels obtained as a result of the  class prediction network.
+        :type box_out: int
+        :param cls_out: The number of channels obtained as a result of the box prediction network.
+        :type cls_out: int
+        :param in_channels: Number of input channels. Defaults to 2.
+        :type in_channels: int, optional
+        :param init_weights: If ``true`` apply weight initialization function.
+            Defaults to True.
+        :type init_weights: bool, optional
         """
-        li_state = None
-        box_preds, cls_preds = [], []
-        for ts in range(X.shape[0]):
-            Z = X[ts]
-            Z = self.conv2d(Z)
-            Z, li_state = self.li(Z, li_state)
-            box_preds.append(self.box_conv(Z))
-            cls_preds.append(self.cls_conv(Z))
-        return torch.stack(box_preds), torch.stack(cls_preds)
+        self.box_out = box_out
+        self.cls_out = cls_out
+        super().__init__(cfg, in_channels, init_weights)
+
+    def _net_generator(self, in_channels: int) -> None:
+        self.base_net = BlockGen(in_channels, [self.net_cfg[0]])
+        self.box_net = BlockGen(self.base_net.out_channels, [self.net_cfg[1]])
+        self.cls_net = BlockGen(self.base_net.out_channels, [self.net_cfg[2]])
+
+    def _load_cfg(self):
+        self.default_cfgs.update(main_cfg(self.box_out, self.cls_out))
+
+    def forward_impl(
+        self, X: torch.Tensor, state: ListState | None
+    ) -> Tuple[torch.Tensor, ListState]:
+        state = [None] * 3 if state is None else state
+        Y, state[0] = self.base_net(X, state[0])
+        box, state[1] = self.box_net(Y, state[1])
+        cls, state[2] = self.cls_net(Y, state[2])
+
+        return box, cls, state
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        boxes, clses = [], []
+        state = None
+        for time_step_x in X:
+            box, cls, state = self.forward_impl(time_step_x, state)
+            boxes.append(box)
+            clses.append(cls)
+        return torch.stack(boxes), torch.stack(clses)
+
+
+#####################################################################
+#                       Model configurations                        #
+#####################################################################
+
+
+def main_cfg(box_out: int, cls_out: int) -> Dict[str, ListGen]:
+    """Default configuration generator
+
+    See source code.
+
+    :return: Lists of layer generators.
+    :rtype: Dict[str, ListGen]
+    """
+    cfgs: Dict[str, ListGen] = {
+        "main": [
+            [
+                Conv(kernel_size=1),
+                Norm(),
+                LSTM(),
+            ],
+            [
+                Conv(kernel_size=1),
+                Conv(kernel_size=1),
+                Conv(box_out, 1),
+            ],
+            [
+                Conv(kernel_size=1),
+                Conv(kernel_size=1),
+                Conv(cls_out, 1),
+            ],
+        ],
+    }
+    return cfgs
