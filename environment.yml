@@ -169,3 +169,4 @@ dependencies:
       - nir==1.0.4
       - nirtorch==1.0
       - norse==1.1.0
+      - pycocotools==2.0.8

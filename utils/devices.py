@@ -1,28 +1,30 @@
+"""Functions for working with the torch.device module"""
+
 import torch
 
 
-def cpu():
-    """Get the CPU device."""
+def cpu() -> torch.device:
+    """Get the CPU device"""
     return torch.device("cpu")
 
 
-def gpu(i=0):
-    """Get a GPU device."""
+def gpu(i: int = 0) -> torch.device:
+    """Get a GPU device"""
     return torch.device(f"cuda:{i}")
 
 
-def num_gpus():
-    """Get the number of available GPUs."""
+def num_gpus() -> torch.device:
+    """Get the number of available GPUs"""
     return torch.cuda.device_count()
 
 
-def try_gpu(i=0):
-    """Return gpu(i) if exists, otherwise return cpu()."""
+def try_gpu(i: int = 0) -> torch.device | None:
+    """Return gpu(i) if exists, otherwise return None"""
     if num_gpus() >= i + 1:
         return gpu(i)
-    return cpu()
+    return None
 
 
-def try_all_gpus():
-    """Return all available GPUs, or [cpu(),] if no GPU exists."""
+def try_all_gpus() -> torch.device:
+    """Return all available GPUs, or [cpu(),] if no GPU exists"""
     return [gpu(i) for i in range(num_gpus())]

@@ -1,45 +1,41 @@
 ### Basic
-Mode: 1               # 1 - interactive, 2 - train, 3 - test dataloader
+Mode: 1               # 1 - interactive, 2 - train, 3 - eval
+gpu_index: 0
 
 ### Train mode
-LoadParameters: false
-NumTrainRounds: 12    # -1 - infinite
+LoadParameters: true
+NumTrainRounds: -1     # -1 - infinite
 NumRoundEpoch: 15
+### Eval mode
+NumEvalRounds: 60
 
 ### Model parameters
-BackboneName: vgg
-BackboneVersion: 3
-NeckName: ssd
-NeckVersion: 3
-BatchNorm: false
-InitWeights: false
-Dropout: false
+Backbone: res
+Neck: ssd
+Head: main
+InitWeights: true
 LossRatio: 0.06
 
 ### Dataset parameters
 Dataset: gen1
-# Train dataset
-BatchSize: 4
 TimeStep: 16
-NumSteps: 128
-TimeWindow: 16
+TimeWindow: 8
 NumLoadFile: 8
 NumWorkers: 4
+# Train dataset
+BatchSize: 3
+NumSteps: 32
 # Test dataset
 TestBatchSize: 1
-TestTimeStep: 16
 TestNumSteps: 128
-TestNumLoadFile: 8
-TestNumWorkers: 4
 
 ### Progress board parameters
 Display: True
 EveryN: 4
 
 ### Plotter parameters
-PlotterThreshold: 0.9
-PlotterColumns: 2
+PlotterThreshold: 0.7
+PlotterColumns: 4
 
 ### Trainer board parameters
-NumGpus: 1
-EpochSize: 200
+EpochSize: 60

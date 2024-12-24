@@ -1,8 +1,13 @@
+"""General methods for working with boxes
+
+For more details see https://d2l.ai/chapter_computer-vision/anchor.html.
+"""
+
 import torch
 
 
 def box_corner_to_center(boxes):
-    """Convert from (upper-left, lower-right) to (center, width, height)."""
+    """Convert from (upper-left, lower-right) to (center, width, height)"""
     x1, y1, x2, y2 = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
     cx = (x1 + x2) / 2
     cy = (y1 + y2) / 2
@@ -13,7 +18,7 @@ def box_corner_to_center(boxes):
 
 
 def box_center_to_corner(boxes):
-    """Convert from (center, width, height) to (upper-left, lower-right)."""
+    """Convert from (center, width, height) to (upper-left, lower-right)"""
     cx, cy, w, h = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
     x1 = cx - 0.5 * w
     y1 = cy - 0.5 * h
@@ -24,15 +29,17 @@ def box_center_to_corner(boxes):
 
 
 def box_iou(boxes1: torch.Tensor, boxes2: torch.Tensor) -> torch.Tensor:
-    """Compute pairwise IoU across two lists of anchor or bounding boxes.
+    """Compute pairwise IoU across two lists of anchor or bounding boxes
 
-    Args:
-        boxes1 (torch.Tensor): anchors [num_anchors, 4] - ulw, ulh, drw, drh
-        boxes2 (torch.Tensor): ground truth [num_gt_box, 4] - ulw, ulh, drw, drh
+    :param boxes1: anchors [num_anchors, 4] - (ulw, ulh, drw, drh).
+    :type boxes1: torch.Tensor
+    :param boxes2: ground truth [num_gt_box, 4] - (ulw, ulh, drw, drh).
+    :type boxes2: torch.Tensor
+    :return: IoU. Element x_ij in the i-th row and j-th column is
+        the IoU of the anchor box i and the ground-truth bounding box j.
 
-    Returns:
-        IoU (torch.Tensor): [num_anchors, num_gt_box] Element x_ij in the i-th row and j-th
-        column is the IoU of the anchor box i and the ground-truth bounding box j
+        Shape [num_anchors, num_gt_box].
+    :rtype: torch.Tensor
     """
     assert boxes1.shape == (boxes1.shape[0], 4), "Wrong box shape"
     assert boxes2.shape == (boxes2.shape[0], 4), "Wrong box shape"
@@ -53,9 +60,7 @@ def box_iou(boxes1: torch.Tensor, boxes2: torch.Tensor) -> torch.Tensor:
 
 
 def offset_boxes(anchors, assigned_bb, eps=1e-6):
-    """Transform for anchor box offsets.
-    see https://d2l-ai.translate.goog/chapter_computer-vision/anchor.html?_x_tr_sl=auto&_x_tr_tl=ru&_x_tr_hl=ru#labeling-classes-and-offsets"""
-    # TODO find a better formula
+    """Transform for anchor box offsets"""
     c_anc = box_corner_to_center(anchors)
     c_assigned_bb = box_corner_to_center(assigned_bb)
     offset_xy = 10 * (c_assigned_bb[:, :2] - c_anc[:, :2]) / c_anc[:, 2:]
@@ -65,7 +70,7 @@ def offset_boxes(anchors, assigned_bb, eps=1e-6):
 
 
 def offset_inverse(anchors, offset_preds):
-    """Predict bounding boxes based on anchor boxes with predicted offsets."""
+    """Predict bounding boxes based on anchor boxes with predicted offsets"""
     anc = box_corner_to_center(anchors)
     pred_bbox_xy = (offset_preds[:, :2] * anc[:, 2:] / 10) + anc[:, :2]
     pred_bbox_wh = torch.exp(offset_preds[:, 2:] / 5) * anc[:, 2:]
@@ -75,7 +80,7 @@ def offset_inverse(anchors, offset_preds):
 
 
 def nms(boxes, scores, class_id, num_classes, iou_threshold):
-    """Sort confidence scores of predicted bounding boxes."""
+    """Sort confidence scores of predicted bounding boxes"""
     keep = []  # Indices of predicted bounding boxes that will be kept
     for class_idx in range(num_classes - 1):
         scores_cls = torch.nonzero(class_id == class_idx).squeeze(dim=1)
@@ -101,16 +106,22 @@ def multibox_detection(
     nms_threshold: float = 0.1,
     pos_threshold: float = 0.009999999,
 ) -> torch.Tensor:
-    """Predict bounding boxes using non-maximum suppression.
-    Args:
-        cls_probs (torch.Tensor): Shape [batch, num_anchors, num_classes + 1]
-        offset_preds (torch.Tensor): Shape [batch, num_anchors, 4]
-        anchors (torch.Tensor): Shape [num_anchors, 4]
-        nms_threshold (float, optional): TODO. Defaults to 0.1.
-        pos_threshold (float, optional): TODO. Defaults to 0.009999999.
-    Returns:
-        torch.Tensor: Shape [batch, anchors, 6]. 
-            One label contains [class, iou, luw, luh, rdw, rdh]
+    """Predict bounding boxes using non-maximum suppression
+
+    :param cls_probs: Shape [batch, anchor, num_classes + 1]
+    :type cls_probs: torch.Tensor
+    :param offset_preds: Shape [batch, anchor, 4]
+    :type offset_preds: torch.Tensor
+    :param anchors: Shape [anchor, 4]
+    :type anchors: torch.Tensor
+    :param nms_threshold: Defaults to 0.1
+    :type nms_threshold: float, optional
+    :param pos_threshold: Defaults to 0.009999999
+    :type pos_threshold: float, optional
+    :return: Shape [batch, anchor, 6]
+
+        One label contains (class, iou, luw, luh, rdw, rdh)
+    :rtype: torch.Tensor
     """
     device = cls_probs.device
     batch_size, num_anchors, num_classes = cls_probs.shape

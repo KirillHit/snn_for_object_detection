@@ -1,18 +1,24 @@
+"""Generates a model and dataset based on parameters from a configuration file"""
+
 import yaml
 from torch.nn.utils import parameters_to_vector as p2v
 import engine
 import models
 import utils
 import utils.devices
+from typing import Any
 
 
 class ModelLoader:
-    """Generates a model and dataset based on parameters from a configuration file"""
+    """Generates a model and dataset based on parameters from a configuration file
+
+    For details see the source code.
+    """
 
     def __init__(self, cfg_path="config/config.yaml"):
         with open(cfg_path, "r") as f:
             self.data = yaml.load(f, Loader=yaml.SafeLoader)
-        if self.get("Mode") == 2:
+        if self.get("Mode") != 1:
             self.data["Display"] = False
         self.print_info()
 
@@ -30,49 +36,34 @@ class ModelLoader:
         return utils.MTProphesee(
             self.get("Dataset"),
             batch_size=self.get("TestBatchSize"),
-            time_step=self.get("TestTimeStep"),
+            time_step=self.get("TimeStep"),
             num_steps=self.get("TestNumSteps"),
-            num_load_file=self.get("TestNumLoadFile"),
-            num_workers=self.get("TestNumWorkers"),
+            num_load_file=self.get("NumLoadFile"),
+            num_workers=self.get("NumWorkers"),
         )
 
-    def get_model(self) -> engine.Module:
-        match self.get("BackboneName"):
-            case "vgg":
-                backbone = models.VGGBackbone
-            case _:
-                raise RuntimeError("Wrong backbone name")
-        match self.get("NeckName"):
-            case "ssd":
-                neck = models.SSDNeck
-            case _:
-                raise RuntimeError("Wrong neck name")
-
-        backbone_net = backbone(
-            str(self.get("BackboneVersion")),
-            batch_norm=self.get("BatchNorm"),
+    def get_model(self, data: engine.DataModule) -> engine.Model:
+        backbone_net = models.BackboneGen(
+            str(self.get("Backbone")),
+            in_channels=2,
             init_weights=self.get("InitWeights"),
         )
-        neck_net = neck(
-            str(self.get("NeckVersion")),
+        neck_net = models.NeckGen(
+            str(self.get("Neck")),
             backbone_net.out_channels,
-            batch_norm=self.get("BatchNorm"),
             init_weights=self.get("InitWeights"),
-            dropout=self.get("Dropout"),
         )
-
-        match self.get("Dataset"):
-            case "gen1":
-                num_classes = 2
-            case "1mpx":
-                num_classes = 7
-            case _:
-                raise RuntimeError("Wrong dataset name")
+        head_net = models.Head(
+            self.get("Head"),
+            len(data.get_labels()),
+            neck_net.out_shape,
+            self.get("InitWeights"),
+        )
 
         model = models.SODa(
             backbone_net,
             neck_net,
-            num_classes=num_classes,
+            head_net,
             loss_ratio=self.get("LossRatio"),
             time_window=self.get("TimeWindow"),
         )
@@ -92,15 +83,13 @@ class ModelLoader:
 
     def get_params_file_name(self) -> str:
         return (
-            f"{self.get("BackboneName")}{self.get("BackboneVersion")}-"
-            f"{self.get("NeckName")}{self.get("NeckVersion")}-"
-            f"{self.get("Dataset")}"
+            f"{self.get("Backbone")}-" f"{self.get("Neck")}-" f"{self.get("Dataset")}"
         )
 
     def get_trainer(self):
         return engine.Trainer(
             self.get_progress_board(),
-            num_gpus=self.get("NumGpus"),
+            gpu_index=self.get("gpu_index"),
             epoch_size=self.get("EpochSize"),
         )
 
@@ -108,25 +97,36 @@ class ModelLoader:
         return utils.Plotter(
             threshold=self.get("PlotterThreshold"),
             labels=data.get_labels(),
-            interval=data.time_step,
+            interval=self.get("TimeStep"),
             columns=self.get("PlotterColumns"),
         )
 
-    def get(self, str):
-        return self.data[str]
+    def get_evaluate(self, data: engine.DataModule) -> utils.SODAeval:
+        return utils.SODAeval(labelmap=data.get_labels())
+
+    def get(self, name: str) -> Any:
+        """Get data from configuration file
+
+        :param name: Parameter name
+        :type name: str
+        :return: Parameter value
+        :rtype: Any
+        :raises KeyError: The key was not found in the set of existing keys
+        """
+        return self.data[name]
 
     def print_info(self) -> None:
+        """Prints basic information from the model configuration"""
         print(
             "[INFO]: Training parameters:\n"
             f"\tMode:{self.get("Mode")}\n"
             f"\tNumTrainRounds:{self.get("NumTrainRounds")}\n"
             f"\tNumRoundEpoch:{self.get("NumRoundEpoch")}\n"
             "\tModel architecture:\n"
-            f"\t\tBackbone: {self.get("BackboneName")}{self.get("BackboneVersion")}\n"
-            f"\t\tNeck: {self.get("NeckName")}{self.get("NeckVersion")}\n"
-            f"\t\tBatchNorm: {self.get("BatchNorm")}\n"
+            f"\t\tBackbone: {self.get("Backbone")}\n"
+            f"\t\tNeck: {self.get("Neck")}\n"
+            f"\t\tHead: {self.get("Head")}\n"
             f"\t\tInitWeights: {self.get("InitWeights")}\n"
-            f"\t\tDropout: {self.get("Dropout")}\n"
             f"\t\tLossRatio: {self.get("LossRatio")}\n"
             f"\tDataset: {self.get("Dataset")}\n"
             f"\t\tBatchSize: {self.get("BatchSize")}\n"
