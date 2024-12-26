@@ -24,9 +24,9 @@ jobs:
           activate-environment: soda_env
           auto-activate-base: false
       - name: Sphinx build
-        uses: coactions/setup-xvfb@v1
-        with:
-          run: sphinx-build docs/source _build
+        run: |
+          sudo apt-get install xvfb
+          xvfb-run --auto-servernum sphinx-build docs/source _build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
