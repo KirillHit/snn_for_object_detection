@@ -42,19 +42,23 @@ class ModelLoader:
             num_workers=self.get("NumWorkers"),
         )
 
+
+
     def get_model(self, data: engine.DataModule) -> engine.Model:
+        config_gen : models.BaseConfig = models.config_list[self.get("Model")]()
+        
         backbone_net = models.BackboneGen(
-            str(self.get("Backbone")),
+            config_gen,
             in_channels=2,
             init_weights=self.get("InitWeights"),
         )
         neck_net = models.NeckGen(
-            str(self.get("Neck")),
+            config_gen,
             backbone_net.out_channels,
             init_weights=self.get("InitWeights"),
         )
         head_net = models.Head(
-            self.get("Head"),
+            config_gen,
             len(data.get_labels()),
             neck_net.out_shape,
             self.get("InitWeights"),
@@ -83,7 +87,7 @@ class ModelLoader:
 
     def get_params_file_name(self) -> str:
         return (
-            f"{self.get("Backbone")}-" f"{self.get("Neck")}-" f"{self.get("Dataset")}"
+            f"{self.get("Model")}_{self.get("Dataset")}"
         )
 
     def get_trainer(self):
@@ -123,9 +127,7 @@ class ModelLoader:
             f"\tNumTrainRounds:{self.get("NumTrainRounds")}\n"
             f"\tNumRoundEpoch:{self.get("NumRoundEpoch")}\n"
             "\tModel architecture:\n"
-            f"\t\tBackbone: {self.get("Backbone")}\n"
-            f"\t\tNeck: {self.get("Neck")}\n"
-            f"\t\tHead: {self.get("Head")}\n"
+            f"\t\Model: {self.get("Model")}\n"
             f"\t\tInitWeights: {self.get("InitWeights")}\n"
             f"\t\tLossRatio: {self.get("LossRatio")}\n"
             f"\tDataset: {self.get("Dataset")}\n"
