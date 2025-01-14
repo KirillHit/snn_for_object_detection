@@ -1,36 +1,56 @@
-# Импульсная нейросеть для детекции объектов
+# SODa (Spike Object Detector)
 
-Импульсная нейросеть для детекции объектов дорожной обстановки с использованием событийной камеры. Применяются открытые библиотеки [PyTorch](https://github.com/pytorch/pytorch) и [norse](https://github.com/norse/norse/tree/main). Поддерживаются датасеты [GEN1](https://www.prophesee.ai/2020/01/24/prophesee-gen1-automotive-detection-dataset/) и [1Mpx](https://www.prophesee.ai/2020/11/24/automotive-megapixel-event-based-dataset/).
+Импульсная нейросеть для детекции объектов дорожной обстановки с использованием событийной камеры. 
 
+Применяются открытые библиотеки [PyTorch](https://github.com/pytorch/pytorch) и [norse](https://github.com/norse/norse/tree/main). Поддерживаются датасеты [GEN1](https://www.prophesee.ai/2020/01/24/prophesee-gen1-automotive-detection-dataset/) и [1Mpx](https://www.prophesee.ai/2020/11/24/automotive-megapixel-event-based-dataset/).
 
 ## Запуск
 
 Скачайте репозиторий:
 
 ``` bash
-git clone https://github.com/KirillHit/spike_yolo.git
-cd spike_yolo
+git clone https://github.com/KirillHit/snn_for_object_detection.git --recurse-submodules
+cd snn_for_object_detection
 ```
 
 Создайте виртуальное окружение с помощью [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html):
 
 ``` bash
 conda env create -f environment.yml
-conda activate spike_yolo_env
+conda activate soda_env
 ```
 
-Запустите решение:
+Перед запуском необходимо скачать один из наборов наборов данных [Gen1](https://www.prophesee.ai/2020/01/24/prophesee-gen1-automotive-detection-dataset/) или [1Mpx](https://www.prophesee.ai/2020/11/24/automotive-megapixel-event-based-dataset/), создать в директории проекта папку `data`, и перенести в неё данные в соответствии с шаблоном `/data/<"gen1" или "1mpx">/<"*_bbox.npy" и "*_td.dat">`
+
+Доступно несколько сценариев работы: интерактивное обучение, тихая тренировка сети и оценка качества работы. Выбор сценария, изменение размера пачки и настройка других параметров обучения осуществляется в [файле конфигурации](https://kirillhit.github.io/snn_for_object_detection/pages/config.html). Для тестов следует выбрать интерактивное обучение.
+
+Далее запустите сценарий:
 
 ``` bash
 python3 main.py
 ```
 
-Далее выберете датасет и запустите обучение/тестирование.
-
 ## Промежуточные результаты
 
-Пример работы сети на датасете Gen1:
+В данный момент проводятся эксперименты с различными архитектурами и методами обучения. Данный пример относиться к сети версии [0.3.0](https://github.com/KirillHit/snn_for_object_detection/tree/v0.3.0). Сеть в этом примере основана на архитектуре SSD и имеет 900000 параметров.
 
-![gen1_example](.images/gen1_example.gif)
+<p align="center">
+<img src="https://raw.githubusercontent.com/KirillHit/snn_for_object_detection/main/.images/gen1_example.gif">
+</p>
 
-Сеть основана на архитектуре SSD и имеет 900000 параметров.
+## Генерация моделей
+
+Для ускорения прототипирования в данном проекте была реализована система генерации моделей. 
+
+Пример описания простой свёрточной сети в коде:
+
+``` python
+def vgg_block(out_channels: int, kernel: int = 3):
+    return Conv(out_channels, kernel), Norm(), LIF()
+
+cfgs: ListGen = [
+    *vgg_block(8), Pool("S"), *vgg_block(32), Pool("S"), *vgg_block(64), Pool("S")
+]
+```
+
+Подробнее о генераторе моделей смотри [здесь](https://kirillhit.github.io/snn_for_object_detection/pages/config.html).
