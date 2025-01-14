@@ -1,9 +1,9 @@
 ### Basic
-Mode: 1               # 1 - interactive, 2 - train, 3 - eval
+Mode: 2               # 1 - interactive, 2 - train, 3 - eval
 gpu_index: 0
 
 ### Train mode
-LoadParameters: true
+LoadParameters: false
 NumTrainRounds: -1    # -1 - infinite
 NumRoundEpoch: 15
 ### Eval mode
@@ -12,7 +12,7 @@ NumEvalRounds: 60
 ### Model parameters
 Model: yolo           # yolo
 InitWeights: true
-LossRatio: 0.1
+LossRatio: 0.06
 
 ### Dataset parameters
 Dataset: gen1
@@ -21,7 +21,7 @@ TimeWindow: 8
 NumLoadFile: 8
 NumWorkers: 4
 # Train dataset
-BatchSize: 4
+BatchSize: 5
 NumSteps: 32
 # Test dataset
 TestBatchSize: 1
@@ -32,7 +32,7 @@ Display: True
 EveryN: 4
 
 ### Plotter parameters
-PlotterThreshold: 0.7
+PlotterThreshold: 0.01
 PlotterColumns: 4
 
 ### Trainer board parameters

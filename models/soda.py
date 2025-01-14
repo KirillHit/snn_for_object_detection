@@ -54,14 +54,14 @@ class SODa(Model):
         self.base_net = backbone
         self.neck_net = neck
         self.head_net = head
-        self.roi_blk = RoI(iou_threshold=0.5)
+        self.roi_blk = RoI(iou_threshold=0.4)
         self.time_window = time_window
 
         self.cls_loss = nn.CrossEntropyLoss(reduction="none")
         self.box_loss = nn.L1Loss(reduction="none")
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
-        return torch.optim.Adamax(self.parameters(), lr=0.0001)
+        return torch.optim.Adamax(self.parameters(), lr=0.001)
 
     def loss(
         self,

@@ -19,6 +19,7 @@ __all__ = (
     "LI",
     "ReLU",
     "SiLU",
+    "Tanh",
     "LSTM",
     "Pool",
     "Up",
@@ -357,6 +358,16 @@ class SiLU(LayerGen):
 
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
         return nn.SiLU(), in_channels
+    
+    
+class Tanh(LayerGen):
+    """SiLU layer generator
+
+    Uses :external:class:`torch.nn.Tanh` module.
+    """
+
+    def get(self, in_channels: int) -> Tuple[nn.Module, int]:
+        return nn.Tanh(), in_channels
 
 
 class LSTM(LayerGen):

@@ -15,13 +15,13 @@ class Yolo(BaseConfig):
     def backbone_cfgs(self) -> ListGen:
         return [
             *self._conv(64, 3, 2),
-            *self._c2f(128, 1),
+            *self._c2f(64, 2),
             *self._conv(128, 3, 2),
+            *self._c2f(128, 2),
         ]
 
     def neck_cfgs(self) -> ListGen:
         return [
-            *self._c2f(128, 2),
             Return(),
             *self._conv(256, 3, 2),
             *self._c2f(256, 2),
@@ -36,7 +36,8 @@ class Yolo(BaseConfig):
             [
                 Conv(kernel_size=1),
                 Norm(),
-                LSTM(),
+                LI(),
+                Tanh(),
             ],
             [
                 Conv(box_out, 1),
