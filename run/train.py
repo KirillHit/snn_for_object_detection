@@ -55,7 +55,7 @@ def train_spin(
             print("[ERROR]: Training stopped due to unexpected error!")
             valid = False
         timestr = time.strftime("%Y%m%d-%H%M%S")
-        model.save_params(params_file + timestr)
+        model.save_params(params_file + "_" + timestr)
         print(f"[INFO]: Round {idx} fineshed at " + timestr)
         idx += 1
     trainer.board.save_plot()

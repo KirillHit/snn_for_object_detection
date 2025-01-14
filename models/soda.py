@@ -10,9 +10,7 @@ from engine.model import Model
 from utils.roi import RoI
 import utils.box as box
 
-from .backbone import BackboneGen
-from .neck import NeckGen
-from .head import Head
+from .generator import BackboneGen, NeckGen, Head
 
 
 class SODa(Model):
@@ -63,7 +61,7 @@ class SODa(Model):
         self.box_loss = nn.L1Loss(reduction="none")
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
-        return torch.optim.Adamax(self.parameters(), lr=0.001)
+        return torch.optim.Adamax(self.parameters(), lr=0.0001)
 
     def loss(
         self,
