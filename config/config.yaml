@@ -1,5 +1,5 @@
 ### Basic
-Mode: 2               # 1 - interactive, 2 - train, 3 - eval
+Mode: 1               # 1 - interactive, 2 - train, 3 - eval
 gpu_index: 0
 
 ### Train mode
@@ -12,7 +12,7 @@ NumEvalRounds: 60
 ### Model parameters
 Model: yolo           # yolo
 InitWeights: true
-LossRatio: 0.06
+LossRatio: 0.04
 
 ### Dataset parameters
 Dataset: gen1
@@ -32,7 +32,7 @@ Display: True
 EveryN: 4
 
 ### Plotter parameters
-PlotterThreshold: 0.01
+PlotterThreshold: 0.7
 PlotterColumns: 4
 
 ### Trainer board parameters
