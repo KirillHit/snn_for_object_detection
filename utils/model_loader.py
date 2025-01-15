@@ -127,7 +127,7 @@ class ModelLoader:
             f"\tNumTrainRounds:{self.get("NumTrainRounds")}\n"
             f"\tNumRoundEpoch:{self.get("NumRoundEpoch")}\n"
             "\tModel architecture:\n"
-            f"\t\Model: {self.get("Model")}\n"
+            f"\tModel: {self.get("Model")}\n"
             f"\t\tInitWeights: {self.get("InitWeights")}\n"
             f"\t\tLossRatio: {self.get("LossRatio")}\n"
             f"\tDataset: {self.get("Dataset")}\n"
