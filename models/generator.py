@@ -35,7 +35,7 @@ type ListState = List[torch.Tensor | None | ListState]
 class BlockGen(nn.Module):
     """Block generator for the network
 
-    Takes as input two-dimensional arrays of :class:`LayerGen`.
+    Takes as input two-dimensional arrays of :class:`LayerGen <models.modules.LayerGen>`.
     The inner dimensions are sequential, the outer ones are added together.
     Lists can include blocks from other two-dimensional lists.
     They will be considered recursively.
