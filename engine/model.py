@@ -9,7 +9,7 @@ from typing import Tuple, Any
 
 
 class Model(nn.Module):
-    """Class of interfaces for networks"""
+    """Class of interface for models"""
 
     def loss(
         self,

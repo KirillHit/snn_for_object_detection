@@ -10,9 +10,7 @@ from engine.model import Model
 from utils.roi import RoI
 import utils.box as box
 
-from .backbone import BackboneGen
-from .neck import NeckGen
-from .head import Head
+from .generator import BackboneGen, NeckGen, Head
 
 
 class SODa(Model):
@@ -56,7 +54,7 @@ class SODa(Model):
         self.base_net = backbone
         self.neck_net = neck
         self.head_net = head
-        self.roi_blk = RoI(iou_threshold=0.5)
+        self.roi_blk = RoI(iou_threshold=0.4)
         self.time_window = time_window
 
         self.cls_loss = nn.CrossEntropyLoss(reduction="none")

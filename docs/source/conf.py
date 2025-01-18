@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "SODa"
-copyright = "2024, Kirill Hitushkin"
+copyright = "2025, Kirill Hitushkin"
 author = "Kirill Hitushkin"
 release = "v0.4.0"
 
@@ -25,6 +25,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
+    "myst_parser",
 ]
 
 intersphinx_mapping = {

@@ -168,10 +168,11 @@ class Trainer:
         :return: Three tensors: data, predictions and targets.
         :rtype: tuple[torch.Tensor, torch.Tensor, torch.Tensor]
         """
-        tensors, targets = next(self.test_dataloader_iter)
-        if self.gpu:
-            tensors = tensors.to(self.gpu)
-        predictions = self.model.predict(tensors).to(devices.cpu())
-        if self.gpu:
-            tensors = tensors.to(devices.cpu())
+        with torch.no_grad():
+            tensors, targets = next(self.test_dataloader_iter)
+            if self.gpu:
+                tensors = tensors.to(self.gpu)
+            predictions = self.model.predict(tensors).to(devices.cpu())
+            if self.gpu:
+                tensors = tensors.to(devices.cpu())
         return tensors, predictions, targets

@@ -3,7 +3,10 @@ SODa Model
 """
 
 from .soda import SODa
-from .backbone import BackboneGen
-from .neck import NeckGen
-from .head import Head
-__all__ = "SODa", "BackboneGen", "NeckGen", "Head"
+from .generator import BackboneGen, NeckGen, Head, BaseConfig
+from typing import Dict
+from .yolo import Yolo
+
+config_list: Dict[str, BaseConfig] = {"yolo": Yolo}
+
+__all__ = "SODa", "BackboneGen", "NeckGen", "Head", "BaseConfig"
