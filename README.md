@@ -24,7 +24,7 @@ conda activate soda_env
 
 Перед запуском необходимо скачать один из наборов данных [Gen1](https://www.prophesee.ai/2020/01/24/prophesee-gen1-automotive-detection-dataset/) или [1Mpx](https://www.prophesee.ai/2020/11/24/automotive-megapixel-event-based-dataset/), создать в директории проекта папку `data`, и перенести в нее данные в соответствии с шаблоном `/data/<"gen1" или "1mpx">/<"*_bbox.npy" и "*_td.dat">`
 
-Для запуска доступно несколько [сценариев](kirillhit.github.io/snn_for_object_detection/pages/structure.html#startup-scripts). Выбор сценария, изменение размера пачки и настройка других параметров обучения осуществляется в [файле конфигурации](https://kirillhit.github.io/snn_for_object_detection/pages/config.html). Для тестов следует выбрать интерактивное обучение.
+Для запуска доступно несколько [сценариев](https://kirillhit.github.io/snn_for_object_detection/pages/structure.html#startup-scripts). Выбор сценария, изменение размера пачки и настройка других параметров обучения осуществляется в [файле конфигурации](https://kirillhit.github.io/snn_for_object_detection/pages/config.html). Для тестов следует выбрать интерактивное обучение.
 
 Далее запустите сценарий:
 
@@ -32,7 +32,7 @@ conda activate soda_env
 python3 main.py
 ```
 
-## Промежуточные результаты
+## Предварительные результаты
 
 В данный момент проводятся эксперименты с различными архитектурами и методами обучения. Этот пример относиться к сети версии [0.3.0](https://github.com/KirillHit/snn_for_object_detection/tree/v0.3.0). Сеть основана на архитектуре SSD и имеет 900000 параметров.
 
