@@ -3,18 +3,16 @@ Mode: 1               # 1 - interactive, 2 - train, 3 - eval
 gpu_index: 0
 
 ### Train mode
-LoadParameters: true
-NumTrainRounds: -1     # -1 - infinite
+LoadParameters: false
+NumTrainRounds: -1    # -1 - infinite
 NumRoundEpoch: 15
 ### Eval mode
 NumEvalRounds: 60
 
 ### Model parameters
-Backbone: res
-Neck: ssd
-Head: main
+Model: yolo           # yolo
 InitWeights: true
-LossRatio: 0.06
+LossRatio: 0.04
 
 ### Dataset parameters
 Dataset: gen1
@@ -23,7 +21,7 @@ TimeWindow: 8
 NumLoadFile: 8
 NumWorkers: 4
 # Train dataset
-BatchSize: 3
+BatchSize: 5
 NumSteps: 32
 # Test dataset
 TestBatchSize: 1
