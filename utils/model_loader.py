@@ -42,11 +42,9 @@ class ModelLoader:
             num_workers=self.get("NumWorkers"),
         )
 
-
-
     def get_model(self, data: engine.DataModule) -> engine.Model:
-        config_gen : models.BaseConfig = models.config_list[self.get("Model")]()
-        
+        config_gen: models.BaseConfig = models.config_list[self.get("Model")]()
+
         backbone_net = models.BackboneGen(
             config_gen,
             in_channels=2,
@@ -86,9 +84,7 @@ class ModelLoader:
         )
 
     def get_params_file_name(self) -> str:
-        return (
-            f"{self.get("Model")}_{self.get("Dataset")}"
-        )
+        return f"{self.get('Model')}_{self.get('Dataset')}"
 
     def get_trainer(self):
         return engine.Trainer(
@@ -123,17 +119,17 @@ class ModelLoader:
         """Prints basic information from the model configuration"""
         print(
             "[INFO]: Training parameters:\n"
-            f"\tMode:{self.get("Mode")}\n"
-            f"\tNumTrainRounds:{self.get("NumTrainRounds")}\n"
-            f"\tNumRoundEpoch:{self.get("NumRoundEpoch")}\n"
+            f"\tMode:{self.get('Mode')}\n"
+            f"\tNumTrainRounds:{self.get('NumTrainRounds')}\n"
+            f"\tNumRoundEpoch:{self.get('NumRoundEpoch')}\n"
             "\tModel architecture:\n"
-            f"\tModel: {self.get("Model")}\n"
-            f"\t\tInitWeights: {self.get("InitWeights")}\n"
-            f"\t\tLossRatio: {self.get("LossRatio")}\n"
-            f"\tDataset: {self.get("Dataset")}\n"
-            f"\t\tBatchSize: {self.get("BatchSize")}\n"
-            f"\t\tTimeStep: {self.get("TimeStep")}\n"
-            f"\t\tNumSteps: {self.get("NumSteps")}\n"
-            f"\t\tNumLoadFile: {self.get("NumLoadFile")}\n"
-            f"\t\tNumWorkers: {self.get("NumWorkers")}"
+            f"\tModel: {self.get('Model')}\n"
+            f"\t\tInitWeights: {self.get('InitWeights')}\n"
+            f"\t\tLossRatio: {self.get('LossRatio')}\n"
+            f"\tDataset: {self.get('Dataset')}\n"
+            f"\t\tBatchSize: {self.get('BatchSize')}\n"
+            f"\t\tTimeStep: {self.get('TimeStep')}\n"
+            f"\t\tNumSteps: {self.get('NumSteps')}\n"
+            f"\t\tNumLoadFile: {self.get('NumLoadFile')}\n"
+            f"\t\tNumWorkers: {self.get('NumWorkers')}"
         )

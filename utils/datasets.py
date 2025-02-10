@@ -370,8 +370,11 @@ class MTPropheseeDataset(PropheseeDatasetBase):
 class STPropheseeDataset(PropheseeDatasetBase):
     """Single-target Prophesee gen1 and 1mpx iterable datasets"""
 
-    events_threshold = 4000
+    events_threshold: int = 4000
     """Minimum average number of events in a sample to use it"""
+
+    box_size_threshold: float = 0.01
+    """Minimum acceptable box size relative to frame area"""
 
     def __init__(
         self,
@@ -421,6 +424,14 @@ class STPropheseeDataset(PropheseeDatasetBase):
         if not gt_boxes.numel():
             return None, False
         labels = gt_boxes[gt_boxes[:, 0] == gt_boxes[0, 0]]
+
+        # Removing boxes that are smaller than a specified size
+        lab_mask = (
+            (labels[:, 4] - labels[:, 2]) * (labels[:, 5] - labels[:, 3])
+        ) > self.box_size_threshold
+        labels = labels[lab_mask]
+        if not labels.numel():
+            return None, False
 
         ############ Features preparing ############
         # Return features format (ts, c [0-negative, 1-positive], h, w)

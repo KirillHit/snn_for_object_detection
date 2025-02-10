@@ -7,7 +7,7 @@ LoadParameters: false
 NumTrainRounds: -1    # -1 - infinite
 NumRoundEpoch: 15
 ### Eval mode
-NumEvalRounds: 60
+NumEvalRounds: 300
 
 ### Model parameters
 Model: yolo           # yolo
@@ -17,22 +17,22 @@ LossRatio: 0.04
 ### Dataset parameters
 Dataset: gen1
 TimeStep: 16
-TimeWindow: 8
 NumLoadFile: 8
 NumWorkers: 4
 # Train dataset
-BatchSize: 5
+BatchSize: 8
 NumSteps: 32
+TimeWindow: 8
 # Test dataset
-TestBatchSize: 1
-TestNumSteps: 128
+TestBatchSize: 64
+TestNumSteps: 32
 
 ### Progress board parameters
 Display: True
 EveryN: 4
 
 ### Plotter parameters
-PlotterThreshold: 0.7
+PlotterThreshold: 0.8
 PlotterColumns: 4
 
 ### Trainer board parameters
