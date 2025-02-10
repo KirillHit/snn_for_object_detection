@@ -1,0 +1,608 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" data-theme="dark">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Параметры запуска &#8212; SODa v0.4.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "dark";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=a3416100" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=6d25dc78"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'pages/config';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Генерация моделей" href="generator.html" />
+    <link rel="prev" title="Структура проекта" href="structure.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="dark">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">SODa v0.4.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Содержание</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="structure.html">Структура проекта</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Параметры запуска</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generator.html">Генерация моделей</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api.html">API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/engine.html">engine</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/engine.data.html">engine.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/engine.data.DataModule.html">engine.data.DataModule</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/engine.model.html">engine.model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/engine.model.Model.html">engine.model.Model</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/engine.trainer.html">engine.trainer</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/engine.trainer.Trainer.html">engine.trainer.Trainer</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/models.html">models</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/models.generator.html">models.generator</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.generator.BackboneGen.html">models.generator.BackboneGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.generator.BaseConfig.html">models.generator.BaseConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.generator.BlockGen.html">models.generator.BlockGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.generator.Head.html">models.generator.Head</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.generator.HeadGen.html">models.generator.HeadGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.generator.ModelGen.html">models.generator.ModelGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.generator.NeckGen.html">models.generator.NeckGen</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/models.modules.html">models.modules</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.Conv.html">models.modules.Conv</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.ConvLSTM.html">models.modules.ConvLSTM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.Dense.html">models.modules.Dense</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.LI.html">models.modules.LI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.LIF.html">models.modules.LIF</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.LSTM.html">models.modules.LSTM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.LayerGen.html">models.modules.LayerGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.Norm.html">models.modules.Norm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.Pass.html">models.modules.Pass</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.Pool.html">models.modules.Pool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.ReLU.html">models.modules.ReLU</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.Residual.html">models.modules.Residual</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.Return.html">models.modules.Return</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.SiLU.html">models.modules.SiLU</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.Storage.html">models.modules.Storage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.SumPool2d.html">models.modules.SumPool2d</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.Tanh.html">models.modules.Tanh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.Up.html">models.modules.Up</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/models.soda.html">models.soda</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.soda.SODa.html">models.soda.SODa</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/models.yolo.html">models.yolo</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.yolo.Yolo.html">models.yolo.Yolo</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/run.html">run</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/run.eval.html">run.eval</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/run.eval.eval_spin.html">run.eval.eval_spin</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/run.interactive.html">run.interactive</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/run.interactive.interactive_spin.html">run.interactive.interactive_spin</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/run.train.html">run.train</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/run.train.train_spin.html">run.train.train_spin</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/utils.html">utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/utils.anchors.html">utils.anchors</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.anchors.AnchorGenerator.html">utils.anchors.AnchorGenerator</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/utils.box.html">utils.box</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.box.box_center_to_corner.html">utils.box.box_center_to_corner</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.box.box_corner_to_center.html">utils.box.box_corner_to_center</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.box.box_iou.html">utils.box.box_iou</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.box.multibox_detection.html">utils.box.multibox_detection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.box.nms.html">utils.box.nms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.box.offset_boxes.html">utils.box.offset_boxes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.box.offset_inverse.html">utils.box.offset_inverse</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/utils.datasets.html">utils.datasets</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.datasets.MTProphesee.html">utils.datasets.MTProphesee</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.datasets.MTPropheseeDataset.html">utils.datasets.MTPropheseeDataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.datasets.PropheseeDataModule.html">utils.datasets.PropheseeDataModule</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.datasets.PropheseeDatasetBase.html">utils.datasets.PropheseeDatasetBase</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.datasets.STProphesee.html">utils.datasets.STProphesee</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.datasets.STPropheseeDataset.html">utils.datasets.STPropheseeDataset</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/utils.devices.html">utils.devices</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.devices.cpu.html">utils.devices.cpu</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.devices.gpu.html">utils.devices.gpu</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.devices.num_gpus.html">utils.devices.num_gpus</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.devices.try_all_gpus.html">utils.devices.try_all_gpus</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.devices.try_gpu.html">utils.devices.try_gpu</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/utils.evaluate.html">utils.evaluate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.evaluate.SODAeval.html">utils.evaluate.SODAeval</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/utils.model_loader.html">utils.model_loader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.model_loader.ModelLoader.html">utils.model_loader.ModelLoader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/utils.plotter.html">utils.plotter</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.plotter.Plotter.html">utils.plotter.Plotter</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/utils.progress_board.html">utils.progress_board</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.progress_board.ProgressBoard.html">utils.progress_board.ProgressBoard</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/utils.roi.html">utils.roi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.roi.RoI.html">utils.roi.RoI</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/KirillHit/snn_for_object_detection" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/pages/config.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Параметры запуска</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="id1">
+<h1>Параметры запуска<a class="headerlink" href="#id1" title="Link to this heading">#</a></h1>
+<p>Выбор параметров обучения осуществляется в файле <code class="docutils literal notranslate"><span class="pre">config\config.yaml</span></code>. Пример файла конфигурации:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">### Basic</span>
+<span class="n">Mode</span><span class="p">:</span> <span class="mi">1</span>               <span class="c1"># 1 - interactive, 2 - train, 3 - eval</span>
+<span class="n">gpu_index</span><span class="p">:</span> <span class="mi">0</span>
+
+<span class="c1">### Train mode</span>
+<span class="n">LoadParameters</span><span class="p">:</span> <span class="n">false</span>
+<span class="n">NumTrainRounds</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span>    <span class="c1"># -1 - infinite</span>
+<span class="n">NumRoundEpoch</span><span class="p">:</span> <span class="mi">15</span>
+<span class="c1">### Eval mode</span>
+<span class="n">NumEvalRounds</span><span class="p">:</span> <span class="mi">300</span>
+
+<span class="c1">### Model parameters</span>
+<span class="n">Model</span><span class="p">:</span> <span class="n">yolo</span>           <span class="c1"># yolo</span>
+<span class="n">InitWeights</span><span class="p">:</span> <span class="n">true</span>
+<span class="n">LossRatio</span><span class="p">:</span> <span class="mf">0.04</span>
+
+<span class="c1">### Dataset parameters</span>
+<span class="n">Dataset</span><span class="p">:</span> <span class="n">gen1</span>
+<span class="n">TimeStep</span><span class="p">:</span> <span class="mi">16</span>
+<span class="n">NumLoadFile</span><span class="p">:</span> <span class="mi">8</span>
+<span class="n">NumWorkers</span><span class="p">:</span> <span class="mi">4</span>
+<span class="c1"># Train dataset</span>
+<span class="n">BatchSize</span><span class="p">:</span> <span class="mi">8</span>
+<span class="n">NumSteps</span><span class="p">:</span> <span class="mi">32</span>
+<span class="n">TimeWindow</span><span class="p">:</span> <span class="mi">8</span>
+<span class="c1"># Test dataset</span>
+<span class="n">TestBatchSize</span><span class="p">:</span> <span class="mi">64</span>
+<span class="n">TestNumSteps</span><span class="p">:</span> <span class="mi">32</span>
+
+<span class="c1">### Progress board parameters</span>
+<span class="n">Display</span><span class="p">:</span> <span class="kc">True</span>
+<span class="n">EveryN</span><span class="p">:</span> <span class="mi">4</span>
+
+<span class="c1">### Plotter parameters</span>
+<span class="n">PlotterThreshold</span><span class="p">:</span> <span class="mf">0.8</span>
+<span class="n">PlotterColumns</span><span class="p">:</span> <span class="mi">4</span>
+
+<span class="c1">### Trainer board parameters</span>
+<span class="n">EpochSize</span><span class="p">:</span> <span class="mi">60</span>
+</pre></div>
+</div>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head" colspan="2"><p>Основные параметры</p></th>
+</tr>
+<tr class="row-even"><th class="head"><p>Название</p></th>
+<th class="head"><p>Описание</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Mode</span></code></p></td>
+<td><p>Выбор сценария обучения (1 - interactive, 2 - train, 3 - eval)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></p></td>
+<td><p>Выбор конфигурации сети (yolo)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LossRatio</span></code></p></td>
+<td><p>Весовой коэффициент для настройки влияния на ошибку ложных срабатываний.
+Используется для расчёта ошибки следующим образом <code class="docutils literal notranslate"><span class="pre">loss</span> <span class="pre">=</span> <span class="pre">gt_loss</span> <span class="pre">*</span> <span class="pre">loss_ratio</span> <span class="pre">+</span> <span class="pre">background_loss</span> <span class="pre">*</span> <span class="pre">(1</span> <span class="pre">-</span> <span class="pre">self.loss_ratio)</span> <span class="pre">+</span> <span class="pre">...</span></code>.
+Чем больше этот коэффициент, тем меньше влияние ложных срабатываний. В результате
+сеть делает больше предсказаний, что позволяет повысить активность последнего слоя.
+Рекомендуется начинать с малых значений и постепенно увеличивать его в ходе обучения.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></p></td>
+<td><p>Выбор датасета (gen1, 1mpx)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TimeStep</span></code></p></td>
+<td><p>Временной интервал между кадрами в миллисекундах</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BatchSize</span></code></p></td>
+<td><p>Размер пакета для обучения</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NumSteps</span></code></p></td>
+<td><p>Количество кадров в одном примере</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TimeWindow</span></code></p></td>
+<td><p>Максимальное количество кадров, на которое может уменьшиться последовательность.
+Это используется для создание обучающих примеров разной длинны.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="structure.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Структура проекта</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="generator.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Генерация моделей</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Kirill Hitushkin
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Kirill Hitushkin.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
