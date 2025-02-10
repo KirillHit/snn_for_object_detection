@@ -88,7 +88,9 @@ class Plotter:
         boxed_video = self._apply_boxes(con_video, prep_preds, prep_target)
         while self._show_video(boxed_video):
             cmd = cv2.waitKey()
-            if cmd == ord("q"):
+            if cmd == ord("s"):
+                self._save_video(boxed_video)
+            if cmd == ord("q") or cmd == ord("s"):
                 cv2.destroyWindow("Res")
                 break
 
@@ -212,6 +214,17 @@ class Plotter:
                 return False
         return True
 
+    def _save_video(self, video: np.ndarray) -> None:
+        _, h, w, _ = video.shape
+        out = cv2.VideoWriter(
+            "log/out.avi", cv2.VideoWriter_fourcc(*"XVID"), 25, (w, h)
+        )
+        for img in video:
+            out.write(img)
+        for _ in range(60):
+            out.write(img)
+        return True
+
     def _apply_boxes(
         self,
         video: np.ndarray,
@@ -227,7 +240,7 @@ class Plotter:
             One label contains (class, iou, xlu, ylu, xrd, yrd)
         :type preds: Optional[torch.Tensor]
         :param target: Shape [count_box, 6]
-        
+
             One label contains (ts, class id, xlu, ylu, xrd, yrd)
         :type target: Optional[torch.Tensor]
         :return: Video with boxes
@@ -250,7 +263,7 @@ class Plotter:
         :param image: Shape [h, w, channel]
         :type image: np.ndarray
         :param preds: Shape [count_box, 6]
-        
+
             One label contains (class, iou, xlu, ylu, xrd, yrd)
         :type preds: torch.Tensor
         """
@@ -283,7 +296,7 @@ class Plotter:
         :param image: Image for drawing
         :type image: np.ndarray
         :param target: Shape [count_box, 7]
-        
+
             One label contains (ts, class id, xlu, ylu, xrd, yrd)
         :type target: torch.Tensor
         """
