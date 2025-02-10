@@ -99,9 +99,24 @@ class ProgressBoard:
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
-    def _draw_loaded(self, data)->None:
+    def _draw_loaded(self, data) -> None:
+        mean = lambda x: sum(x) / len(x)
+        Point = collections.namedtuple("Point", ["x", "y"])
+
         for label in data:
-            linep = data[label]
+            points = []
+            linep = []
+            src_line = data[label]
+
+            for x, y in src_line:
+                points.append(Point(x, y))
+                if len(points) != self.every_n:
+                    continue
+                linep.append(
+                    Point(mean([p.x for p in points]), mean([p.y for p in points]))
+                )
+                points.clear()
+
             (line,) = self.axes.plot(
                 linep[0][0],
                 linep[0][1],
@@ -126,7 +141,7 @@ class ProgressBoard:
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
-    def save_plot(self)->None:
+    def save_plot(self) -> None:
         """Save the chart to folder :attr:`log_folder`"""
         if not os.path.exists(self.log_folder):
             os.makedirs(self.log_folder)
@@ -135,7 +150,7 @@ class ProgressBoard:
             f.write(json.dumps(self.data))
         print("[INFO]: Training logs saved")
 
-    def load_plot(self, file_name: str)->None:
+    def load_plot(self, file_name: str) -> None:
         """Loads a chart from folder :attr:`log_folder`
 
         :param file_name: File name

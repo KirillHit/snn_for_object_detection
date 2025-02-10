@@ -17,17 +17,16 @@ class Yolo(BaseConfig):
             *self._conv(64, 3, 2),
             *self._c2f(64, 2),
             *self._conv(128, 3, 2),
-            *self._c2f(128, 2),
+            *self._c2f(128, 3),
         ]
 
     def neck_cfgs(self) -> ListGen:
         return [
+            *self._conv(256, 3, 2),
+            *self._c2f(256, 4),
             Return(),
             *self._conv(256, 3, 2),
-            *self._c2f(256, 2),
-            Return(),
-            *self._conv(256, 3, 2),
-            *self._c2f(256, 1),
+            *self._c2f(256, 3),
             Return(),
         ]
 
