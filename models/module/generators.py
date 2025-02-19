@@ -7,6 +7,7 @@ from typing import Tuple, Optional
 import norse.torch as snn
 from models.module.synapse import SynapseCell
 from models.module.conv_lstm import ConvLSTM
+from models.module.sli import SLICell
 from models.module.modules import *
 
 __all__ = (
@@ -26,6 +27,7 @@ __all__ = (
     "Up",
     "Return",
     "Synapse",
+    "SLI"
 )
 
 
@@ -264,7 +266,7 @@ class Tanh(LayerGen):
 class LSTM(LayerGen):
     """LSTM layer generator
 
-    Uses :class:`ConvLSTM` module.
+    Uses :class:`ConvLSTM <models.module.conv_lstm.ConvLSTM>` module.
     """
 
     def __init__(self, hidden_size: Optional[int] = None):
@@ -296,10 +298,20 @@ class Return(LayerGen):
 
 
 class Synapse(LayerGen):
-    """Generator of the layer of LI neurons
+    """Generator of the layer of synapse
 
-    Uses :external:class:`norse.torch.module.leaky_integrator.LICell` module.
+    Uses :class:`SynapseCell <models.module.synapse.SynapseCell>` module.
     """
 
     def get(self, in_channels: int) -> Tuple[snn.LICell, int]:
         return SynapseCell(), in_channels
+
+
+class SLI(LayerGen):
+    """Generator of the layer of Saturable LI neurons
+
+    Uses :class:`SLICell <models.module.sli.SLICell>` module.
+    """
+
+    def get(self, in_channels: int) -> Tuple[snn.LICell, int]:
+        return SLICell(), in_channels

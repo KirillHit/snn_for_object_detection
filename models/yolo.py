@@ -35,8 +35,7 @@ class Yolo(BaseConfig):
             [
                 Conv(kernel_size=1),
                 Norm(),
-                LI(),
-                Tanh(),
+                SLI(),
             ],
             [
                 Conv(box_out, 1),
