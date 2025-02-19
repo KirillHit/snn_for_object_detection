@@ -332,7 +332,7 @@ class ModelGen(nn.Module):
 
 
 class BackboneGen(ModelGen):
-    """Model base generator
+    """Model backbone generator
 
     Returns the tensor from the last layer of the network.
     """
