@@ -20,7 +20,8 @@ from torch import nn
 from typing import List, Tuple, Dict
 from norse.torch.utils.state import _is_module_stateful
 from utils.anchors import AnchorGenerator
-from .modules import *
+from models.module.generators import *
+from models.module.modules import *
 
 
 #####################################################################

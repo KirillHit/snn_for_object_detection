@@ -1,9 +1,9 @@
 """
-Model generator similar to yolo8
+Network configuration similar to yolo8
 """
 
 from models.generator import ListGen, BaseConfig
-from models.modules import *
+from models.module.generators import *
 
 
 class Yolo(BaseConfig):
