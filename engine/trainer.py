@@ -13,11 +13,6 @@ from tqdm import tqdm
 class Trainer:
     """Class for training a model on a selected dataset"""
 
-    _train_batch_idx: int = 0
-    _test_batch_idx: int = 0
-    _val_batch_idx: int = 0
-    _stop_flag: bool = False
-
     def __init__(
         self, board: ProgressBoard, gpu_index: int = 0, epoch_size: int = 60
     ) -> None:
@@ -32,6 +27,11 @@ class Trainer:
         """
         self.board, self.epoch_size = board, epoch_size
         self.gpu = devices.try_gpu(gpu_index)
+        
+        self.train_batch_idx = 0
+        self.test_batch_idx = 0
+        self.val_batch_idx = 0
+        self.stop_flag = False
 
     def prepare(self, model: Model, data: DataModule) -> None:
         """Prepares the model and data module
@@ -70,18 +70,18 @@ class Trainer:
     def _plot(self, loss: torch.Tensor, split: str) -> None:
         match split:
             case "train":
-                x = self._train_batch_idx
+                x = self.train_batch_idx
             case "test":
                 x = (
-                    self._train_batch_idx
+                    self.train_batch_idx
                     - self.epoch_size
-                    + self._test_batch_idx % self.epoch_size
+                    + self.test_batch_idx % self.epoch_size
                 )
             case "val":
                 x = (
-                    self._train_batch_idx
+                    self.train_batch_idx
                     - self.epoch_size
-                    + self._val_batch_idx % self.epoch_size
+                    + self.val_batch_idx % self.epoch_size
                 )
             case _:
                 raise ValueError(f'The split parameter cannot be "{split}"!')
@@ -96,7 +96,7 @@ class Trainer:
 
         The state is saved and training can be continued.
         """
-        self._stop_flag = True
+        self.stop_flag = True
 
     def fit(self, num_epochs: int = 1) -> None:
         """Begins training the model
@@ -104,9 +104,9 @@ class Trainer:
         :param num_epochs: Number of training epochs, defaults to 1.
         :type num_epochs: int, optional
         """
-        self._stop_flag = False
+        self.stop_flag = False
         for self.epoch in tqdm(range(num_epochs), leave=False, desc="[Epoch]"):
-            if self._stop_flag:
+            if self.stop_flag:
                 return
             self.fit_epoch()
         self.test()
@@ -119,7 +119,7 @@ class Trainer:
         """
         self.model.train()
         for _ in (pbar := tqdm(range(self.epoch_size), leave=False, desc="[Train]")):
-            if self._stop_flag:
+            if self.stop_flag:
                 return
             batch = next(self.train_dataloader_iter)
             train_loss = self.model.training_step(self._prepare_batch(batch))
@@ -129,7 +129,7 @@ class Trainer:
                 self.optim.step()
                 self._plot(train_loss, split="train")
                 pbar.set_description("[Train] Loss %.4f / Progress " % train_loss)
-            self._train_batch_idx += 1
+            self.train_batch_idx += 1
 
     def test(self):
         """Starts one epoch of model testing
@@ -139,13 +139,13 @@ class Trainer:
         """
         self.model.eval()
         for _ in tqdm(range(self.epoch_size), leave=False, desc="[Test]"):
-            if self._stop_flag:
+            if self.stop_flag:
                 return
             batch = next(self.test_dataloader_iter)
             with torch.no_grad():
                 test_loss = self.model.test_step(self._prepare_batch(batch))
                 self._plot(test_loss, split="test")
-            self._test_batch_idx += 1
+            self.test_batch_idx += 1
 
     def validation(self):
         """Starts one epoch of model evaluation
@@ -154,13 +154,13 @@ class Trainer:
         progress is displayed in console."""
         self.model.eval()
         for _ in tqdm(range(self.epoch_size), leave=False, desc="[Val] "):
-            if self._stop_flag:
+            if self.stop_flag:
                 return
             batch = next(self.val_dataloader_iter)
             with torch.no_grad():
                 val_loss = self.model.validation_step(self._prepare_batch(batch))
                 self._plot(val_loss, split="val")
-            self._val_batch_idx += 1
+            self.val_batch_idx += 1
 
     def predict(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Returns the network's prediction for a random sample

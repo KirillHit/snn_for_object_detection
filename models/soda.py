@@ -22,8 +22,6 @@ class SODa(Model):
     as a parameter when initializing.
     """
 
-    _start_time = 0
-
     def __init__(
         self,
         backbone: BackboneGen,
@@ -56,6 +54,7 @@ class SODa(Model):
         self.head_net = head
         self.roi_blk = RoI(iou_threshold=0.4)
         self.time_window = time_window
+        self.start_time = 0
 
         self.cls_loss = nn.CrossEntropyLoss(reduction="none")
         self.box_loss = nn.L1Loss(reduction="none")
@@ -107,8 +106,8 @@ class SODa(Model):
 
     def training_step(self, batch: tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
         if self.time_window:
-            preds = self.forward(batch[0][self._start_time :])
-            self._start_time = torch.randint(
+            preds = self.forward(batch[0][self.start_time :])
+            self.start_time = torch.randint(
                 0, self.time_window, (1,), requires_grad=False, dtype=torch.uint32
             )
         else:

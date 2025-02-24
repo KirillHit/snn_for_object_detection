@@ -177,11 +177,6 @@ class PropheseeDatasetBase(IterableDataset):
     The samples_generator and parse_data method must be overridden in the child class.
     """
 
-    _record_time = 60000000  # us
-    _width: int
-    _height: int
-    _time_step_name: str
-
     def __init__(
         self,
         gt_files: List[str],
@@ -209,6 +204,7 @@ class PropheseeDatasetBase(IterableDataset):
         self.num_load_file = num_load_file
         self.time_step = time_step
         self.time_step_us = self.time_step * 1000
+        self.record_time = 60000000  # us
 
         match name:
             case "gen1":
@@ -370,12 +366,6 @@ class MTPropheseeDataset(PropheseeDatasetBase):
 class STPropheseeDataset(PropheseeDatasetBase):
     """Single-target Prophesee gen1 and 1mpx iterable datasets"""
 
-    events_threshold: int = 4000
-    """Minimum average number of events in a sample to use it"""
-
-    box_size_threshold: float = 0.01
-    """Minimum acceptable box size relative to frame area"""
-
     def __init__(
         self,
         gt_files: List[str],
@@ -388,6 +378,11 @@ class STPropheseeDataset(PropheseeDatasetBase):
         assert num_load_file > 0, "The number of loaded files must be more than zero"
         super().__init__(gt_files, data_files, time_step, num_load_file, name)
         self.num_steps = num_steps
+        
+        # Minimum average number of events in a sample to use it
+        self.events_threshold: int = 4000
+        # Minimum acceptable box size relative to frame area
+        self.box_size_threshold: float = 0.01
 
     def samples_generator(
         self,
