@@ -53,8 +53,10 @@ class Storage(nn.Module):
     It is intended for use in feature pyramids, where you need to get multiple
     matrices from different places in the network.
     """
-
-    _storage: torch.Tensor
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.storage = None
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Store the input tensor and returns it back
@@ -64,7 +66,7 @@ class Storage(nn.Module):
         :return: Input tensor.
         :rtype: torch.Tensor
         """
-        self._storage = X
+        self.storage = X
         return X
 
     def get_storage(self) -> torch.Tensor:
@@ -73,6 +75,6 @@ class Storage(nn.Module):
         :return: Stored tensor.
         :rtype: torch.Tensor
         """
-        temp = self._storage
-        self._storage = None
+        temp = self.storage
+        self.storage = None
         return temp

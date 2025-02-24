@@ -17,7 +17,7 @@ List for storing the state of the model
 
 import torch
 from torch import nn
-from typing import List, Tuple, Dict
+from typing import List, Tuple
 from norse.torch.utils.state import _is_module_stateful
 from utils.anchors import AnchorGenerator
 from models.module.generators import *
@@ -80,10 +80,6 @@ class BlockGen(nn.Module):
 
     """
 
-    out_channels: int = 0
-    """The number of channels that will be after applying this block to 
-    a tensor with ``in_channels`` channels."""
-
     def __init__(self, in_channels: int, cfgs: ListGen):
         """
         :param in_channels: Number of input channels.
@@ -94,6 +90,10 @@ class BlockGen(nn.Module):
         super().__init__()
         branch_list: List[nn.ModuleList] = []
         self.branch_state: List[List[bool]] = []
+
+        self.out_channels = 0
+        """The number of channels that will be after applying this block to 
+        a tensor with ``in_channels`` channels."""
 
         if isinstance(cfgs, Residual):
             self.out_type = self._residual_out
@@ -255,13 +255,6 @@ class ModelGen(nn.Module):
         This class can only be used as a base class for inheritance.
     """
 
-    out_channels: int = 0
-    """The number of channels that will be after applying this block to 
-    a tensor with ``in_channels`` channels."""
-
-    default_cfgs: Dict[str, ListGen] = {}
-    """List of configurations provided by default."""
-
     def __init__(
         self,
         cfg: BaseConfig,
@@ -278,6 +271,10 @@ class ModelGen(nn.Module):
         :type init_weights: bool, optional
         """
         super().__init__()
+
+        self.out_channels = 0
+        """The number of channels that will be after applying this block to 
+        a tensor with ``in_channels`` channels."""
 
         self.net_cfg = self._load_cfg(cfg)
 
@@ -366,20 +363,19 @@ class NeckGen(ModelGen):
     :class:`models.modules.Return` layers.
     """
 
-    out_shape: List[int]
-    """Stores the format of the output data 
-    
-    - The number of elements is equal to the number of tensors in the output list.
-    - The numeric value is equal to the number of channels of the corresponding tensor.
-    
-    This data is required to initialize :class:`models.head.Head`.
-    """
-
     def __init__(
         self, cfg: str | ListGen, in_channels: int = 2, init_weights: bool = False
     ):
         super().__init__(cfg, in_channels, init_weights)
+
         self.out_shape = self._search_out(self.net_cfg)
+        """Stores the format of the output data 
+        
+        - The number of elements is equal to the number of tensors in the output list.
+        - The numeric value is equal to the number of channels of the corresponding tensor.
+        
+        This data is required to initialize :class:`models.head.Head`.
+        """
 
     def _search_out(self, cfg: str | ListGen) -> List[int]:
         """Finds the indices of the layers from which it is necessary to obtain tensors
