@@ -114,7 +114,7 @@ def sli_feed_forward_step(
     dt: float = 0.001,
 ) -> Tuple[torch.Tensor, SLIState]:
     # compute current jumps
-    i_jump = state.i + input_tensor * torch.tanh(p.v_st - torch.abs(state.v))
+    i_jump = state.i + input_tensor * torch.sigmoid(p.v_st - torch.abs(state.v))
     # compute voltage updates
     dv = dt * p.tau_mem_inv * ((p.v_leak - state.v) + i_jump)
     v_new = state.v + dv

@@ -5,10 +5,13 @@ Simple custom modules
 import torch
 from torch import nn
 import torch.nn.functional as F
+from typing import Optional, List, Any, NamedTuple
+from norse.torch.module.snn import SNNCell, _merge_states
 
 __all__ = (
     "SumPool2d",
     "Storage",
+    "StateStorage"
 )
 
 
@@ -53,7 +56,7 @@ class Storage(nn.Module):
     It is intended for use in feature pyramids, where you need to get multiple
     matrices from different places in the network.
     """
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.storage = None
@@ -78,3 +81,43 @@ class Storage(nn.Module):
         temp = self.storage
         self.storage = None
         return temp
+
+
+class StateStorage(torch.nn.Module):
+    """
+    Class wrapper for neurons with a state of Norse. 
+    Saves the intermediate states of the stored neurons for further analysis.
+    """
+    
+    def __init__(self, m: SNNCell):
+        """
+        :param m: An initialized module with a state from the Norse library, 
+            which will be called with a direct passage
+        :type m: SNNCell
+        """
+        super().__init__()
+        self.module = m
+        self.state_list: List[torch.Tensor] = []
+        self.spike_list: List[torch.Tensor] = []
+
+    def get_state(self) -> NamedTuple:
+        """Returns intermediate states of neurons"""
+        return _merge_states(self.state_list)
+    
+    def get_spikes(self) -> torch.Tensor:
+        """Returns spikes at the output of neurons for all time steps"""
+        return torch.stack(self.spike_list)
+
+    def forward(self, input_tensor: torch.Tensor, state: Optional[Any] = None):
+        """
+        Conveys the value to his module directly.
+        If the network is in non -training mode, retains intermediate states
+        """
+        if state is None:
+            self.state_list.clear()
+            self.spike_list.clear()
+        out, new_state = self.module(input_tensor, state)
+        if not self.training:
+            self.state_list.append(new_state)
+            self.spike_list.append(out)
+        return out, new_state

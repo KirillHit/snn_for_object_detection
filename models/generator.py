@@ -207,6 +207,12 @@ class BlockGen(nn.Module):
 class BaseConfig:
     """Base class for model configuration generators"""
 
+    state_storage = False
+    """
+    If true preserves preserves all intermediate states of spiking neurons.
+    Necessary for analyzing the network operation.
+    """
+
     def backbone_cfgs(self) -> ListGen:
         """Generates and returns a network backbone configuration
 

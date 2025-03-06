@@ -44,6 +44,7 @@ class ModelLoader:
 
     def get_model(self, data: engine.DataModule) -> engine.Model:
         config_gen: models.BaseConfig = models.config_list[self.get("Model")]()
+        config_gen.state_storage = (self.get("Mode") == 4)
 
         backbone_net = models.BackboneGen(
             config_gen,
