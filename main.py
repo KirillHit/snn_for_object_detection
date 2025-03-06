@@ -33,5 +33,9 @@ if __name__ == "__main__":
                 params_file,
                 model_loader.get("NumEvalRounds"),
             )
+        case 4:
+            run.activity_test(
+                model, trainer, model_loader.get_plotter(data), params_file
+            )
         case _:
             raise RuntimeError("Wrong mode!")

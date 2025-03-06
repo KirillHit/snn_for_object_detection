@@ -25,6 +25,9 @@ class ProgressBoard:
         every_n: int = 1,
     ):
         self.ls, self.colors, self.display, self.every_n = ls, colors, display, every_n
+        self.log_folder = "./log"
+        """Folder for saving charts"""
+        
         self.raw_points = collections.OrderedDict()
         self.data = collections.OrderedDict()
         self.lines = {}
@@ -39,9 +42,6 @@ class ProgressBoard:
         self.axes.set_xscale(xscale)
         self.axes.set_yscale(yscale)
         self.axes.set_ylim(top=ylim[0], bottom=ylim[1])
-        
-        self.log_folder = "./log"
-        """Folder for saving charts"""
 
     def draw(self, x: Union[int, float], y: Union[int, float], label: str) -> None:
         """Add a new value to the chart

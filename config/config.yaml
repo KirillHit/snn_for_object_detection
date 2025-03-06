@@ -1,11 +1,11 @@
 ### Basic
-Mode: 1               # 1 - interactive, 2 - train, 3 - eval
+Mode: 4               # 1 - interactive, 2 - train, 3 - eval
 gpu_index: 0
 
 ### Train mode
 LoadParameters: false
 NumTrainRounds: -1    # -1 - infinite
-NumRoundEpoch: 15
+NumRoundEpoch: 30
 ### Eval mode
 NumEvalRounds: 300
 
@@ -20,7 +20,7 @@ TimeStep: 16
 NumLoadFile: 8
 NumWorkers: 4
 # Train dataset
-BatchSize: 8
+BatchSize: 5
 NumSteps: 32
 TimeWindow: 8
 # Test dataset
@@ -32,7 +32,7 @@ Display: True
 EveryN: 4
 
 ### Plotter parameters
-PlotterThreshold: 0.8
+PlotterThreshold: 0.1
 PlotterColumns: 4
 
 ### Trainer board parameters

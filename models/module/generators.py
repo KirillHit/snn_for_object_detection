@@ -5,6 +5,7 @@ Layer Generators
 from torch import nn
 from typing import Tuple, Optional
 import norse.torch as snn
+from norse.torch.module.snn import SNNCell
 from models.module.synapse import SynapseCell
 from models.module.conv_lstm import ConvLSTM
 from models.module.sli import SLICell
@@ -27,7 +28,7 @@ __all__ = (
     "Up",
     "Return",
     "Synapse",
-    "SLI"
+    "SLI",
 )
 
 
@@ -219,8 +220,17 @@ class LIF(LayerGen):
     Uses :external:class:`norse.torch.module.lif.LIFCell` module.
     """
 
-    def get(self, in_channels: int) -> Tuple[nn.Module, int]:
-        return snn.LIFCell(), in_channels
+    def __init__(self, state_storage: bool = False):
+        """
+        :param state_storage: If the truth, wraps the module into the :class:`StateStorage` class,
+            in which the intermediate states of the neuron are preserved for analysis, defaults to False
+        :type state_storage: bool, optional
+        """
+        self.state_storage = state_storage
+
+    def get(self, in_channels: int) -> Tuple[SNNCell, int]:
+        module = snn.LIFCell() if not self.state_storage else StateStorage(snn.LIFCell())
+        return module, in_channels
 
 
 class LI(LayerGen):
@@ -229,8 +239,17 @@ class LI(LayerGen):
     Uses :external:class:`norse.torch.module.leaky_integrator.LICell` module.
     """
 
-    def get(self, in_channels: int) -> Tuple[snn.LICell, int]:
-        return snn.LICell(), in_channels
+    def __init__(self, state_storage: bool = False):
+        """
+        :param state_storage: If the truth, wraps the module into the :class:`StateStorage` class,
+            in which the intermediate states of the neuron are preserved for analysis, defaults to False
+        :type state_storage: bool, optional
+        """
+        self.state_storage = state_storage
+
+    def get(self, in_channels: int) -> Tuple[SNNCell, int]:
+        module = snn.LICell() if not self.state_storage else StateStorage(snn.LICell())
+        return module, in_channels
 
 
 class ReLU(LayerGen):
@@ -313,5 +332,14 @@ class SLI(LayerGen):
     Uses :class:`SLICell <models.module.sli.SLICell>` module.
     """
 
-    def get(self, in_channels: int) -> Tuple[snn.LICell, int]:
-        return SLICell(), in_channels
+    def __init__(self, state_storage: bool = False):
+        """
+        :param state_storage: If the truth, wraps the module into the :class:`StateStorage` class,
+            in which the intermediate states of the neuron are preserved for analysis, defaults to False
+        :type state_storage: bool, optional
+        """
+        self.state_storage = state_storage
+
+    def get(self, in_channels: int) -> Tuple[SNNCell, int]:
+        module = SLICell() if not self.state_storage else StateStorage(SLICell())
+        return module, in_channels

@@ -11,7 +11,7 @@
                                                         с классом :class:`Head <models.generator.Head>`, который создаёт отдельный экземпляр модели головы для каждой карты признаков.
 ====================================================    ===============
 
-Для генерации моделей используется объект :class:`BlockGen <models.generator.BlockGen>`, который создаёт модель из списка объектов :class:`LayerGen <models.module.generators.LayerGen>` для контурирования слоёв. Если в конфигурации имеется вложенный список, то :class:`BlockGen <models.generator.BlockGen>` вызывается рекурсивно. Также можно задать сложное поведение при обработке вложенных листов с помощью перегрузок для списка :external:class:`list`: :class:`Residual <models.module.generators.Residual>` и :class:`Dense <models.module.generators.Dense>`. Это позволяет строить остаточные и плотные нейросети.
+Для генерации моделей используется объект :class:`BlockGen <models.generator.BlockGen>`, который создаёт модель из списка объектов :class:`LayerGen <models.module.generators.LayerGen>` для конструирования слоёв. Если в конфигурации имеется вложенный список, то :class:`BlockGen <models.generator.BlockGen>` вызывается рекурсивно. Также можно задать сложное поведение при обработке вложенных листов с помощью перегрузок для списка :external:class:`list`: :class:`Residual <models.module.generators.Residual>` и :class:`Dense <models.module.generators.Dense>`. Это позволяет строить остаточные и плотные нейросети.
 
 .. code-block::
     :caption: Пример конфигурации свёрточной сети с остаточными связями

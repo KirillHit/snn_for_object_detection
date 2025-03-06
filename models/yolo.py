@@ -32,11 +32,7 @@ class Yolo(BaseConfig):
 
     def head_cfgs(self, box_out: int, cls_out: int) -> ListGen:
         return [
-            [
-                Conv(kernel_size=1),
-                Norm(),
-                SLI(),
-            ],
+            [Conv(kernel_size=1), Norm(), LI(state_storage=self.state_storage), Tanh()],
             [
                 Conv(box_out, 1),
             ],
@@ -49,7 +45,7 @@ class Yolo(BaseConfig):
         return (
             Conv(out_channels, stride=stride, kernel_size=kernel),
             Norm(),
-            LIF(),
+            LIF(state_storage=self.state_storage),
         )
 
     def _bottleneck(self, shortcut: bool = True):
