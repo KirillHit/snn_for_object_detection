@@ -62,10 +62,8 @@ def train_spin(
             print("[ERROR]: Training stopped due to unexpected error!")
             valid = False
         timestr = time.strftime("%Y%m%d_%H%M%S")
-        model.save_params(params_file + "_" + timestr, "archive/" + save_folder)
-        trainer.board.save_plot(
-            params_file + "_" + start_time, "archive/" + save_folder
-        )
-        print(f"[INFO]: Round {idx} fineshed at " + timestr)
+        model.save_params(f"{params_file}_round{idx}", f"archive/{save_folder}/{start_time}")
+        trainer.board.save_plot(params_file, f"archive/{save_folder}/{start_time}")
+        print(f"[INFO]: Round {idx} completed at {timestr} on batch number {trainer.train_batch_idx}")
         idx += 1
     print("[INFO]: Training complete")
