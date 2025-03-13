@@ -1,9 +1,10 @@
 ### Basic
-Mode: 4               # 1 - interactive, 2 - train, 3 - eval
+Mode: 2               # 1 - interactive, 2 - train, 3 - eval, 4 - activity test
 gpu_index: 0
+SaveFolder: timeshift_8
 
 ### Train mode
-LoadParameters: false
+LoadParameters: true
 NumTrainRounds: -1    # -1 - infinite
 NumRoundEpoch: 30
 ### Eval mode
@@ -23,6 +24,7 @@ NumWorkers: 4
 BatchSize: 5
 NumSteps: 32
 TimeWindow: 8
+TimeShift: 8
 # Test dataset
 TestBatchSize: 64
 TestNumSteps: 32

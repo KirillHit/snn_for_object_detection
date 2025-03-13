@@ -21,6 +21,7 @@ if __name__ == "__main__":
                 model,
                 trainer,
                 params_file,
+                model_loader.get("SaveFolder"),
                 model_loader.get("LoadParameters"),
                 model_loader.get("NumTrainRounds"),
                 model_loader.get("NumRoundEpoch"),

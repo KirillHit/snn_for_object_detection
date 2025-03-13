@@ -4,7 +4,6 @@ from matplotlib import pyplot as plt
 import collections
 import json
 import os
-import time
 from typing import Union
 
 
@@ -25,9 +24,7 @@ class ProgressBoard:
         every_n: int = 1,
     ):
         self.ls, self.colors, self.display, self.every_n = ls, colors, display, every_n
-        self.log_folder = "./log"
-        """Folder for saving charts"""
-        
+
         self.raw_points = collections.OrderedDict()
         self.data = collections.OrderedDict()
         self.lines = {}
@@ -141,22 +138,17 @@ class ProgressBoard:
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
-    def save_plot(self) -> None:
-        """Save the chart to folder :attr:`log_folder`"""
-        if not os.path.exists(self.log_folder):
-            os.makedirs(self.log_folder)
-        timestr = time.strftime("%Y%m%d-%H%M%S")
-        with open(self.log_folder + f"/{timestr}.json", "w") as f:
+    def save_plot(self, file_name: str, folder: str = "") -> None:
+        """Save the chart"""
+        path = os.path.join("./", folder)
+        os.makedirs(path, exist_ok=True)
+        with open(os.path.join(path, f"{file_name}.json"), "w") as f:
             f.write(json.dumps(self.data))
         print("[INFO]: Training logs saved")
 
-    def load_plot(self, file_name: str) -> None:
-        """Loads a chart from folder :attr:`log_folder`
-
-        :param file_name: File name
-        :type file_name: str
-        """
-        file_path = f"{self.log_folder}/{file_name}.json"
+    def load_plot(self, file_name: str, folder: str = "") -> None:
+        """Loads a chart"""
+        file_path = os.path.join("./", folder, f"{file_name}.json")
         if not os.path.exists(file_path):
             print("[ERROR]: The plot file does not exist. Check path: " + file_path)
             return

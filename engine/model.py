@@ -17,7 +17,7 @@ class Model(nn.Module):
         labels: Any,
     ) -> torch.Tensor:
         """Loss calculation function
-        
+
         This method must be overridden in child classes.
 
         :param preds: Predictions made by a neural network.
@@ -32,7 +32,7 @@ class Model(nn.Module):
 
     def forward(self, X: torch.Tensor) -> Any:
         """Direct network pass
-        
+
         This method must be overridden in child classes.
 
         :param X: Input data
@@ -96,28 +96,27 @@ class Model(nn.Module):
         """
         raise NotImplementedError
 
-    def save_params(self, name: str) -> None:
+    def save_params(self, name: str, folder: str = "./nets") -> None:
         """Saves network weights
 
-        :param name: Parameters file name. The file will be saved to the ``nets`` folder.
+        :param name: Parameters file name.
         :type name: str, optional
+        :param folder: Save path, defaults to "./nets"
+        :type folder: str, optional
         """
-        os.makedirs("./nets", exist_ok=True)
-        if not name:
-            name = name = self.__class__.__name__
-        torch.save(self.state_dict(), os.path.join("./nets", name + ".params"))
+        path = os.path.join(folder)
+        os.makedirs(path, exist_ok=True)
+        torch.save(self.state_dict(), os.path.join(path, name + ".params"))
         print("[INFO]: Model parameters saved")
 
     def load_params(self, name: str) -> None:
         """Loads network weights from a file
-        
+
         The file must be in the ``nets`` folder and end with ``.params``
 
-        :param name: Parameters file name. 
+        :param name: Parameters file name.
         :type name: str
         """
-        if not name:
-            name = name = self.__class__.__name__
         file = os.path.join("./nets", name + ".params")
         if not os.path.exists(file):
             print("[ERROR]: The parameters file does not exist. Check path: " + file)

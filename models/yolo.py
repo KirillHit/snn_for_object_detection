@@ -28,6 +28,9 @@ class Yolo(BaseConfig):
             *self._conv(256, 3, 2),
             *self._c2f(256, 3),
             Return(),
+            *self._conv(256, 3, 2),
+            *self._c2f(256, 2),
+            Return(),
         ]
 
     def head_cfgs(self, box_out: int, cls_out: int) -> ListGen:

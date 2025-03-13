@@ -25,7 +25,7 @@ class PropheseeDataModule(DataModule):
 
     def __init__(
         self,
-        name: str,
+        name="gen1",
         root="./data",
         batch_size=4,
         num_steps=128,
@@ -35,7 +35,7 @@ class PropheseeDataModule(DataModule):
     ):
         """
         :param name: The name of the dataset to download. Supported ``gen1`` and ``1mpx``.
-        :type name: str
+        :type name: str, optional
         :param root: The directory where datasets are stored. Defaults to "./data".
         :type root: str, optional
         :param batch_size: Number of elements in a batch. Defaults to 4.
@@ -139,12 +139,12 @@ class MTProphesee(PropheseeDataModule):
         self, gt_files: List[str], data_files: List[str]
     ) -> IterableDataset:
         return MTPropheseeDataset(
-            gt_files,
-            data_files,
-            self.time_step,
-            self.num_steps,
-            self.num_load_file,
-            self.name,
+            num_steps=self.num_steps,
+            gt_files=gt_files,
+            data_files=data_files,
+            time_step=self.time_step,
+            num_load_file=self.num_load_file,
+            name=self.name,
         )
 
 
@@ -154,16 +154,28 @@ class STProphesee(PropheseeDataModule):
     Labeling is provided for the last time step only. Intended for training.
     """
 
+    def __init__(self, time_shift=8, **kwargs):
+        """
+        :param time_shift: The number of time steps that labels are moved forward relative to their
+            frame. Defaults to 8.
+        :type time_shift: int, optional
+        :param \\**kwargs: Parent class parameters.
+            See :class:`PropheseeDataModule <utils.datasets.PropheseeDataModule>`
+        """
+        super().__init__(**kwargs)
+        self.time_shift = time_shift
+
     def create_dataset(
         self, gt_files: List[str], data_files: List[str]
     ) -> IterableDataset:
         return STPropheseeDataset(
-            gt_files,
-            data_files,
-            self.time_step,
-            self.num_steps,
-            self.num_load_file,
-            self.name,
+            num_steps=self.num_steps,
+            time_shift=self.time_shift,
+            gt_files=gt_files,
+            data_files=data_files,
+            time_step=self.time_step,
+            num_load_file=self.num_load_file,
+            name=self.name,
         )
 
 
@@ -298,20 +310,11 @@ class PropheseeDatasetBase(IterableDataset):
 
 
 class MTPropheseeDataset(PropheseeDatasetBase):
-    def __init__(
-        self,
-        gt_files: List[str],
-        data_files: List[str],
-        time_step: int,
-        num_steps: int,
-        num_load_file: int,
-        name: str,
-    ):
-        assert num_load_file > 0, "The number of loaded files must be more than zero"
-        super().__init__(gt_files, data_files, time_step, num_load_file, name)
+    def __init__(self, num_steps: int, **kwargs):
+        super().__init__(**kwargs)
         self.num_steps = num_steps
         self.duration_us = self.time_step_us * self.num_steps
-        self.record_steps = self._record_time // self.duration_us
+        self.record_steps = self.record_time // self.duration_us
 
     def samples_generator(
         self,
@@ -364,21 +367,11 @@ class MTPropheseeDataset(PropheseeDatasetBase):
 
 
 class STPropheseeDataset(PropheseeDatasetBase):
-    """Single-target Prophesee gen1 and 1mpx iterable datasets"""
+    r"""Single-target Prophesee gen1 and 1mpx iterable datasets"""
 
-    def __init__(
-        self,
-        gt_files: List[str],
-        data_files: List[str],
-        time_step: int,
-        num_steps: int,
-        num_load_file: int,
-        name: str,
-    ):
-        assert num_load_file > 0, "The number of loaded files must be more than zero"
-        super().__init__(gt_files, data_files, time_step, num_load_file, name)
-        self.num_steps = num_steps
-        
+    def __init__(self, num_steps: int, time_shift: int, **kwargs):
+        super().__init__(**kwargs)
+        self.num_steps, self.time_shift = num_steps, time_shift
         # Minimum average number of events in a sample to use it
         self.events_threshold: int = 4000
         # Minimum acceptable box size relative to frame area
@@ -436,8 +429,12 @@ class STPropheseeDataset(PropheseeDatasetBase):
         )
         # Events format ('t' [us], 'x', 'y', 'p' [1-positive/0-negative])
         first_label_time_us = labels[0, 0].item() * self.time_step_us
-        first_event_time_us = first_label_time_us - (self.time_step_us * self.num_steps)
-        events = events_loader.load_delta_t(first_label_time_us - start_time_us)
+        first_event_time_us = first_label_time_us - (
+            self.time_step_us * (self.num_steps - self.time_shift)
+        )
+        events = events_loader.load_delta_t(
+            first_label_time_us + self.time_step_us * self.time_shift - start_time_us
+        )
         events = events[events[:]["t"] >= first_event_time_us]
         if (events.shape[0] // self.num_steps) < self.events_threshold:
             return None, True

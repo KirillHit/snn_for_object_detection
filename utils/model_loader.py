@@ -24,17 +24,18 @@ class ModelLoader:
 
     def get_train_dataset(self) -> engine.DataModule:
         return utils.STProphesee(
-            self.get("Dataset"),
+            num_steps=self.get("NumSteps"),
+            time_shift=self.get("TimeShift"),
+            name=self.get("Dataset"),
             batch_size=self.get("BatchSize"),
             time_step=self.get("TimeStep"),
-            num_steps=self.get("NumSteps"),
             num_load_file=self.get("NumLoadFile"),
             num_workers=self.get("NumWorkers"),
         )
 
     def get_test_dataset(self) -> engine.DataModule:
         return utils.MTProphesee(
-            self.get("Dataset"),
+            name=self.get("Dataset"),
             batch_size=self.get("TestBatchSize"),
             time_step=self.get("TimeStep"),
             num_steps=self.get("TestNumSteps"),
@@ -121,9 +122,9 @@ class ModelLoader:
         print(
             "[INFO]: Training parameters:\n"
             f"\tMode:{self.get('Mode')}\n"
+            f"\tSaveFolder:{self.get('SaveFolder')}\n"
             f"\tNumTrainRounds:{self.get('NumTrainRounds')}\n"
             f"\tNumRoundEpoch:{self.get('NumRoundEpoch')}\n"
-            "\tModel architecture:\n"
             f"\tModel: {self.get('Model')}\n"
             f"\t\tInitWeights: {self.get('InitWeights')}\n"
             f"\t\tLossRatio: {self.get('LossRatio')}\n"
@@ -131,6 +132,8 @@ class ModelLoader:
             f"\t\tBatchSize: {self.get('BatchSize')}\n"
             f"\t\tTimeStep: {self.get('TimeStep')}\n"
             f"\t\tNumSteps: {self.get('NumSteps')}\n"
+            f"\t\tTimeWindow: {self.get('TimeWindow')}\n"
+            f"\t\tTimeShift: {self.get('TimeShift')}\n"
             f"\t\tNumLoadFile: {self.get('NumLoadFile')}\n"
             f"\t\tNumWorkers: {self.get('NumWorkers')}"
         )

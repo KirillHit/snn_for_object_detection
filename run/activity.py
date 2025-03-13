@@ -12,7 +12,7 @@ import matplotlib.colors as mcolors
 from models.module.modules import StateStorage
 from models.generator import ModelGen, BlockGen, Head
 from utils.devices import cpu
-from typing import List, Any, Optional, Dict
+from typing import List, Any, Optional, Dict, NamedTuple
 
 
 class Statics:
@@ -28,7 +28,7 @@ class Statics:
             elif isinstance(m, (ModelGen, BlockGen, Head, nn.ModuleList)):
                 self.process(m)
 
-    def _unbatch_state(self, states):
+    def _unbatch_state(self, states: NamedTuple) -> NamedTuple:
         state_dict = states._asdict()
         cls = states.__class__
         keys = list(state_dict.keys())
@@ -38,7 +38,7 @@ class Statics:
         return cls(**output_dict)
 
     def _analyse_data(
-        self, layer: StateStorage, state: torch.Tensor, spikes: torch.Tensor
+        self, layer: StateStorage, state: NamedTuple, spikes: torch.Tensor
     ):
         self.layer_idx += 1
         self.fig = plt.figure(figsize=(20, 10))
@@ -48,18 +48,17 @@ class Statics:
         self.axes: Dict[str, plt.Axes] = self.fig.subplot_mosaic(
             "AB;DC", per_subplot_kw={"A": {"projection": "3d"}}
         )
+        keys = list(state._asdict().keys())
         self._plot_mean_states(
             state,
-            "v",
-            "i",
+            *keys,
             title="Average values of potential and current",
         )
         self._plot_spikes(spikes)
         self._plot_density(spikes)
         self._plot_neurons_states(
             state,
-            "v",
-            "i",
+            *keys,
         )
 
         plt.show()

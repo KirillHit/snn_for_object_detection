@@ -12,12 +12,13 @@ def train_spin(
     model: engine.Model,
     trainer: engine.Trainer,
     params_file: str,
+    save_folder: str,
     load_parameters=True,
     num_train_rounds=-1,
     num_round_epochs=60,
 ):
     """Script for background network training
-    
+
     Does not create windows and saves training progress to the ``log`` folder.
 
     :param model: Network model.
@@ -26,6 +27,8 @@ def train_spin(
     :type trainer: engine.Trainer
     :param params_file: Parameters file name. See :class:`engine.model.Model.load_params`.
     :type params_file: str
+    :param save_folder: Folder for saving parameters.
+    :type save_folder: str
     :param load_parameters: If True loads parameters from a file, otherwise initializes
         the model again. Defaults to True.
     :type load_parameters: bool, optional
@@ -35,8 +38,12 @@ def train_spin(
     :param num_round_epochs: Number of epochs in one round. Defaults to 60.
     :type num_round_epochs: int, optional
     """
+    start_time = time.strftime("%Y%m%d_%H%M%S")
+    print(f"[INFO]: Start time: {start_time}")
+
     if load_parameters:
         model.load_params(params_file)
+
     idx = 1
     valid = True
     while valid and (num_train_rounds == -1 or idx <= num_train_rounds):
@@ -54,9 +61,11 @@ def train_spin(
             print("Error description: ", exc)
             print("[ERROR]: Training stopped due to unexpected error!")
             valid = False
-        timestr = time.strftime("%Y%m%d-%H%M%S")
-        model.save_params(params_file + "_" + timestr)
+        timestr = time.strftime("%Y%m%d_%H%M%S")
+        model.save_params(params_file + "_" + timestr, "archive/" + save_folder)
+        trainer.board.save_plot(
+            params_file + "_" + start_time, "archive/" + save_folder
+        )
         print(f"[INFO]: Round {idx} fineshed at " + timestr)
         idx += 1
-    trainer.board.save_plot()
     print("[INFO]: Training complete")

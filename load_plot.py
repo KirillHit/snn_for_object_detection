@@ -28,10 +28,10 @@ if __name__ == "__main__":
         ylabel="Average loss",
         display=True,
         ylim=(1.2, 0.01),
-        every_n=10,
+        every_n=1,
     )
 
-    board.load_plot("20241224-102107")
+    board.load_plot("yolo_gen1_20250313-140408", "nets/archive/timeshift_8")
     
     plt.show()
 
