@@ -39,7 +39,7 @@ python3 main.py
 В данный момент проводятся эксперименты с различными архитектурами и методами обучения. Этот пример относиться к сети версии [0.4.1](https://github.com/KirillHit/snn_for_object_detection/tree/v0.4.1). Сеть основана на архитектуре YOLOv8 и имеет 3M параметров.
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/KirillHit/snn_for_object_detection/main/.images/gen1_example.gif">
+<img src=".images/gen1_example.gif">
 </p>
 
 Для обучения использовались пачки из 5 примеров длительностью в 32 кадра. Временной шаг между кадрами составляет 16 мс, что примерно соответствует 60 fps. Удалось достигнуть точности 22.8 mAP@0.5. График обучения сети:
