@@ -39,8 +39,8 @@ autosummary_generate = True  # Turn on sphinx.ext.autosummary
 autoclass_content = "both"  # Add __init__ doc (ie. params) to class summaries
 autodoc_inherit_docstrings = True  # If no docstring, inherit from base class
 add_module_names = False  # Remove namespaces from class/method signatures
-html_show_sourcelink = False
 
+html_static_path = ["../../_static"]
 templates_path = ["_templates"]
 exclude_patterns = []
 
@@ -49,7 +49,6 @@ exclude_patterns = []
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_book_theme"
-html_static_path = ["_static"]
 
 html_context = {"default_mode": "dark"}
 html_theme_options = {
