@@ -1,5 +1,5 @@
 ### Basic
-Mode: 2               # 1 - interactive, 2 - train, 3 - eval, 4 - activity test
+Mode: 1               # 1 - interactive, 2 - train, 3 - eval, 4 - activity test
 gpu_index: 0
 SaveFolder: timeshift_8
 
@@ -21,10 +21,10 @@ TimeStep: 16
 NumLoadFile: 8
 NumWorkers: 4
 # Train dataset
-BatchSize: 5
-NumSteps: 32
-TimeWindow: 8
-TimeShift: 8
+BatchSize: 4
+NumSteps: 42
+TimeWindow: 16
+TimeShift: 16
 # Test dataset
 TestBatchSize: 64
 TestNumSteps: 32
