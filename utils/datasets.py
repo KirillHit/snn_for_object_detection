@@ -4,16 +4,27 @@ import glob
 import os
 import numpy as np
 import torch
-from torch.utils.data import IterableDataset, get_worker_info
-from engine.data import DataModule
+from torch.utils.data import IterableDataset, get_worker_info, DataLoader
 from prophesee_toolbox.src.io.psee_loader import PSEELoader
 from random import shuffle
 from typing import Generator, Iterator, List, Optional, Tuple
-from tqdm import tqdm
 import itertools
+from torch.nn.utils.rnn import pad_sequence
+import lightning as L
 
 
-class PropheseeDataModule(DataModule):
+def _stack_data(batch):
+    """Combines samples into a batch taking into account the time dimension"""
+    features = torch.stack([sample[0] for sample in batch], dim=1)
+    targets = pad_sequence(
+        [sample[1] for sample in batch],
+        batch_first=True,
+        padding_value=-1,
+    )
+    return features, targets
+
+
+class PropheseeDataModule(L.LightningDataModule):
     """Base class for Prophesee dataset data modules
 
     .. warning::
@@ -25,36 +36,39 @@ class PropheseeDataModule(DataModule):
 
     def __init__(
         self,
+        data_dir="./data",
         name="gen1",
-        root="./data",
         batch_size=4,
-        num_steps=128,
-        time_step=16,
-        num_load_file=8,
         num_workers=4,
+        num_load_file=8,
+        num_steps=32,
+        time_step=16,
+        one_label=True,
     ):
         """
-        :param name: The name of the dataset to download. Supported ``gen1`` and ``1mpx``.
+        :param data_dir: The directory where datasets are stored. Defaults to "./data".
+        :type data_dir: str, optional
+        :param name: The name of the dataset. Supported ``gen1`` and ``1mpx``.
         :type name: str, optional
-        :param root: The directory where datasets are stored. Defaults to "./data".
-        :type root: str, optional
         :param batch_size: Number of elements in a batch. Defaults to 4.
         :type batch_size: int, optional
+        :param num_workers: A positive integer will turn on multi-process data loading with the
+            specified number of loader worker processes. Defaults to 4.
+        :type num_workers: int, optional
+        :param num_load_file: Number of concurrently open files in each thread. Defaults to 8.
+        :type num_load_file: int, optional
         :param num_steps: Number of frames. Defaults to 16.
         :type num_steps: int, optional
         :param time_step: Time between frames. Defaults to 16.
         :type time_step: int, optional
-        :param num_load_file: Number of concurrently open files in each thread. Defaults to 8.
-        :type num_load_file: int, optional
-        :param num_workers: A positive integer will turn on multi-process data loading with the
-            specified number of loader worker processes. Defaults to 4.
-        :type num_workers: int, optional
+        :param one_label: #TODO
+        :type one_label: bool, optional
         :raises ValueError: Invalid dataset name.
         """
-        super().__init__(root, num_workers=num_workers, batch_size=batch_size)
-        self.name, self.num_steps = name, num_steps
-        self.time_step, self.num_load_file = time_step, num_load_file
-        match self.name:
+        super().__init__()
+        self.save_hyperparameters()
+
+        match self.hparams.name:
             case "gen1":
                 self.labels_name = ("car", "person")
             case "1mpx":
@@ -71,17 +85,26 @@ class PropheseeDataModule(DataModule):
                 raise ValueError(f'[ERROR]: The name parameter cannot be "{name}"!')
 
     def get_labels(self):
+        """Returns a list of class names"""
         return self.labels_name
 
-    def read_data(self, split: str):
+    def setup(self, stage: str) -> None:
+        if stage == "fit":
+            self.train_dataset = self.create_dataset(*self._get_files_list("train"))
+            self.val_dataset = self.create_dataset(*self._get_files_list("val"))
+
+        if stage == "test":
+            self.test_dataset = self.create_dataset(*self._get_files_list("test"))
+
+    def _get_files_list(self, split: str) -> Tuple[List[str], List[str]]:
         # Data dir: ./data/<gen1, 1mpx>/<test, train, val>
-        data_dir = os.path.join(self._root, self.name, split)
+        data_dir = os.path.join(self.hparams.data_dir, self.hparams.name, split)
         # Get files name
         gt_files = glob.glob(data_dir + "/*_bbox.npy")
         data_files = [p.replace("_bbox.npy", "_td.dat") for p in gt_files]
 
         if not data_files or not gt_files or len(data_files) != len(gt_files):
-            tqdm.write(
+            print(
                 f"[WARN]: Directory '{data_dir}' does not contain data or data is invalid! I'm expecting: "
                 f"./data/{data_dir}/*_bbox.npy (and *_td.dat). "
                 "The dataset can be downloaded from this link: "
@@ -89,26 +112,27 @@ class PropheseeDataModule(DataModule):
                 "https://www.prophesee.ai/2020/11/24/automotive-megapixel-event-based-dataset/"
             )
 
-        dataset = self.create_dataset(gt_files, data_files)
+        return gt_files, data_files
 
-        match split:
-            case "train":
-                self._train_dataset = dataset
-            case "test":
-                self._test_dataset = dataset
-            case "val":
-                self._val_dataset = dataset
-            case _:
-                raise ValueError(f'[ERROR]: The split parameter cannot be "{split}"!')
+    def train_dataloader(self):
+        return self._get_dataloader(self.train_dataset)
 
-        print(
-            "[INFO]: "
-            + str(len(data_files))
-            + " "
-            + split
-            + " samples loaded from "
-            + self.name
-            + " dataset..."
+    def val_dataloader(self):
+        return self._get_dataloader(self.val_dataset)
+
+    def test_dataloader(self):
+        return self._get_dataloader(self.test_dataset)
+
+    def predict_dataloader(self):
+        return self._get_dataloader(self.test_dataset)
+
+    def _get_dataloader(self, dataset: IterableDataset) -> DataLoader:
+        return DataLoader(
+            dataset,
+            batch_size=self.hparams.batch_size,
+            num_workers=self.hparams.num_workers,
+            collate_fn=_stack_data,
+            persistent_workers=True,
         )
 
     def create_dataset(
@@ -123,6 +147,7 @@ class PropheseeDataModule(DataModule):
         :return: Ready dataset
         :rtype: IterableDataset
         """
+
         raise NotImplementedError
 
 

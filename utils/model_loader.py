@@ -7,6 +7,7 @@ import models
 import utils
 import utils.devices
 from typing import Any
+import lightning as L
 
 
 class ModelLoader:
@@ -22,7 +23,7 @@ class ModelLoader:
             self.data["Display"] = False
         self.print_info()
 
-    def get_train_dataset(self) -> engine.DataModule:
+    def get_dataset(self) -> engine.DataModule:
         return utils.STProphesee(
             num_steps=self.get("NumSteps"),
             time_shift=self.get("TimeShift"),
@@ -33,19 +34,9 @@ class ModelLoader:
             num_workers=self.get("NumWorkers"),
         )
 
-    def get_test_dataset(self) -> engine.DataModule:
-        return utils.MTProphesee(
-            name=self.get("Dataset"),
-            batch_size=self.get("TestBatchSize"),
-            time_step=self.get("TimeStep"),
-            num_steps=self.get("TestNumSteps"),
-            num_load_file=self.get("NumLoadFile"),
-            num_workers=self.get("NumWorkers"),
-        )
-
     def get_model(self, data: engine.DataModule) -> engine.Model:
         config_gen: models.BaseConfig = models.config_list[self.get("Model")]()
-        config_gen.state_storage = (self.get("Mode") == 4)
+        config_gen.state_storage = self.get("Mode") == 4
 
         backbone_net = models.BackboneGen(
             config_gen,
@@ -89,11 +80,7 @@ class ModelLoader:
         return f"{self.get('Model')}_{self.get('Dataset')}"
 
     def get_trainer(self):
-        return engine.Trainer(
-            self.get_progress_board(),
-            gpu_index=self.get("gpu_index"),
-            epoch_size=self.get("EpochSize"),
-        )
+        return L.Trainer()
 
     def get_plotter(self, data: engine.DataModule) -> utils.Plotter:
         return utils.Plotter(

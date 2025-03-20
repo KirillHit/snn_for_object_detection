@@ -1,12 +1,15 @@
-import run
+from lightning.pytorch.cli import LightningCLI
 import utils.model_loader
-import utils.devices
+
+def cli_main():
+    cli = LightningCLI(DemoModel, BoringDataModule)
 
 if __name__ == "__main__":
+    cli_main()
+    
     model_loader = utils.model_loader.ModelLoader()
-    data = model_loader.get_train_dataset()
+    data = model_loader.get_dataset()
     model = model_loader.get_model(data)
-    model.to(utils.devices.gpu())
     trainer = model_loader.get_trainer()
     trainer.prepare(model, data)
     params_file = model_loader.get_params_file_name()
