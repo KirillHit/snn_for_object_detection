@@ -6,12 +6,12 @@ from torch import nn
 from typing import Tuple, Optional
 import norse.torch as snn
 from norse.torch.module.snn import SNNCell
-from models.module.synapse import SynapseCell
-from models.module.conv_lstm import ConvLSTM
-from models.module.sli import SLICell
-from models.module.modules import *
+from models.modules.synapse import SynapseCell
+from models.modules.conv_lstm import ConvLSTM
+from models.modules.sli import SLICell
+from models.modules.common import *
 
-__all__ = (
+layers_list = (
     "Residual",
     "Dense",
     "LayerGen",

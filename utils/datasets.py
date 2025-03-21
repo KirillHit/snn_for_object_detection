@@ -30,7 +30,7 @@ class PropheseeDataModule(L.LightningDataModule):
     def __init__(
         self,
         data_dir="./data",
-        name="gen1",
+        dataset="gen1",
         batch_size=4,
         num_workers=4,
         num_load_file=8,
@@ -42,8 +42,8 @@ class PropheseeDataModule(L.LightningDataModule):
         """
         :param data_dir: The directory where datasets are stored. Defaults to "./data".
         :type data_dir: str, optional
-        :param name: The name of the dataset. Supported ``gen1`` and ``1mpx``.
-        :type name: str, optional
+        :param dataset: The name of the dataset. Supported ``gen1`` and ``1mpx``.
+        :type dataset: str, optional
         :param batch_size: Number of elements in a batch. Defaults to 4.
         :type batch_size: int, optional
         :param num_workers: A positive integer will turn on multi-process data loading with the
@@ -65,7 +65,7 @@ class PropheseeDataModule(L.LightningDataModule):
         super().__init__()
         self.save_hyperparameters()
 
-        match self.hparams.name:
+        match self.hparams.dataset:
             case "gen1":
                 self.labels_name = ("car", "person")
             case "1mpx":
@@ -79,7 +79,7 @@ class PropheseeDataModule(L.LightningDataModule):
                     "traffic lights",
                 )
             case _:
-                raise ValueError(f'[ERROR]: The name parameter cannot be "{self.hparams.name}"!')
+                raise ValueError(f'[ERROR]: The name parameter cannot be "{self.hparams.dataset}"!')
 
     def get_labels(self):
         """Returns a list of class names"""
@@ -95,7 +95,7 @@ class PropheseeDataModule(L.LightningDataModule):
 
     def _get_files_list(self, split: str) -> Tuple[List[str], List[str]]:
         # Data dir: ./data/<gen1, 1mpx>/<test, train, val>
-        data_dir = os.path.join(self.hparams.data_dir, self.hparams.name, split)
+        data_dir = os.path.join(self.hparams.data_dir, self.hparams.dataset, split)
         # Get files name
         gt_files = glob.glob(data_dir + "/*_bbox.npy")
         data_files = [p.replace("_bbox.npy", "_td.dat") for p in gt_files]
@@ -152,7 +152,7 @@ class PropheseeDataModule(L.LightningDataModule):
                 data_files=data_files,
                 time_step=self.hparams.time_step,
                 num_load_file=self.hparams.num_load_file,
-                name=self.name,
+                name=self.hparams.dataset,
             )
         else:
             return MTPropheseeDataset(
@@ -161,7 +161,7 @@ class PropheseeDataModule(L.LightningDataModule):
                 data_files=data_files,
                 time_step=self.hparams.time_step,
                 num_load_file=self.hparams.num_load_file,
-                name=self.name,
+                name=self.hparams.dataset,
             )
 
 class PropheseeDatasetBase(IterableDataset):

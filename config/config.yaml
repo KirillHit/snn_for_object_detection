@@ -1,38 +1,58 @@
-### Basic
-Mode: 1               # 1 - interactive, 2 - train, 3 - eval, 4 - activity test
-gpu_index: 0
-SaveFolder: timeshift_4
-
-### Train mode
-LoadParameters: false
-NumTrainRounds: -1    # -1 - infinite
-NumRoundEpoch: 30
-### Eval mode
-NumEvalRounds: 300
-
-### Model parameters
-Model: yolo           # yolo
-InitWeights: true
-LossRatio: 0.04
-
-### Dataset parameters
-Dataset: gen1
-TimeStep: 16
-NumLoadFile: 8
-NumWorkers: 4
-# Train dataset
-BatchSize: 4
-NumSteps: 42
-TimeWindow: 16
-TimeShift: 4
-
-### Progress board parameters
-Display: True
-EveryN: 4
-
-### Plotter parameters
-PlotterThreshold: 0.1
-PlotterColumns: 4
-
-### Trainer board parameters
-EpochSize: 60
+# lightning.pytorch==2.5.0.post0
+seed_everything: true
+trainer:
+  accelerator: gpu
+  strategy: auto
+  devices: -1
+  num_nodes: 1
+  precision: null
+  callbacks: null
+  fast_dev_run: false
+  max_epochs: -1
+  min_epochs: null
+  max_steps: -1
+  min_steps: null
+  max_time: null
+  limit_train_batches: 100
+  limit_val_batches: 100
+  limit_test_batches: 100
+  limit_predict_batches: 1
+  overfit_batches: 0.0
+  val_check_interval: null
+  check_val_every_n_epoch: 10
+  num_sanity_val_steps: null
+  log_every_n_steps: null
+  enable_checkpointing: True
+  enable_progress_bar: null
+  enable_model_summary: null
+  accumulate_grad_batches: 1
+  gradient_clip_algorithm: null
+  inference_mode: true
+  use_distributed_sampler: true
+  profiler: null
+  detect_anomaly: false
+  barebones: false
+  plugins: null
+  sync_batchnorm: false
+  reload_dataloaders_every_n_epochs: 0
+model:
+  num_classes: 2
+  loss_ratio: 0.04
+  time_window: 0
+  iou_threshold: 0.4
+  learning_rate: 0.001
+  state_storage: false
+  init_weights: true
+data:
+  data_dir: ./data
+  dataset: gen1
+  batch_size: 4
+  num_workers: 4
+  num_load_file: 8
+  num_steps: 32
+  time_step: 16
+  time_shift: 8
+  one_label: true
+optimizer: null
+lr_scheduler: null
+ckpt_path: null

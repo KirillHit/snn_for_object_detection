@@ -20,8 +20,8 @@ from torch import nn
 from typing import List, Tuple
 from norse.torch.utils.state import _is_module_stateful
 from utils.anchors import AnchorGenerator
-from models.module.generators import *
-from models.module.modules import *
+from models.modules.layer_gen import *
+from models.modules.common import *
 
 
 #####################################################################
@@ -200,50 +200,7 @@ class BlockGen(nn.Module):
 
 
 #####################################################################
-#                        Backbone Generator                         #
-#####################################################################
-
-
-class BaseConfig:
-    """Base class for model configuration generators"""
-
-    state_storage = False
-    """
-    If true preserves preserves all intermediate states of spiking neurons.
-    Necessary for analyzing the network operation.
-    """
-
-    def backbone_cfgs(self) -> ListGen:
-        """Generates and returns a network backbone configuration
-
-        :return: Backbone configuration.
-        :rtype: ListGen
-        """
-        raise NotImplementedError
-
-    def neck_cfgs(self) -> ListGen:
-        """Generates and returns a network neck configuration
-
-        :return: Neck configuration.
-        :rtype: ListGen
-        """
-        raise NotImplementedError
-
-    def head_cfgs(self, box_out: int, cls_out: int) -> ListGen:
-        """Generates and returns a network head configuration
-
-        :param box_out: Number of output channels for box predictions.
-        :type box_out: int
-        :param cls_out: Number of output channels for class predictions.
-        :type cls_out: int
-        :return: Head configuration.
-        :rtype: ListGen
-        """
-        raise NotImplementedError
-
-
-#####################################################################
-#                        Backbone Generator                         #
+#                         Model Generator                           #
 #####################################################################
 
 
@@ -263,7 +220,7 @@ class ModelGen(nn.Module):
 
     def __init__(
         self,
-        cfg: BaseConfig,
+        cfg,
         in_channels: int = 2,
         init_weights: bool = True,
     ) -> None:
@@ -303,7 +260,7 @@ class ModelGen(nn.Module):
         self.net = BlockGen(in_channels, self.net_cfg)
         self.out_channels = self.net.out_channels
 
-    def _load_cfg(self, cfg: BaseConfig) -> ListGen:
+    def _load_cfg(self, cfg) -> ListGen:
         raise NotImplementedError
 
     def forward_impl(self, X: torch.Tensor, state: ListState | None = None):
@@ -340,8 +297,8 @@ class BackboneGen(ModelGen):
     Returns the tensor from the last layer of the network.
     """
 
-    def _load_cfg(self, cfg: BaseConfig) -> ListGen:
-        return cfg.backbone_cfgs()
+    def _load_cfg(self, cfg) -> ListGen:
+        return cfg()
 
     def forward_impl(
         self, X: torch.Tensor, state: ListState | None
@@ -399,8 +356,8 @@ class NeckGen(ModelGen):
                 out += self._search_out(module)
         return out
 
-    def _load_cfg(self, cfg: BaseConfig) -> ListGen:
-        return cfg.neck_cfgs()
+    def _load_cfg(self, cfg) -> ListGen:
+        return cfg()
 
     def forward_impl(
         self, X: List[torch.Tensor], state: ListState | None
@@ -595,8 +552,8 @@ class HeadGen(ModelGen):
         self.box_net = BlockGen(self.base_net.out_channels, [self.net_cfg[1]])
         self.cls_net = BlockGen(self.base_net.out_channels, [self.net_cfg[2]])
 
-    def _load_cfg(self, cfg: BaseConfig) -> ListGen:
-        return cfg.head_cfgs(self.box_out, self.cls_out)
+    def _load_cfg(self, cfg) -> ListGen:
+        return cfg(self.box_out, self.cls_out)
 
     def forward_impl(
         self, X: torch.Tensor, state: ListState | None

@@ -2,11 +2,12 @@
 Network configuration similar to yolo8
 """
 
-from models.generator import ListGen, BaseConfig
-from models.module.generators import *
+from models.soda import SODa
+from models.generator import ListGen
+from models.modules import *
 
 
-class Yolo(BaseConfig):
+class Yolo(SODa):
     """Generates a model similar to yolo8
 
     See https://viso.ai/deep-learning/yolov8-guide/.
@@ -35,7 +36,12 @@ class Yolo(BaseConfig):
 
     def head_cfgs(self, box_out: int, cls_out: int) -> ListGen:
         return [
-            [Conv(kernel_size=1), Norm(), LI(state_storage=self.state_storage), Tanh()],
+            [
+                Conv(kernel_size=1),
+                Norm(),
+                LI(state_storage=self.hparams.state_storage),
+                Tanh(),
+            ],
             [
                 Conv(box_out, 1),
             ],
@@ -48,7 +54,7 @@ class Yolo(BaseConfig):
         return (
             Conv(out_channels, stride=stride, kernel_size=kernel),
             Norm(),
-            LIF(state_storage=self.state_storage),
+            LIF(state_storage=self.hparams.state_storage),
         )
 
     def _bottleneck(self, shortcut: bool = True):

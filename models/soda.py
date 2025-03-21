@@ -9,9 +9,7 @@ import lightning as L
 
 from utils.roi import RoI
 import utils.box as box
-
-from .generator import BackboneGen, NeckGen, Head
-
+from models.generator import ListGen, BackboneGen, NeckGen, Head
 
 class SODa(L.LightningModule):
     """
@@ -20,25 +18,25 @@ class SODa(L.LightningModule):
     Implements the basic functions for calculating losses,
     training the network and generating predictions. The network model is passed
     as a parameter when initializing.
+    
+    .. warning::
+
+        This class can only be used as a base class for inheritance.
     """
 
     def __init__(
         self,
-        backbone: BackboneGen,
-        neck: NeckGen,
-        head: Head,
-        loss_ratio: int = 0.04,
+        num_classes: int,
+        loss_ratio: float = 0.04,
         time_window: int = 0,
-        iou_threshold: int = 0.4,
-        learning_rate: int = 0.001,
+        iou_threshold: float = 0.4,
+        learning_rate: float = 0.001,
+        state_storage: bool = False,
+        init_weights: bool = True,
     ):
         """
-        :param backbone: Main network.
-        :type backbone: BackboneGen
-        :param neck: Feature Map Extraction Network.
-        :type neck: NeckGen
-        :param head: Network for transforming feature maps into predictions.
-        :type head: Head
+        :param num_classes: Number of classes.
+        :type num_classes: int
         :param loss_ratio: The ratio of the loss for non-detection to the loss for false positives.
             The higher this parameter, the more guesses the network generates.
             This is necessary to keep the network active. Defaults to 0.04.
@@ -52,17 +50,63 @@ class SODa(L.LightningModule):
         :type iou_threshold: int, optional
         :param learning_rate: #TODO
         :type learning_rate: int, optional
+        :param state_storage: If true preserves preserves all intermediate states of spiking neurons.
+            Necessary for analyzing the network operation. Defaults to False.
+        :type state_storage: bool, optional
+        :param init_weights: If ``true`` apply weight initialization function.
+            Defaults to True.
+        :type init_weights: bool, optional
         """
         super().__init__()
-        self.save_hyperparameters(ignore=["backbone", "neck", "head"])
-        self.base_net = backbone
-        self.neck_net = neck
-        self.head_net = head
-        self.roi_blk = RoI(self.hparams.iou_threshold)
-        self.start_time = 0
+        self.save_hyperparameters()
 
+        self.base_net = BackboneGen(
+            self.backbone_cfgs,
+            in_channels=2,
+            init_weights=self.hparams.init_weights,
+        )
+        self.neck_net = NeckGen(
+            self.neck_cfgs,
+            self.base_net.out_channels,
+            init_weights=self.hparams.init_weights,
+        )
+        self.head_net = Head(
+            self.head_cfgs,
+            self.hparams.num_classes,
+            self.neck_net.out_shape,
+            init_weights=self.hparams.init_weights,
+        )
+        self.roi_blk = RoI(self.hparams.iou_threshold)
         self.cls_loss = nn.CrossEntropyLoss(reduction="none")
         self.box_loss = nn.L1Loss(reduction="none")
+        
+    def backbone_cfgs(self) -> ListGen:
+        """Generates and returns a network backbone configuration
+
+        :return: Backbone configuration.
+        :rtype: ListGen
+        """
+        raise NotImplementedError
+
+    def neck_cfgs(self) -> ListGen:
+        """Generates and returns a network neck configuration
+
+        :return: Neck configuration.
+        :rtype: ListGen
+        """
+        raise NotImplementedError
+
+    def head_cfgs(self, box_out: int, cls_out: int) -> ListGen:
+        """Generates and returns a network head configuration
+
+        :param box_out: Number of output channels for box predictions.
+        :type box_out: int
+        :param cls_out: Number of output channels for class predictions.
+        :type cls_out: int
+        :return: Head configuration.
+        :rtype: ListGen
+        """
+        raise NotImplementedError
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
         return torch.optim.Adamax(self.parameters(), lr=self.hparams.learning_rate)
@@ -126,33 +170,39 @@ class SODa(L.LightningModule):
         Y = self.base_net.forward(X)
         fratures_maps = self.neck_net.forward(Y)
         return self.head_net.forward(fratures_maps)
-
-    def training_step(
-        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
-    ) -> torch.Tensor:
-        if self.hparams.time_window > 0:
-            preds = self.forward(batch[0][self.start_time :])
-            self.start_time = torch.randint(
+    
+    def _rand_start_time(self) -> int:
+        return torch.randint(
                 0,
                 self.hparams.time_window,
                 (1,),
                 requires_grad=False,
                 dtype=torch.uint32,
-            )
-        else:
-            preds = self.forward(batch[0])
+            ) if self.hparams.time_window else 0
+
+    def training_step(
+        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
+    ) -> torch.Tensor:
+        preds = self.forward(batch[0][self._rand_start_time() :])
         loss = self.loss(preds, batch[1])
+        self.log("train loss", loss, prog_bar=True, on_step=True, on_epoch=True, sync_dist=True)
         return loss
 
     def test_step(
         self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> torch.Tensor:
-        return self.training_step(batch, batch_idx)
+        preds = self.forward(batch[0][self._rand_start_time() :])
+        loss = self.loss(preds, batch[1])
+        self.log("test loss", loss, on_step=True, on_epoch=True, sync_dist=True)
+        return loss
 
     def validation_step(
         self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> torch.Tensor:
-        return self.training_step(batch, batch_idx)
+        preds = self.forward(batch[0][self._rand_start_time() :])
+        loss = self.loss(preds, batch[1])
+        self.log("val loss", loss, on_step=True, on_epoch=True, sync_dist=True)
+        return loss
 
     def predict_step(
         self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int

@@ -9,9 +9,8 @@ from utils.plotter import Plotter
 from matplotlib import pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.colors as mcolors
-from models.module.modules import StateStorage
+from models.modules.common import StateStorage
 from models.generator import ModelGen, BlockGen, Head
-from utils.devices import cpu
 from typing import List, Any, Optional, Dict, NamedTuple
 
 
