@@ -1,13 +1,11 @@
 """Generates a model and dataset based on parameters from a configuration file"""
 
 import yaml
-from torch.nn.utils import parameters_to_vector as p2v
-import engine
 import models
 import utils
-import utils.devices
 from typing import Any
 import lightning as L
+from typing import List
 
 
 class ModelLoader:
@@ -23,8 +21,8 @@ class ModelLoader:
             self.data["Display"] = False
         self.print_info()
 
-    def get_dataset(self) -> engine.DataModule:
-        return utils.STProphesee(
+    def get_dataset(self) -> utils.datasets.PropheseeDataModule:
+        return utils.datasets.PropheseeDataModule(
             num_steps=self.get("NumSteps"),
             time_shift=self.get("TimeShift"),
             name=self.get("Dataset"),
@@ -34,7 +32,7 @@ class ModelLoader:
             num_workers=self.get("NumWorkers"),
         )
 
-    def get_model(self, data: engine.DataModule) -> engine.Model:
+    def get_model(self, classes: List[str]) -> L.LightningModule:
         config_gen: models.BaseConfig = models.config_list[self.get("Model")]()
         config_gen.state_storage = self.get("Mode") == 4
 
@@ -50,7 +48,7 @@ class ModelLoader:
         )
         head_net = models.Head(
             config_gen,
-            len(data.get_labels()),
+            len(classes),
             neck_net.out_shape,
             self.get("InitWeights"),
         )
@@ -62,19 +60,8 @@ class ModelLoader:
             loss_ratio=self.get("LossRatio"),
             time_window=self.get("TimeWindow"),
         )
-        print(f"[INFO]: Number of model parameters: {p2v(model.parameters()).numel()}")
 
         return model
-
-    def get_progress_board(self) -> utils.ProgressBoard:
-        return utils.ProgressBoard(
-            yscale="log",
-            xlabel="Batch idx",
-            ylabel="Average loss",
-            display=self.get("Display"),
-            ylim=(1.2, 0.1),
-            every_n=self.get("EveryN"),
-        )
 
     def get_params_file_name(self) -> str:
         return f"{self.get('Model')}_{self.get('Dataset')}"
@@ -82,16 +69,16 @@ class ModelLoader:
     def get_trainer(self):
         return L.Trainer()
 
-    def get_plotter(self, data: engine.DataModule) -> utils.Plotter:
+    def get_plotter(self, classes: List[str]) -> utils.Plotter:
         return utils.Plotter(
             threshold=self.get("PlotterThreshold"),
-            labels=data.get_labels(),
+            labels=classes,
             interval=self.get("TimeStep"),
             columns=self.get("PlotterColumns"),
         )
 
-    def get_evaluate(self, data: engine.DataModule) -> utils.SODAeval:
-        return utils.SODAeval(labelmap=data.get_labels())
+    def get_evaluate(self, classes: List[str]) -> utils.SODAeval:
+        return utils.SODAeval(classes)
 
     def get(self, name: str) -> Any:
         """Get data from configuration file

@@ -25,14 +25,7 @@ def _stack_data(batch):
 
 
 class PropheseeDataModule(L.LightningDataModule):
-    """Base class for Prophesee dataset data modules
-
-    .. warning::
-
-        This class can only be used as a base class for inheritance.
-
-    The create_dataset method must be overridden in the child class.
-    """
+    """Prophesee gen1 and 1mpx datasets"""
 
     def __init__(
         self,
@@ -43,6 +36,7 @@ class PropheseeDataModule(L.LightningDataModule):
         num_load_file=8,
         num_steps=32,
         time_step=16,
+        time_shift=8,
         one_label=True,
     ):
         """
@@ -61,7 +55,10 @@ class PropheseeDataModule(L.LightningDataModule):
         :type num_steps: int, optional
         :param time_step: Time between frames. Defaults to 16.
         :type time_step: int, optional
-        :param one_label: #TODO
+        :param time_shift: The number of time steps that labels are moved forward relative to their
+            frame. Defaults to 8.
+        :type time_shift: int, optional
+        :param one_label: If true labeling is provided for the last time step only. Intended for training. Defaults to True.
         :type one_label: bool, optional
         :raises ValueError: Invalid dataset name.
         """
@@ -82,7 +79,7 @@ class PropheseeDataModule(L.LightningDataModule):
                     "traffic lights",
                 )
             case _:
-                raise ValueError(f'[ERROR]: The name parameter cannot be "{name}"!')
+                raise ValueError(f'[ERROR]: The name parameter cannot be "{self.hparams.name}"!')
 
     def get_labels(self):
         """Returns a list of class names"""
@@ -90,11 +87,11 @@ class PropheseeDataModule(L.LightningDataModule):
 
     def setup(self, stage: str) -> None:
         if stage == "fit":
-            self.train_dataset = self.create_dataset(*self._get_files_list("train"))
-            self.val_dataset = self.create_dataset(*self._get_files_list("val"))
+            self.train_dataset = self._create_dataset(*self._get_files_list("train"))
+            self.val_dataset = self._create_dataset(*self._get_files_list("val"))
 
         if stage == "test":
-            self.test_dataset = self.create_dataset(*self._get_files_list("test"))
+            self.test_dataset = self._create_dataset(*self._get_files_list("test"))
 
     def _get_files_list(self, split: str) -> Tuple[List[str], List[str]]:
         # Data dir: ./data/<gen1, 1mpx>/<test, train, val>
@@ -135,7 +132,7 @@ class PropheseeDataModule(L.LightningDataModule):
             persistent_workers=True,
         )
 
-    def create_dataset(
+    def _create_dataset(
         self, gt_files: List[str], data_files: List[str]
     ) -> IterableDataset:
         """Initializes dataset
@@ -147,62 +144,25 @@ class PropheseeDataModule(L.LightningDataModule):
         :return: Ready dataset
         :rtype: IterableDataset
         """
-
-        raise NotImplementedError
-
-
-class MTProphesee(PropheseeDataModule):
-    """Multi-target Prophesee's gen1 and 1mpx datasets.
-
-    The packages are provided in a multi-target form,
-    meaning that one example can contain target labels at multiple time steps.
-    Records are split into fixed-step chunks that are returned sequentially.
-    Intended for testing. There is single-target dataset for training.
-    """
-
-    def create_dataset(
-        self, gt_files: List[str], data_files: List[str]
-    ) -> IterableDataset:
-        return MTPropheseeDataset(
-            num_steps=self.num_steps,
-            gt_files=gt_files,
-            data_files=data_files,
-            time_step=self.time_step,
-            num_load_file=self.num_load_file,
-            name=self.name,
-        )
-
-
-class STProphesee(PropheseeDataModule):
-    """Single-target Prophesee gen1 and 1mpx datasets.
-
-    Labeling is provided for the last time step only. Intended for training.
-    """
-
-    def __init__(self, time_shift=8, **kwargs):
-        """
-        :param time_shift: The number of time steps that labels are moved forward relative to their
-            frame. Defaults to 8.
-        :type time_shift: int, optional
-        :param \\**kwargs: Parent class parameters.
-            See :class:`PropheseeDataModule <utils.datasets.PropheseeDataModule>`
-        """
-        super().__init__(**kwargs)
-        self.time_shift = time_shift
-
-    def create_dataset(
-        self, gt_files: List[str], data_files: List[str]
-    ) -> IterableDataset:
-        return STPropheseeDataset(
-            num_steps=self.num_steps,
-            time_shift=self.time_shift,
-            gt_files=gt_files,
-            data_files=data_files,
-            time_step=self.time_step,
-            num_load_file=self.num_load_file,
-            name=self.name,
-        )
-
+        if self.hparams.one_label:
+            return STPropheseeDataset(
+                num_steps=self.hparams.num_steps,
+                time_shift=self.hparams.time_shift,
+                gt_files=gt_files,
+                data_files=data_files,
+                time_step=self.hparams.time_step,
+                num_load_file=self.hparams.num_load_file,
+                name=self.name,
+            )
+        else:
+            return MTPropheseeDataset(
+                num_steps=self.hparams.num_steps,
+                gt_files=gt_files,
+                data_files=data_files,
+                time_step=self.hparams.time_step,
+                num_load_file=self.hparams.num_load_file,
+                name=self.name,
+            )
 
 class PropheseeDatasetBase(IterableDataset):
     """Base class for Prophesee dataset iterators
