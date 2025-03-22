@@ -79,7 +79,9 @@ class PropheseeDataModule(L.LightningDataModule):
                     "traffic lights",
                 )
             case _:
-                raise ValueError(f'[ERROR]: The name parameter cannot be "{self.hparams.dataset}"!')
+                raise ValueError(
+                    f'[ERROR]: The name parameter cannot be "{self.hparams.dataset}"!'
+                )
 
     def get_labels(self):
         """Returns a list of class names"""
@@ -88,9 +90,9 @@ class PropheseeDataModule(L.LightningDataModule):
     def setup(self, stage: str) -> None:
         if stage == "fit":
             self.train_dataset = self._create_dataset(*self._get_files_list("train"))
+        if stage in ("fit", "validate"):
             self.val_dataset = self._create_dataset(*self._get_files_list("val"))
-
-        if stage == "test":
+        if stage in ("test", "predict"):
             self.test_dataset = self._create_dataset(*self._get_files_list("test"))
 
     def _get_files_list(self, split: str) -> Tuple[List[str], List[str]]:
@@ -101,11 +103,11 @@ class PropheseeDataModule(L.LightningDataModule):
         data_files = [p.replace("_bbox.npy", "_td.dat") for p in gt_files]
 
         if not data_files or not gt_files or len(data_files) != len(gt_files):
-            print(
-                f"[WARN]: Directory '{data_dir}' does not contain data or data is invalid! I'm expecting: "
+            raise RuntimeError(
+                f"Directory '{data_dir}' does not contain data or data is invalid! I'm expecting: "
                 f"./data/{data_dir}/*_bbox.npy (and *_td.dat). "
                 "The dataset can be downloaded from this link: "
-                "https://www.prophesee.ai/2020/01/24/prophesee-gen1-automotive-detection-dataset/ or"
+                "https://www.prophesee.ai/2020/01/24/prophesee-gen1-automotive-detection-dataset/ or "
                 "https://www.prophesee.ai/2020/11/24/automotive-megapixel-event-based-dataset/"
             )
 
@@ -163,6 +165,7 @@ class PropheseeDataModule(L.LightningDataModule):
                 num_load_file=self.hparams.num_load_file,
                 name=self.hparams.dataset,
             )
+
 
 class PropheseeDatasetBase(IterableDataset):
     """Base class for Prophesee dataset iterators
@@ -249,20 +252,10 @@ class PropheseeDatasetBase(IterableDataset):
     def _labels_prepare(self, labels: List[np.ndarray]) -> List[torch.Tensor]:
         """Converts labels from numpy.ndarray format to torch
 
-        :param labels: Labels in numpy format
-
-            - Numpy format ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
-            Tensor format (ts [ms], class id, xlu, ylu, xrd, yrd)
+        :param labels: Labels in numpy format ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
         :type labels: List[np.ndarray]
-        :return: _description_
+        :return: Labels in torch format (ts [ms], class id, xlu, ylu, xrd, yrd)
         :rtype: List[torch.Tensor]
-        """
-        """Converts labels from numpy.ndarray format to torch.
-        Args:
-            labels (List[np.ndarray]): Labels in numpy format
-                
-        Returns:
-            List[torch.Tensor]: Labels in torch format
         """
         return [
             torch.from_numpy(

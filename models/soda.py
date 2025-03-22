@@ -6,10 +6,12 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 import lightning as L
+import torchmetrics.detection
 
 from utils.roi import RoI
 import utils.box as box
 from models.generator import ListGen, BackboneGen, NeckGen, Head
+
 
 class SODa(L.LightningModule):
     """
@@ -18,7 +20,7 @@ class SODa(L.LightningModule):
     Implements the basic functions for calculating losses,
     training the network and generating predictions. The network model is passed
     as a parameter when initializing.
-    
+
     .. warning::
 
         This class can only be used as a base class for inheritance.
@@ -79,7 +81,11 @@ class SODa(L.LightningModule):
         self.roi_blk = RoI(self.hparams.iou_threshold)
         self.cls_loss = nn.CrossEntropyLoss(reduction="none")
         self.box_loss = nn.L1Loss(reduction="none")
-        
+
+        self.map_metric = torchmetrics.detection.MeanAveragePrecision(
+            box_format="xyxy", iou_type="bbox", backend="faster_coco_eval"
+        )
+
     def backbone_cfgs(self) -> ListGen:
         """Generates and returns a network backbone configuration
 
@@ -125,7 +131,7 @@ class SODa(L.LightningModule):
             2. cls_preds: Shape [ts, batch, anchor, num_classes + 1]
             3. bbox_preds: Shape [ts, batch, anchor, 4]
         :type preds: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]
-        :param labels: Tensor shape [num_labels, 5].
+        :param labels: Tensor shape [batch, num_labels, 5].
 
             One label contains: class id, xlu, ylu, xrd, yrd.
         :type labels: torch.Tensor
@@ -170,22 +176,26 @@ class SODa(L.LightningModule):
         Y = self.base_net.forward(X)
         fratures_maps = self.neck_net.forward(Y)
         return self.head_net.forward(fratures_maps)
-    
+
     def _rand_start_time(self) -> int:
-        return torch.randint(
+        return (
+            torch.randint(
                 0,
                 self.hparams.time_window,
                 (1,),
                 requires_grad=False,
                 dtype=torch.uint32,
-            ) if self.hparams.time_window else 0
+            )
+            if self.hparams.time_window
+            else 0
+        )
 
     def training_step(
         self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> torch.Tensor:
         preds = self.forward(batch[0][self._rand_start_time() :])
         loss = self.loss(preds, batch[1])
-        self.log("train loss", loss, prog_bar=True, on_step=True, on_epoch=True, sync_dist=True)
+        self.log("train_loss", loss, prog_bar=True)
         return loss
 
     def test_step(
@@ -193,20 +203,73 @@ class SODa(L.LightningModule):
     ) -> torch.Tensor:
         preds = self.forward(batch[0][self._rand_start_time() :])
         loss = self.loss(preds, batch[1])
-        self.log("test loss", loss, on_step=True, on_epoch=True, sync_dist=True)
+        self.log("test_loss", loss, prog_bar=True)
+        self._map_estimate(preds, batch[1])
         return loss
+
+    def on_test_epoch_end(self):
+        self._map_compute()
 
     def validation_step(
         self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> torch.Tensor:
         preds = self.forward(batch[0][self._rand_start_time() :])
         loss = self.loss(preds, batch[1])
-        self.log("val loss", loss, on_step=True, on_epoch=True, sync_dist=True)
+        self.log("val_loss", loss, prog_bar=True)
+        self._map_estimate(preds, batch[1])
         return loss
 
-    def predict_step(
-        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
-    ) -> torch.Tensor:
+    def on_validation_epoch_end(self):
+        self._map_compute()
+
+    def _map_compute(self):
+        result = self.map_metric.compute()
+        self.log_dict({k: result[k] for k in result.keys() if k in ["map", "map_50"]})
+        self.map_metric.reset()
+
+    def _map_estimate(
+        self,
+        preds: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+        labels: torch.Tensor,
+    ):
+        """#TODO
+        :param preds: Predictions made by a neural network.
+            Contains three tensors:
+
+            1. anchors: Shape [anchor, 4]
+            2. cls_preds: Shape [ts, batch, anchor, num_classes + 1]
+            3. bbox_preds: Shape [ts, batch, anchor, 4]
+        :type preds: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]
+        :param labels: Tensor shape [batch, num_labels, 5].
+
+            One label contains: class id, xlu, ylu, xrd, yrd.
+        :type labels: torch.Tensor
+        """
+        anchors, cls_preds, bbox_preds = preds
+        prep_pred = box.multibox_detection(
+            F.softmax(cls_preds[-1], dim=2), bbox_preds[-1], anchors
+        )
+        map_preds = []
+        map_target = []
+        for batch, label in zip(prep_pred, labels):
+            masked_preds = batch[batch[:, 0] >= 0]
+            map_preds.append(
+                {
+                    "boxes": masked_preds[:, 2:],
+                    "scores": masked_preds[:, 1],
+                    "labels": masked_preds[:, 0].type(torch.IntTensor),
+                }
+            )
+            masked_label = label[label[:, 0] >= 0]
+            map_target.append(
+                {
+                    "boxes": masked_label[:, 1:],
+                    "labels": masked_label[:, 0].type(torch.IntTensor),
+                }
+            )
+        self.map_metric.update(map_preds, map_target)
+
+    def predict(self, batch: tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
         """Returns the network's predictions based on the input data
 
         :param batch: Input data.
@@ -225,3 +288,13 @@ class SODa(L.LightningModule):
             cls_probs_ts = F.softmax(cls_preds[ts], dim=2)
             output.append(box.multibox_detection(cls_probs_ts, bbox_preds[ts], anchors))
         return torch.stack(output)
+    
+    def predict_stated(self, batch: tuple[torch.Tensor, torch.Tensor], state) :
+        #TODO
+        pass
+
+    def predict_step(
+        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
+    ) -> torch.Tensor:
+        #TODO
+        pass

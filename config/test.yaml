@@ -1,0 +1,3 @@
+trainer:
+  limit_val_batches: 1000
+  enable_checkpointing: false
