@@ -229,7 +229,9 @@ class LIF(LayerGen):
         self.state_storage = state_storage
 
     def get(self, in_channels: int) -> Tuple[SNNCell, int]:
-        module = snn.LIFCell() if not self.state_storage else StateStorage(snn.LIFCell())
+        module = (
+            snn.LIFCell() if not self.state_storage else StateStorage(snn.LIFCell())
+        )
         return module, in_channels
 
 

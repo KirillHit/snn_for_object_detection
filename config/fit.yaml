@@ -1,17 +1,23 @@
 trainer:
+  accelerator: gpu
+  strategy: ddp
+  devices: -1
+  num_nodes: 1
   precision: null
   callbacks:
     - class_path: lightning.pytorch.callbacks.early_stopping.EarlyStopping
       init_args:
-        monitor: val_loss
-        mode: min
+        monitor: map
+        mode: max
         patience: 20
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
       init_args:
-        monitor: val_loss
+        monitor: map
         save_top_k: 2
-        mode: min
-    - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+        mode: max
+    - class_path: lightning.pytorch.callbacks.ModelSummary
+      init_args:
+          max_depth: 1
   fast_dev_run: false
   max_epochs: -1
   min_epochs: null
@@ -21,7 +27,7 @@ trainer:
   limit_train_batches: 100
   limit_val_batches: 100
   limit_test_batches: 100
-  limit_predict_batches: 10
+  limit_predict_batches: 20
   overfit_batches: 0.0
   val_check_interval: null
   check_val_every_n_epoch: 1
@@ -35,6 +41,7 @@ trainer:
   profiler: null
   detect_anomaly: false
   barebones: false
-  plugins: null
+  plugins:
+#    class_path: lightning.pytorch.plugins.environments.SLURMEnvironment
   sync_batchnorm: false
   reload_dataloaders_every_n_epochs: 0

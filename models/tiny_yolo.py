@@ -7,7 +7,7 @@ from models.generator import ListGen
 from models.modules import *
 
 
-class Yolo(SODa):
+class TinyYolo(SODa):
     """Generates a model similar to yolo8
 
     See https://viso.ai/deep-learning/yolov8-guide/.

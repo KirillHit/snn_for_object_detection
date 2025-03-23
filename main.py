@@ -1,5 +1,5 @@
 from lightning.pytorch.cli import LightningCLI
-from models import SODa, Yolo
+from models import SODa, TinyYolo
 from utils import PropheseeDataModule
 
 
@@ -19,15 +19,19 @@ def cli_main():
             "validate": {
                 "default_config_files": [
                     "config/base.yaml",
-                    "config/logger.yaml",
                     "config/test.yaml",
                 ]
             },
             "test": {
                 "default_config_files": [
                     "config/base.yaml",
-                    "config/logger.yaml",
                     "config/test.yaml",
+                ]
+            },
+            "predict": {
+                "default_config_files": [
+                    "config/base.yaml",
+                    "config/predict.yaml",
                 ]
             },
         },

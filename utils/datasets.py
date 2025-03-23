@@ -13,17 +13,6 @@ from torch.nn.utils.rnn import pad_sequence
 import lightning as L
 
 
-def _stack_data(batch):
-    """Combines samples into a batch taking into account the time dimension"""
-    features = torch.stack([sample[0] for sample in batch], dim=1)
-    targets = pad_sequence(
-        [sample[1] for sample in batch],
-        batch_first=True,
-        padding_value=-1,
-    )
-    return features, targets
-
-
 class PropheseeDataModule(L.LightningDataModule):
     """Prophesee gen1 and 1mpx datasets"""
 
@@ -34,9 +23,9 @@ class PropheseeDataModule(L.LightningDataModule):
         batch_size=4,
         num_workers=4,
         num_load_file=8,
-        num_steps=32,
+        num_steps=42,
         time_step=16,
-        time_shift=8,
+        time_shift=16,
         one_label=True,
     ):
         """
@@ -65,11 +54,18 @@ class PropheseeDataModule(L.LightningDataModule):
         super().__init__()
         self.save_hyperparameters()
 
+        if self.hparams.dataset not in ("gen1", "1mpx"):
+            raise ValueError(
+                f'The dataset parameter cannot be "{self.hparams.dataset}"!'
+            )
+
+    def get_labels(self) -> List[str]:
+        """Returns a list of class names"""
         match self.hparams.dataset:
             case "gen1":
-                self.labels_name = ("car", "person")
+                return ["car", "person"]
             case "1mpx":
-                self.labels_name = (
+                return [
                     "pedestrians",
                     "two wheelers",
                     "cars",
@@ -77,15 +73,11 @@ class PropheseeDataModule(L.LightningDataModule):
                     "buses",
                     "signs",
                     "traffic lights",
-                )
+                ]
             case _:
                 raise ValueError(
-                    f'[ERROR]: The name parameter cannot be "{self.hparams.dataset}"!'
+                    f'The dataset parameter cannot be "{self.hparams.dataset}"!'
                 )
-
-    def get_labels(self):
-        """Returns a list of class names"""
-        return self.labels_name
 
     def setup(self, stage: str) -> None:
         if stage == "fit":
@@ -101,7 +93,6 @@ class PropheseeDataModule(L.LightningDataModule):
         # Get files name
         gt_files = glob.glob(data_dir + "/*_bbox.npy")
         data_files = [p.replace("_bbox.npy", "_td.dat") for p in gt_files]
-
         if not data_files or not gt_files or len(data_files) != len(gt_files):
             raise RuntimeError(
                 f"Directory '{data_dir}' does not contain data or data is invalid! I'm expecting: "
@@ -110,7 +101,6 @@ class PropheseeDataModule(L.LightningDataModule):
                 "https://www.prophesee.ai/2020/01/24/prophesee-gen1-automotive-detection-dataset/ or "
                 "https://www.prophesee.ai/2020/11/24/automotive-megapixel-event-based-dataset/"
             )
-
         return gt_files, data_files
 
     def train_dataloader(self):
@@ -130,9 +120,19 @@ class PropheseeDataModule(L.LightningDataModule):
             dataset,
             batch_size=self.hparams.batch_size,
             num_workers=self.hparams.num_workers,
-            collate_fn=_stack_data,
+            collate_fn=self._stack_data,
             persistent_workers=True,
         )
+
+    def _stack_data(self, batch):
+        """Combines samples into a batch taking into account the time dimension"""
+        features = torch.stack([sample[0] for sample in batch], dim=1)
+        targets = pad_sequence(
+            [sample[1] for sample in batch],
+            batch_first=True,
+            padding_value=-1,
+        )
+        return features, targets
 
     def _create_dataset(
         self, gt_files: List[str], data_files: List[str]
@@ -216,7 +216,7 @@ class PropheseeDatasetBase(IterableDataset):
                 self._height = 720
                 self._time_step_name = "t"
             case _:
-                raise ValueError(f'[ERROR]: The dataset parameter cannot be "{name}"!')
+                raise ValueError(f'The dataset parameter cannot be "{name}"!')
 
     def __iter__(self) -> Iterator[Tuple[torch.Tensor, torch.Tensor]]:
         """Returns an iterator for the dataset"""

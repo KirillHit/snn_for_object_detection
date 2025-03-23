@@ -20,8 +20,7 @@ from torch import nn
 from typing import List, Tuple
 from norse.torch.utils.state import _is_module_stateful
 from utils.anchors import AnchorGenerator
-from models.modules.layer_gen import *
-from models.modules.common import *
+from models.modules import *
 
 
 #####################################################################
@@ -263,7 +262,7 @@ class ModelGen(nn.Module):
     def _load_cfg(self, cfg) -> ListGen:
         raise NotImplementedError
 
-    def forward_impl(self, X: torch.Tensor, state: ListState | None = None):
+    def forward(self, X: torch.Tensor, state: ListState | None = None):
         """State-based network pass
 
         :param X: Input tensor. Shape is Shape [batch, channel, h, w].
@@ -272,16 +271,6 @@ class ModelGen(nn.Module):
         :type state: ListState | None, optional
         :return: The resulting tensor and the list of new states.
         :rtype: Tuple[torch.Tensor, ListState]
-        """
-        raise NotImplementedError
-
-    def forward(self, X: torch.Tensor):
-        """Network pass for data containing time resolution
-
-        :param X: Input tensor. Shape is Shape [ts, batch, channel, h, w].
-        :type X: torch.Tensor
-        :return: The resulting tensor and the list of new states.
-        :rtype: torch.Tensor,
         """
         raise NotImplementedError
 
@@ -300,18 +289,10 @@ class BackboneGen(ModelGen):
     def _load_cfg(self, cfg) -> ListGen:
         return cfg()
 
-    def forward_impl(
+    def forward(
         self, X: torch.Tensor, state: ListState | None
     ) -> Tuple[torch.Tensor, ListState]:
         return self.net(X, state)
-
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
-        out = []
-        state = None
-        for time_step_x in X:
-            Y, state = self.forward_impl(time_step_x, state)
-            out.append(Y)
-        return torch.stack(out)
 
 
 #####################################################################
@@ -359,7 +340,7 @@ class NeckGen(ModelGen):
     def _load_cfg(self, cfg) -> ListGen:
         return cfg()
 
-    def forward_impl(
+    def forward(
         self, X: List[torch.Tensor], state: ListState | None
     ) -> Tuple[torch.Tensor, ListState]:
         out = []
@@ -368,18 +349,6 @@ class NeckGen(ModelGen):
             if isinstance(module, Storage):
                 out.append(module.get_storage())
         return out, state
-
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
-        storage: List[List[torch.Tensor]] = [[] for _ in self.out_shape]
-        state = None
-        for time_step_x in X:
-            Y, state = self.forward_impl(time_step_x, state)
-            for idx, res in enumerate(Y):
-                storage[idx].append(res)
-        out: List[torch.Tensor] = []
-        for ret_layer in storage:
-            out.append(torch.stack(ret_layer))
-        return out
 
 
 #####################################################################
@@ -444,45 +413,48 @@ class Head(nn.Module):
             )
 
     def forward(
-        self, X: List[torch.Tensor]
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        self, X: List[torch.Tensor], state: ListState | None
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, ListState]:
         """Direct network pass
 
-        :param X: Feature map list. One map shape [ts, batch, channel, h, w].
+        :param X: Feature map list. One map shape [batch, channel, h, w].
         :type X: List[torch.Tensor]
+        :param state: List of block layer states.
+        :type state: ListState | None
         :return: Predictions made by a neural network.
             Contains three tensors:
 
             1. anchors: Shape [anchor, 4]
-            2. cls_preds: Shape [ts, batch, anchor, num_classes + 1]
-            3. bbox_preds: Shape [ts, batch, anchor, 4]
-        :rtype: tuple[torch.Tensor, torch.Tensor, torch.Tensor]
+            2. cls_preds: Shape [batch, anchor, num_classes + 1]
+            3. bbox_preds: Shape [batch, anchor, 4]
+            4. state: New state for head
+        :rtype: tuple[torch.Tensor, torch.Tensor, torch.Tensor, ListState]
         """
-
+        state = [None] * len(X) if state is None else state
         anchors, cls_preds, bbox_preds = [], [], []
 
         for idx, map in enumerate(X):
             anchors.append(getattr(self, f"anchor_gen_{idx}")(map))
-            boxes, classes = getattr(self, f"model_{idx}")(map)
+            boxes, classes, state[idx] = getattr(self, f"model_{idx}")(map, state[idx])
             bbox_preds.append(boxes)
             cls_preds.append(classes)
 
-        anchors = torch.cat(anchors, dim=0)
+        anchors = torch.cat(anchors)
         cls_preds = self._concat_preds(cls_preds)
         cls_preds = cls_preds.reshape(
-            cls_preds.shape[0], cls_preds.shape[1], -1, self.num_classes + 1
+            cls_preds.shape[0], -1, self.num_classes + 1
         )
         bbox_preds = self._concat_preds(bbox_preds)
-        bbox_preds = bbox_preds.reshape(bbox_preds.shape[0], bbox_preds.shape[1], -1, 4)
-        return anchors, cls_preds, bbox_preds
+        bbox_preds = bbox_preds.reshape(bbox_preds.shape[0], -1, 4)
+        return anchors, cls_preds, bbox_preds, state
 
     def _flatten_pred(self, pred: torch.Tensor) -> torch.Tensor:
         """Transforms the tensor so that each pixel retains channels values and smooths each batch"""
-        return torch.flatten(torch.permute(pred, (0, 1, 3, 4, 2)), start_dim=2)
+        return torch.flatten(torch.permute(pred, (0, 2, 3, 1)), start_dim=1)
 
     def _concat_preds(self, preds: list[torch.Tensor]) -> torch.Tensor:
         """Concatenating Predictions for Multiple Scales"""
-        return torch.cat([self._flatten_pred(p) for p in preds], dim=2)
+        return torch.cat([self._flatten_pred(p) for p in preds], dim=1)
 
 
 #####################################################################
@@ -555,21 +527,12 @@ class HeadGen(ModelGen):
     def _load_cfg(self, cfg) -> ListGen:
         return cfg(self.box_out, self.cls_out)
 
-    def forward_impl(
+    def forward(
         self, X: torch.Tensor, state: ListState | None
-    ) -> Tuple[torch.Tensor, ListState]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, ListState]:
         state = [None] * 3 if state is None else state
         Y, state[0] = self.base_net(X, state[0])
         box, state[1] = self.box_net(Y, state[1])
         cls, state[2] = self.cls_net(Y, state[2])
 
         return box, cls, state
-
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
-        boxes, clses = [], []
-        state = None
-        for time_step_x in X:
-            box, cls, state = self.forward_impl(time_step_x, state)
-            boxes.append(box)
-            clses.append(cls)
-        return torch.stack(boxes), torch.stack(clses)
