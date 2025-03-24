@@ -14,16 +14,25 @@ class Plotter:
     def __init__(
         self,
         threshold: float = 0.8,
+        show_video: bool = True,
         save_video: bool = False,
         file_path: str = "log",
         file_name: str = "out",
     ):
         """
-        #TODO
         :param threshold: Threshold value for displaying box. Defaults to 0.8.
         :type threshold: float, optional
+        :param show_video: If true, shows video in window. Defaults to True.
+        :type show_video: bool, optional
+        :param save_video: If true, saves the video to a file. Defaults to False.
+        :type save_video: bool, optional
+        :param file_path: Folder for saved video. Defaults to "log".
+        :type file_path: str, optional
+        :param file_name: Save file name. Defaults to "out".
+        :type file_name: str, optional
         """
         self.threshold = threshold
+        self.show_video = show_video
         self.save_video = save_video
         self.file_path = file_path
         self.file_name = file_name
@@ -33,17 +42,22 @@ class Plotter:
         ]
         self.labels = None
 
-    def __call__(self, video: List[np.ndarray], interval: int) -> None:
+    def __call__(
+        self, video: List[np.ndarray], interval: int, batch_idx: str = ""
+    ) -> None:
         """Displays frames obtained by the apply method and saves them
 
         :param video: List of frames
         :type video: List[np.ndarray]
         :param interval: Time between frames in milliseconds
         :type interval: int
+        :param batch_idx: Batch number
+        :type batch_idx: str, optional
         """
-        self._show_video(video, interval)
+        if self.show_video:
+            self._show_video(video, interval, batch_idx)
         if self.save_video:
-            self._save_video(video, interval)
+            self._save_video(video, interval, batch_idx)
 
     def apply(
         self,
@@ -72,7 +86,8 @@ class Plotter:
         res_img[plt_image[..., 1] > 0, 0] = 255
         target = self._prepare_targets(target, h, w)
         predictions = self._prepare_preds(predictions, h, w)
-        self._apply_boxes(res_img, predictions, target)
+        self._draw_target_boxes(res_img, target)
+        self._draw_preds_box(res_img, predictions)
         return res_img
 
     def _prepare_preds(
@@ -96,15 +111,6 @@ class Plotter:
         target[:, [2, 4]] = target[:, [2, 4]] * height
         return target.int().cpu()
 
-    def _apply_boxes(
-        self,
-        image: np.ndarray,
-        preds: Optional[torch.Tensor],
-        target: Optional[torch.Tensor],
-    ) -> None:
-        self._draw_target_boxes(image, target)
-        self._draw_preds_box(image, preds)
-
     def _draw_preds_box(self, image: np.ndarray, preds: Optional[torch.Tensor]) -> None:
         if preds is None:
             return
@@ -121,7 +127,11 @@ class Plotter:
             )
             cv2.putText(
                 image,
-                text="%.2f %s" % (box[1].item() / 100, self.labels[box[0].item()] if self.labels is not None else ""),
+                text="%.2f %s"
+                % (
+                    box[1].item() / 100,
+                    self.labels[box[0].item()] if self.labels is not None else "",
+                ),
                 org=(box[2].item(), box[3].item() - 4),
                 fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                 fontScale=0.4,
@@ -147,22 +157,26 @@ class Plotter:
                 lineType=cv2.LINE_AA,
             )
 
-    def _show_video(self, video: List[np.ndarray], interval: int) -> None:
+    def _show_video(
+        self, video: List[np.ndarray], interval: int, batch_idx: str = ""
+    ) -> None:
         while True:
             for img in video:
                 cv2.imshow("Res", img)
                 if cv2.waitKey(interval) == ord("q"):
-                    cv2.destroyWindow("Res")
+                    cv2.destroyWindow("Res " + batch_idx)
                     return
             if cv2.waitKey() == ord("q"):
-                cv2.destroyWindow("Res")
+                cv2.destroyWindow("Res " + batch_idx)
                 return
 
-    def _save_video(self, video: List[np.ndarray], interval: int) -> None:
-        h, w, _ = video.shape
+    def _save_video(
+        self, video: List[np.ndarray], interval: int, batch_idx: str = ""
+    ) -> None:
+        h, w, _ = video[0].shape
         os.makedirs(self.file_path, exist_ok=True)
         out = cv2.VideoWriter(
-            os.path.join(self.file_path, self.file_name + ".avi"),
+            os.path.join(self.file_path, self.file_name + batch_idx + ".avi"),
             cv2.VideoWriter_fourcc(*"XVID"),
             1000 / interval,
             (w, h),

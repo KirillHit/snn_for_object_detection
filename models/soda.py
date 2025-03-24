@@ -57,10 +57,10 @@ class SODa(L.LightningModule):
         :param state_storage: If true preserves preserves all intermediate states of spiking neurons.
             Necessary for analyzing the network operation. Defaults to False.
         :type state_storage: bool, optional
-        :param init_weights: If ``true`` apply weight initialization function.
-            Defaults to True.
+        :param init_weights: If true, apply the weight initialization function. Defaults to True.
         :type init_weights: bool, optional
-        :param plotter: #TODO
+        :param plotter: Class for displaying results. Needed for the prediction step.
+            Expects to receive a utils.Plotter object. Defaults to None.
         :type plotter: Plotter, optional
         """
         super().__init__()
@@ -87,9 +87,13 @@ class SODa(L.LightningModule):
         self.cls_loss = nn.CrossEntropyLoss(reduction="none")
         self.box_loss = nn.L1Loss(reduction="none")
         self.map_metric = torchmetrics.detection.MeanAveragePrecision(
-            box_format="xyxy", iou_type="bbox", backend="faster_coco_eval"
+            box_format="xyxy",
+            iou_type="bbox",
+            backend="faster_coco_eval",
+            compute_on_cpu=False,
+            sync_on_compute=False,
+            dist_sync_on_step=True,
         )
-        
 
     def backbone_cfgs(self) -> ListGen:
         """Generates and returns a network backbone configuration
@@ -144,7 +148,13 @@ class SODa(L.LightningModule):
     ) -> torch.Tensor:
         preds = self.forward(batch[0][self._rand_start_time() :])
         loss = self._loss(preds, batch[1])
-        self.log("train_loss", loss, prog_bar=True, batch_size=batch[0].shape[1])
+        self.log(
+            "train_loss",
+            loss,
+            prog_bar=True,
+            batch_size=batch[0].shape[1],
+            sync_dist=True,
+        )
         return loss
 
     def test_step(
@@ -152,25 +162,33 @@ class SODa(L.LightningModule):
     ) -> torch.Tensor:
         preds = self.forward(batch[0][self._rand_start_time() :])
         loss = self._loss(preds, batch[1])
-        self.log("test_loss", loss, batch_size=batch[0].shape[1])
+        self.log("test_loss", loss, batch_size=batch[0].shape[1], sync_dist=True)
         self._map_estimate(preds, batch[1])
         return loss
+
+    def on_test_epoch_end(self):
+        self._map_compute()
 
     def validation_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> torch.Tensor:
         preds = self.forward(batch[0][self._rand_start_time() :])
         loss = self._loss(preds, batch[1])
-        self.log("val_loss", loss, batch_size=batch[0].shape[1])
+        self.log("val_loss", loss, batch_size=batch[0].shape[1], sync_dist=True)
         self._map_estimate(preds, batch[1])
         return loss
 
-    def predict_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int):
+    def on_validation_epoch_end(self):
+        self._map_compute()
+
+    def on_predict_epoch_start(self):
         if self.plotter is None:
-            return
-        else:
-            self.plotter.labels = self.trainer.datamodule.get_labels()
+            raise RuntimeError(
+                "To display predictions, you must initialize the plotter for the model"
+            )
         self.plotter.labels = self.trainer.datamodule.get_labels()
+
+    def predict_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int):
         state = None
         video = []
         input = batch[0][:, 0].squeeze(1)
@@ -179,20 +197,31 @@ class SODa(L.LightningModule):
             preds = None if idx < self.hparams.time_window else preds
             video.append(self.plotter.apply(ts, preds, None))
         video.append(self.plotter.apply(ts, preds, batch[1][0]))
-        self.plotter(video, self.trainer.datamodule.hparams.time_step)
-
-    def on_test_epoch_end(self):
-        self._map_compute()
-
-    def on_validation_epoch_end(self):
-        self._map_compute()
+        self.plotter(video, self.trainer.datamodule.hparams.time_step, str(batch_idx))
 
     def predict(
         self, X: torch.Tensor, state: ListState | None
     ) -> Tuple[torch.Tensor, ListState]:
-        """
-        Shape X [c, h, w]
-        #TODO
+        """Prediction method for inference
+
+        .. code-block:: python
+            :caption: Example
+
+            state = None
+            for ts in cap:
+                preds, state = self.predict(ts, state)
+                # Does something with predictions
+
+        :param X: Input image from event camera. Expected shape [channel, height, width].
+        :type X: torch.Tensor
+        :param state: Previous state of the detector or None
+        :type state: ListState | None
+        :return: Returns a list of two elements:
+
+            1. **Predictions**: A tensor of size [number of predictions, 4], 
+                where each prediction contains a vector (class id, confidence, lux, luy, rdx, rdy).
+            2. **State**: New state of the detector
+        :rtype: Tuple[torch.Tensor, ListState]
         """
         preds, state = self._forward_impl(X.unsqueeze(0), state)
         anchors, cls, bbox = preds
@@ -253,7 +282,13 @@ class SODa(L.LightningModule):
 
     def _map_compute(self):
         result = self.map_metric.compute()
-        self.log_dict({k: result[k] for k in result.keys() if k in ["map", "map_50"]})
+        self.log_dict(
+            {
+                k: result[k]
+                for k in result.keys()
+                if k in ["map", "map_50", "mar_1", "mar_10", "mar_100"]
+            },
+        )
         self.map_metric.reset()
 
     def _map_estimate(

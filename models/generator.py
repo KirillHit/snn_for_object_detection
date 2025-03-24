@@ -40,7 +40,7 @@ class BlockGen(nn.Module):
     Lists can include blocks from other two-dimensional lists.
     They will be considered recursively.
 
-    .. code-block::
+    .. code-block:: python
         :caption: Simple configuration list example
 
         def vgg_block(out_channels: int, kernel: int = 3):
@@ -50,7 +50,7 @@ class BlockGen(nn.Module):
             *vgg_block(8), Pool("S"), *vgg_block(32), Pool("S"), *vgg_block(64), Pool("S")
         ]
 
-    .. code-block::
+    .. code-block:: python
         :caption: Example of a configuration list with residual links
 
         def conv(out_channels: int, kernel: int = 3, stride: int = 1):
@@ -467,7 +467,7 @@ class HeadGen(ModelGen):
 
     The configuration lists for this module look different.
 
-    .. code-block::
+    .. code-block:: python
         :caption: Configuration list example
 
         cfgs: ListGen = [

@@ -1,4 +1,0 @@
-ckpt_path: "nets/tiny_yolo_gen1.ckpt"
-trainer:
-  limit_val_batches: 100
-  enable_checkpointing: false

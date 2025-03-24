@@ -11,27 +11,23 @@ def cli_main():
         parser_kwargs={
             "fit": {
                 "default_config_files": [
-                    "config/base.yaml",
+                    "config/config.yaml",
                     "config/logger.yaml",
-                    "config/fit.yaml",
                 ]
             },
             "validate": {
                 "default_config_files": [
-                    "config/base.yaml",
-                    "config/test.yaml",
+                    "config/config.yaml",
                 ]
             },
             "test": {
                 "default_config_files": [
-                    "config/base.yaml",
-                    "config/test.yaml",
+                    "config/config.yaml",
                 ]
             },
             "predict": {
                 "default_config_files": [
-                    "config/base.yaml",
-                    "config/predict.yaml",
+                    "config/config.yaml",
                 ]
             },
         },

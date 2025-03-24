@@ -1,3 +1,0 @@
-ckpt_path: "nets/tiny_yolo_gen1.ckpt"
-data:
-  batch_size: 1
