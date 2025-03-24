@@ -1,0 +1,876 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" data-theme="dark">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>utils.datasets &#8212; SODa v0.4.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "dark";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=6d25dc78"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/utils/datasets';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="dark">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">SODa v0.4.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Содержание</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../pages/structure.html">Структура проекта</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pages/config.html">Параметры запуска</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pages/generator.html">Генерация моделей</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../api.html">API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/models.html">models</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/models.generator.html">models.generator</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/models.generator.BackboneGen.html">models.generator.BackboneGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/models.generator.BlockGen.html">models.generator.BlockGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/models.generator.Head.html">models.generator.Head</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/models.generator.HeadGen.html">models.generator.HeadGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/models.generator.ModelGen.html">models.generator.ModelGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/models.generator.NeckGen.html">models.generator.NeckGen</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/models.modules.html">models.modules</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/models.modules.common.html">models.modules.common</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/models.modules.conv_lstm.html">models.modules.conv_lstm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/models.modules.layer_gen.html">models.modules.layer_gen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/models.modules.sli.html">models.modules.sli</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/models.modules.synapse.html">models.modules.synapse</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/models.soda.html">models.soda</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/models.soda.SODa.html">models.soda.SODa</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/models.tiny_yolo.html">models.tiny_yolo</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/models.tiny_yolo.TinyYolo.html">models.tiny_yolo.TinyYolo</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/utils.html">utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/utils.anchors.html">utils.anchors</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/utils.anchors.AnchorGenerator.html">utils.anchors.AnchorGenerator</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/utils.box.html">utils.box</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/utils.box.box_center_to_corner.html">utils.box.box_center_to_corner</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/utils.box.box_corner_to_center.html">utils.box.box_corner_to_center</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/utils.box.box_iou.html">utils.box.box_iou</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/utils.box.multibox_detection.html">utils.box.multibox_detection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/utils.box.nms.html">utils.box.nms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/utils.box.offset_boxes.html">utils.box.offset_boxes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/utils.box.offset_inverse.html">utils.box.offset_inverse</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/utils.datasets.html">utils.datasets</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/utils.datasets.MTPropheseeDataset.html">utils.datasets.MTPropheseeDataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/utils.datasets.PropheseeDataModule.html">utils.datasets.PropheseeDataModule</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/utils.datasets.PropheseeDatasetBase.html">utils.datasets.PropheseeDatasetBase</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/utils.datasets.STPropheseeDataset.html">utils.datasets.STPropheseeDataset</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/utils.plotter.html">utils.plotter</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/utils.plotter.Plotter.html">utils.plotter.Plotter</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/utils.roi.html">utils.roi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/utils.roi.RoI.html">utils.roi.RoI</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/KirillHit/snn_for_object_detection" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for utils.datasets</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Tool for downloading gen1 and 1mpx datasets&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">IterableDataset</span><span class="p">,</span> <span class="n">get_worker_info</span><span class="p">,</span> <span class="n">DataLoader</span>
+<span class="kn">from</span> <span class="nn">prophesee_toolbox.src.io.psee_loader</span> <span class="kn">import</span> <span class="n">PSEELoader</span>
+<span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">shuffle</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">torch.nn.utils.rnn</span> <span class="kn">import</span> <span class="n">pad_sequence</span>
+<span class="kn">import</span> <span class="nn">lightning</span> <span class="k">as</span> <span class="nn">L</span>
+
+
+<div class="viewcode-block" id="PropheseeDataModule">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.PropheseeDataModule.html#utils.datasets.PropheseeDataModule">[docs]</a>
+<span class="k">class</span> <span class="nc">PropheseeDataModule</span><span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">LightningDataModule</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Prophesee gen1 and 1mpx datasets&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_dir</span><span class="o">=</span><span class="s2">&quot;./data&quot;</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;gen1&quot;</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">num_load_file</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">num_steps</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+        <span class="n">time_step</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+        <span class="n">time_shift</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+        <span class="n">one_label</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param data_dir: The directory where datasets are stored. Defaults to &quot;./data&quot;.</span>
+<span class="sd">        :type data_dir: str, optional</span>
+<span class="sd">        :param dataset: The name of the dataset. Supported ``gen1`` and ``1mpx``.</span>
+<span class="sd">        :type dataset: str, optional</span>
+<span class="sd">        :param batch_size: Number of elements in a batch. Defaults to 4.</span>
+<span class="sd">        :type batch_size: int, optional</span>
+<span class="sd">        :param num_workers: A positive integer will turn on multi-process data loading with the</span>
+<span class="sd">            specified number of loader worker processes. Defaults to 4.</span>
+<span class="sd">        :type num_workers: int, optional</span>
+<span class="sd">        :param num_load_file: Number of concurrently open files in each thread. Defaults to 8.</span>
+<span class="sd">        :type num_load_file: int, optional</span>
+<span class="sd">        :param num_steps: Number of frames. Defaults to 16.</span>
+<span class="sd">        :type num_steps: int, optional</span>
+<span class="sd">        :param time_step: Time between frames. Defaults to 16.</span>
+<span class="sd">        :type time_step: int, optional</span>
+<span class="sd">        :param time_shift: The number of time steps that labels are moved forward relative to their</span>
+<span class="sd">            frame. Defaults to 8.</span>
+<span class="sd">        :type time_shift: int, optional</span>
+<span class="sd">        :param one_label: If true labeling is provided for the last time step only. Intended for training. Defaults to True.</span>
+<span class="sd">        :type one_label: bool, optional</span>
+<span class="sd">        :raises ValueError: Invalid dataset name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_hyperparameters</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;gen1&quot;</span><span class="p">,</span> <span class="s2">&quot;1mpx&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;The dataset parameter cannot be &quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">dataset</span><span class="si">}</span><span class="s1">&quot;!&#39;</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="PropheseeDataModule.get_labels">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.PropheseeDataModule.html#utils.datasets.PropheseeDataModule.get_labels">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_labels</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a list of class names&quot;&quot;&quot;</span>
+        <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">dataset</span><span class="p">:</span>
+            <span class="k">case</span> <span class="s2">&quot;gen1&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;car&quot;</span><span class="p">,</span> <span class="s2">&quot;person&quot;</span><span class="p">]</span>
+            <span class="k">case</span> <span class="s2">&quot;1mpx&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">[</span>
+                    <span class="s2">&quot;pedestrians&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;two wheelers&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;cars&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;trucks&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;buses&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;signs&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;traffic lights&quot;</span><span class="p">,</span>
+                <span class="p">]</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;The dataset parameter cannot be &quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">dataset</span><span class="si">}</span><span class="s1">&quot;!&#39;</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PropheseeDataModule.setup">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.PropheseeDataModule.html#utils.datasets.PropheseeDataModule.setup">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;fit&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">train_dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_dataset</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_files_list</span><span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">stage</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;fit&quot;</span><span class="p">,</span> <span class="s2">&quot;validate&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">val_dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_dataset</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_files_list</span><span class="p">(</span><span class="s2">&quot;val&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">stage</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="s2">&quot;predict&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">test_dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_dataset</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_files_list</span><span class="p">(</span><span class="s2">&quot;test&quot;</span><span class="p">))</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_get_files_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">split</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+        <span class="c1"># Data dir: ./data/&lt;gen1, 1mpx&gt;/&lt;test, train, val&gt;</span>
+        <span class="n">data_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">data_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">split</span><span class="p">)</span>
+        <span class="c1"># Get files name</span>
+        <span class="n">gt_files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">data_dir</span> <span class="o">+</span> <span class="s2">&quot;/*_bbox.npy&quot;</span><span class="p">)</span>
+        <span class="n">data_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_bbox.npy&quot;</span><span class="p">,</span> <span class="s2">&quot;_td.dat&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">gt_files</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">data_files</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">gt_files</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_files</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gt_files</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Directory &#39;</span><span class="si">{</span><span class="n">data_dir</span><span class="si">}</span><span class="s2">&#39; does not contain data or data is invalid! I&#39;m expecting: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;./data/</span><span class="si">{</span><span class="n">data_dir</span><span class="si">}</span><span class="s2">/*_bbox.npy (and *_td.dat). &quot;</span>
+                <span class="s2">&quot;The dataset can be downloaded from this link: &quot;</span>
+                <span class="s2">&quot;https://www.prophesee.ai/2020/01/24/prophesee-gen1-automotive-detection-dataset/ or &quot;</span>
+                <span class="s2">&quot;https://www.prophesee.ai/2020/11/24/automotive-megapixel-event-based-dataset/&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">gt_files</span><span class="p">,</span> <span class="n">data_files</span>
+
+<div class="viewcode-block" id="PropheseeDataModule.train_dataloader">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.PropheseeDataModule.html#utils.datasets.PropheseeDataModule.train_dataloader">[docs]</a>
+    <span class="k">def</span> <span class="nf">train_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_dataset</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PropheseeDataModule.val_dataloader">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.PropheseeDataModule.html#utils.datasets.PropheseeDataModule.val_dataloader">[docs]</a>
+    <span class="k">def</span> <span class="nf">val_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val_dataset</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PropheseeDataModule.test_dataloader">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.PropheseeDataModule.html#utils.datasets.PropheseeDataModule.test_dataloader">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_dataset</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PropheseeDataModule.predict_dataloader">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.PropheseeDataModule.html#utils.datasets.PropheseeDataModule.predict_dataloader">[docs]</a>
+    <span class="k">def</span> <span class="nf">predict_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_dataset</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_get_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">IterableDataset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataLoader</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">DataLoader</span><span class="p">(</span>
+            <span class="n">dataset</span><span class="p">,</span>
+            <span class="n">batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+            <span class="n">num_workers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">num_workers</span><span class="p">,</span>
+            <span class="n">collate_fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack_data</span><span class="p">,</span>
+            <span class="n">persistent_workers</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_stack_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Combines samples into a batch taking into account the time dimension&quot;&quot;&quot;</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">sample</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="n">pad_sequence</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">sample</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">],</span>
+            <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">padding_value</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">features</span><span class="p">,</span> <span class="n">targets</span>
+
+    <span class="k">def</span> <span class="nf">_create_dataset</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">gt_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">data_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IterableDataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initializes dataset</span>
+
+<span class="sd">        :param gt_files: List of files with targets</span>
+<span class="sd">        :type gt_files: List[str]</span>
+<span class="sd">        :param data_files: List of files with records</span>
+<span class="sd">        :type data_files: List[str]</span>
+<span class="sd">        :return: Ready dataset</span>
+<span class="sd">        :rtype: IterableDataset</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">one_label</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">STPropheseeDataset</span><span class="p">(</span>
+                <span class="n">num_steps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span>
+                <span class="n">time_shift</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">time_shift</span><span class="p">,</span>
+                <span class="n">gt_files</span><span class="o">=</span><span class="n">gt_files</span><span class="p">,</span>
+                <span class="n">data_files</span><span class="o">=</span><span class="n">data_files</span><span class="p">,</span>
+                <span class="n">time_step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">time_step</span><span class="p">,</span>
+                <span class="n">num_load_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">num_load_file</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">MTPropheseeDataset</span><span class="p">(</span>
+                <span class="n">num_steps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span>
+                <span class="n">gt_files</span><span class="o">=</span><span class="n">gt_files</span><span class="p">,</span>
+                <span class="n">data_files</span><span class="o">=</span><span class="n">data_files</span><span class="p">,</span>
+                <span class="n">time_step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">time_step</span><span class="p">,</span>
+                <span class="n">num_load_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">num_load_file</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="PropheseeDatasetBase">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.PropheseeDatasetBase.html#utils.datasets.PropheseeDatasetBase">[docs]</a>
+<span class="k">class</span> <span class="nc">PropheseeDatasetBase</span><span class="p">(</span><span class="n">IterableDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for Prophesee dataset iterators</span>
+
+<span class="sd">    .. warning::</span>
+
+<span class="sd">        This class can only be used as a base class for inheritance.</span>
+
+<span class="sd">    The samples_generator and parse_data method must be overridden in the child class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">gt_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">data_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">time_step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_load_file</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param gt_files: List of ground truth file paths.</span>
+<span class="sd">        :type gt_files: List[str]</span>
+<span class="sd">        :param data_files: List of data file paths.</span>
+<span class="sd">        :type data_files: List[str]</span>
+<span class="sd">        :param time_step: Time between frames.</span>
+<span class="sd">        :type time_step: int</span>
+<span class="sd">        :param num_load_file: Number of examples loaded at a time.</span>
+<span class="sd">        :type num_load_file: int</span>
+<span class="sd">        :param name: The name of the dataset to download. Supported ``gen1`` and ``1mpx``.</span>
+<span class="sd">        :type name: str</span>
+<span class="sd">        :raises ValueError: Invalid dataset name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">num_load_file</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;The number of loaded files must be more than zero&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">gt_files</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_files</span> <span class="o">=</span> <span class="n">gt_files</span><span class="p">,</span> <span class="n">data_files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_load_file</span> <span class="o">=</span> <span class="n">num_load_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_step</span> <span class="o">=</span> <span class="n">time_step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_step_us</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_step</span> <span class="o">*</span> <span class="mi">1000</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">record_time</span> <span class="o">=</span> <span class="mi">60000000</span>  <span class="c1"># us</span>
+
+        <span class="k">match</span> <span class="n">name</span><span class="p">:</span>
+            <span class="k">case</span> <span class="s2">&quot;gen1&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_width</span> <span class="o">=</span> <span class="mi">304</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_height</span> <span class="o">=</span> <span class="mi">240</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_time_step_name</span> <span class="o">=</span> <span class="s2">&quot;ts&quot;</span>
+            <span class="k">case</span> <span class="s2">&quot;1mpx&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_width</span> <span class="o">=</span> <span class="mi">1280</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_height</span> <span class="o">=</span> <span class="mi">720</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_time_step_name</span> <span class="o">=</span> <span class="s2">&quot;t&quot;</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;The dataset parameter cannot be &quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&quot;!&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PropheseeDatasetBase.__iter__">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.PropheseeDatasetBase.html#utils.datasets.PropheseeDatasetBase.__iter__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns an iterator for the dataset&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples_generator</span><span class="p">())</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_load_generator</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">PSEELoader</span><span class="p">]],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Loads num_load_file new samples from the list</span>
+
+<span class="sd">        This is necessary when working with a large number of files.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">worker_info</span> <span class="o">=</span> <span class="n">get_worker_info</span><span class="p">()</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="n">worker_info</span><span class="o">.</span><span class="n">id</span>
+        <span class="n">per_worker</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gt_files</span><span class="p">)</span> <span class="o">//</span> <span class="n">worker_info</span><span class="o">.</span><span class="n">num_workers</span>
+
+        <span class="c1"># Shuffle loaded files</span>
+        <span class="n">shuffle_file_idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">per_worker</span> <span class="o">*</span> <span class="nb">id</span><span class="p">,</span> <span class="n">per_worker</span> <span class="o">*</span> <span class="p">(</span><span class="nb">id</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
+        <span class="n">shuffle</span><span class="p">(</span><span class="n">shuffle_file_idx</span><span class="p">)</span>
+        <span class="n">idx_file_iter</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">cycle</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">shuffle_file_idx</span><span class="p">))</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">labels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">loaders</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">PSEELoader</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">count</span><span class="p">,</span> <span class="n">file_idx</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">idx_file_iter</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_load_file</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gt_files</span><span class="p">[</span><span class="n">file_idx</span><span class="p">]))</span>
+                <span class="n">loaders</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PSEELoader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_files</span><span class="p">[</span><span class="n">file_idx</span><span class="p">]))</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_labels_prepare</span><span class="p">(</span><span class="n">labels</span><span class="p">),</span> <span class="n">loaders</span>
+
+    <span class="k">def</span> <span class="nf">_labels_prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">labels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Converts labels from numpy.ndarray format to torch</span>
+
+<span class="sd">        :param labels: Labels in numpy format (&#39;ts [us]&#39;, &#39;x&#39;, &#39;y&#39;, &#39;w&#39;, &#39;h&#39;, &#39;class_id&#39;, &#39;confidence&#39;, &#39;track_id&#39;)</span>
+<span class="sd">        :type labels: List[np.ndarray]</span>
+<span class="sd">        :return: Labels in torch format (ts [ms], class id, xlu, ylu, xrd, yrd)</span>
+<span class="sd">        :rtype: List[torch.Tensor]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">gt_boxes</span><span class="p">[:][</span><span class="bp">self</span><span class="o">.</span><span class="n">_time_step_name</span><span class="p">]</span> <span class="o">//</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_step_us</span><span class="p">),</span>
+                        <span class="n">gt_boxes</span><span class="p">[:][</span><span class="s2">&quot;class_id&quot;</span><span class="p">],</span>
+                        <span class="n">gt_boxes</span><span class="p">[:][</span><span class="s2">&quot;x&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_width</span><span class="p">,</span>
+                        <span class="n">gt_boxes</span><span class="p">[:][</span><span class="s2">&quot;y&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_height</span><span class="p">,</span>
+                        <span class="p">(</span><span class="n">gt_boxes</span><span class="p">[:][</span><span class="s2">&quot;x&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">gt_boxes</span><span class="p">[:][</span><span class="s2">&quot;w&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_width</span><span class="p">,</span>
+                        <span class="p">(</span><span class="n">gt_boxes</span><span class="p">[:][</span><span class="s2">&quot;y&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">gt_boxes</span><span class="p">[:][</span><span class="s2">&quot;h&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_height</span><span class="p">,</span>
+                    <span class="p">],</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">t</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">gt_boxes</span> <span class="ow">in</span> <span class="n">labels</span>
+        <span class="p">]</span>
+
+<div class="viewcode-block" id="PropheseeDatasetBase.samples_generator">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.PropheseeDatasetBase.html#utils.datasets.PropheseeDatasetBase.samples_generator">[docs]</a>
+    <span class="k">def</span> <span class="nf">samples_generator</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Creates a new sample generator&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+<div class="viewcode-block" id="PropheseeDatasetBase.parse_data">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.PropheseeDatasetBase.html#utils.datasets.PropheseeDatasetBase.parse_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">parse_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">gt_boxes</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">events_loader</span><span class="p">:</span> <span class="n">PSEELoader</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transforms events into a video stream&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MTPropheseeDataset">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.MTPropheseeDataset.html#utils.datasets.MTPropheseeDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">MTPropheseeDataset</span><span class="p">(</span><span class="n">PropheseeDatasetBase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">=</span> <span class="n">num_steps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">duration_us</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_step_us</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">record_steps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">record_time</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration_us</span>
+
+<div class="viewcode-block" id="MTPropheseeDataset.samples_generator">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.MTPropheseeDataset.html#utils.datasets.MTPropheseeDataset.samples_generator">[docs]</a>
+    <span class="k">def</span> <span class="nf">samples_generator</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">gt_files</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Attempt to access unloaded part of dataset&quot;</span><span class="p">)</span>
+        <span class="n">file_loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_generator</span><span class="p">()</span>
+        <span class="n">shuffle_idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_load_file</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">record_steps</span><span class="p">))</span>
+        <span class="n">shuffle</span><span class="p">(</span><span class="n">shuffle_idx</span><span class="p">)</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">gt_boxes_list</span><span class="p">,</span> <span class="n">events_loaders</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">file_loader</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">shuffle_idx</span><span class="p">:</span>
+                <span class="n">data_idx</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_load_file</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_data</span><span class="p">(</span><span class="n">gt_boxes_list</span><span class="p">[</span><span class="n">data_idx</span><span class="p">],</span> <span class="n">events_loaders</span><span class="p">[</span><span class="n">data_idx</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="MTPropheseeDataset.parse_data">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.MTPropheseeDataset.html#utils.datasets.MTPropheseeDataset.parse_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">parse_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">gt_boxes</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">events_loader</span><span class="p">:</span> <span class="n">PSEELoader</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="c1">############ Features preparing ############</span>
+        <span class="c1"># Return features format (ts, c [0-negative, 1-positive], h, w)</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_height</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_width</span><span class="p">],</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Events format (&#39;t&#39; [us], &#39;x&#39;, &#39;y&#39;, &#39;p&#39; [1-positive/0-negative])</span>
+        <span class="k">if</span> <span class="n">events_loader</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
+            <span class="n">events_loader</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">events_loader</span><span class="o">.</span><span class="n">current_time</span> <span class="o">//</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_step_us</span><span class="p">)</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">start_time</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="n">events_loader</span><span class="o">.</span><span class="n">load_delta_t</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">duration_us</span><span class="p">)</span>
+        <span class="n">time_stamps</span> <span class="o">=</span> <span class="p">(</span><span class="n">events</span><span class="p">[:][</span><span class="s2">&quot;t&quot;</span><span class="p">]</span> <span class="o">//</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_step_us</span><span class="p">))</span> <span class="o">-</span> <span class="n">start_time</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">time_stamps</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">gt_boxes</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">features</span><span class="p">[</span>
+            <span class="n">time_stamps</span><span class="p">[:],</span>
+            <span class="n">events</span><span class="p">[:][</span><span class="s2">&quot;p&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">),</span>
+            <span class="n">events</span><span class="p">[:][</span><span class="s2">&quot;y&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">),</span>
+            <span class="n">events</span><span class="p">[:][</span><span class="s2">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">),</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1">############ Labels preparing ############</span>
+        <span class="c1"># Return labels format (ts, class id, xlu, ylu, xrd, yrd)</span>
+        <span class="c1"># Box update frequency 1-4 Hz</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">gt_boxes</span><span class="p">[(</span><span class="n">gt_boxes</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">gt_boxes</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">end_time</span><span class="p">)]</span>
+        <span class="n">labels</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-=</span> <span class="n">start_time</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="STPropheseeDataset">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.STPropheseeDataset.html#utils.datasets.STPropheseeDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">STPropheseeDataset</span><span class="p">(</span><span class="n">PropheseeDatasetBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Single-target Prophesee gen1 and 1mpx iterable datasets&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">time_shift</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_shift</span> <span class="o">=</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">time_shift</span>
+        <span class="c1"># Minimum average number of events in a sample to use it</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4000</span>
+        <span class="c1"># Minimum acceptable box size relative to frame area</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">box_size_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span>
+
+<div class="viewcode-block" id="STPropheseeDataset.samples_generator">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.STPropheseeDataset.html#utils.datasets.STPropheseeDataset.samples_generator">[docs]</a>
+    <span class="k">def</span> <span class="nf">samples_generator</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">gt_files</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Attempt to access unloaded part of dataset&quot;</span><span class="p">)</span>
+        <span class="n">file_loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_generator</span><span class="p">()</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">gt_boxes_list</span><span class="p">,</span> <span class="n">events_loaders</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">file_loader</span><span class="p">)</span>
+            <span class="n">shuffle_idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_load_file</span><span class="p">))</span>
+            <span class="k">while</span> <span class="n">shuffle_idx</span><span class="p">:</span>
+                <span class="n">new_shuffle_idx</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">shuffle_idx</span><span class="p">:</span>
+                    <span class="n">data</span><span class="p">,</span> <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_data</span><span class="p">(</span><span class="n">gt_boxes_list</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">events_loaders</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">res</span><span class="p">:</span>
+                        <span class="n">new_shuffle_idx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">data</span>
+                <span class="n">shuffle_idx</span> <span class="o">=</span> <span class="n">new_shuffle_idx</span>
+                <span class="n">shuffle</span><span class="p">(</span><span class="n">shuffle_idx</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="STPropheseeDataset.parse_data">
+<a class="viewcode-back" href="../../_autosummary/utils.datasets.STPropheseeDataset.html#utils.datasets.STPropheseeDataset.parse_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">parse_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">gt_boxes</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">events_loader</span><span class="p">:</span> <span class="n">PSEELoader</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span> <span class="nb">bool</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">events_loader</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">False</span>
+
+        <span class="c1">############ Labels preparing ############</span>
+        <span class="c1"># Return labels format (class id, xlu, ylu, xrd, yrd)</span>
+        <span class="c1"># Box update frequency 1-4 Hz</span>
+        <span class="n">start_time_us</span> <span class="o">=</span> <span class="n">events_loader</span><span class="o">.</span><span class="n">current_time</span>
+        <span class="n">start_step</span> <span class="o">=</span> <span class="n">start_time_us</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_step_us</span>
+        <span class="n">gt_boxes</span> <span class="o">=</span> <span class="n">gt_boxes</span><span class="p">[</span><span class="n">gt_boxes</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ge</span><span class="p">(</span><span class="n">start_step</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">gt_boxes</span><span class="o">.</span><span class="n">numel</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">False</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">gt_boxes</span><span class="p">[</span><span class="n">gt_boxes</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">gt_boxes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]</span>
+
+        <span class="c1"># Removing boxes that are smaller than a specified size</span>
+        <span class="n">lab_mask</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">labels</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">]</span> <span class="o">-</span> <span class="n">labels</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="n">labels</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">]</span> <span class="o">-</span> <span class="n">labels</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">])</span>
+        <span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_size_threshold</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="n">lab_mask</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">labels</span><span class="o">.</span><span class="n">numel</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">False</span>
+
+        <span class="c1">############ Features preparing ############</span>
+        <span class="c1"># Return features format (ts, c [0-negative, 1-positive], h, w)</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_height</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_width</span><span class="p">],</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Events format (&#39;t&#39; [us], &#39;x&#39;, &#39;y&#39;, &#39;p&#39; [1-positive/0-negative])</span>
+        <span class="n">first_label_time_us</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_step_us</span>
+        <span class="n">first_event_time_us</span> <span class="o">=</span> <span class="n">first_label_time_us</span> <span class="o">-</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_step_us</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_shift</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="n">events_loader</span><span class="o">.</span><span class="n">load_delta_t</span><span class="p">(</span>
+            <span class="n">first_label_time_us</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_step_us</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_shift</span> <span class="o">-</span> <span class="n">start_time_us</span>
+        <span class="p">)</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="n">events</span><span class="p">[</span><span class="n">events</span><span class="p">[:][</span><span class="s2">&quot;t&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">first_event_time_us</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">events</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">events_threshold</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">True</span>
+
+        <span class="n">time_stamps</span> <span class="o">=</span> <span class="p">(</span><span class="n">events</span><span class="p">[:][</span><span class="s2">&quot;t&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">first_event_time_us</span><span class="p">)</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_step_us</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">time_stamps</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">False</span>
+
+        <span class="c1"># For some reason in 1mpx there are events that go beyond the frame boundaries</span>
+        <span class="n">events</span><span class="p">[:][</span><span class="s2">&quot;x&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">events</span><span class="p">[:][</span><span class="s2">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">features</span><span class="p">[</span>
+            <span class="n">time_stamps</span><span class="p">[:],</span>
+            <span class="n">events</span><span class="p">[:][</span><span class="s2">&quot;p&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">),</span>
+            <span class="n">events</span><span class="p">[:][</span><span class="s2">&quot;y&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">),</span>
+            <span class="n">events</span><span class="p">[:][</span><span class="s2">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">),</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">labels</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]),</span> <span class="kc">True</span></div>
+</div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Kirill Hitushkin
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Kirill Hitushkin.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

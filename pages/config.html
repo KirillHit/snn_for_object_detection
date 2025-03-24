@@ -1,0 +1,580 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" data-theme="dark">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Параметры запуска &#8212; SODa v0.4.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "dark";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=a3416100" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=6d25dc78"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'pages/config';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Генерация моделей" href="generator.html" />
+    <link rel="prev" title="Структура проекта" href="structure.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="dark">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">SODa v0.4.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Содержание</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="structure.html">Структура проекта</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Параметры запуска</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generator.html">Генерация моделей</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api.html">API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/models.html">models</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/models.generator.html">models.generator</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.generator.BackboneGen.html">models.generator.BackboneGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.generator.BlockGen.html">models.generator.BlockGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.generator.Head.html">models.generator.Head</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.generator.HeadGen.html">models.generator.HeadGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.generator.ModelGen.html">models.generator.ModelGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.generator.NeckGen.html">models.generator.NeckGen</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/models.modules.html">models.modules</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.common.html">models.modules.common</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.conv_lstm.html">models.modules.conv_lstm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.layer_gen.html">models.modules.layer_gen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.sli.html">models.modules.sli</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.modules.synapse.html">models.modules.synapse</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/models.soda.html">models.soda</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.soda.SODa.html">models.soda.SODa</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/models.tiny_yolo.html">models.tiny_yolo</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/models.tiny_yolo.TinyYolo.html">models.tiny_yolo.TinyYolo</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/utils.html">utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/utils.anchors.html">utils.anchors</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.anchors.AnchorGenerator.html">utils.anchors.AnchorGenerator</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/utils.box.html">utils.box</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.box.box_center_to_corner.html">utils.box.box_center_to_corner</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.box.box_corner_to_center.html">utils.box.box_corner_to_center</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.box.box_iou.html">utils.box.box_iou</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.box.multibox_detection.html">utils.box.multibox_detection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.box.nms.html">utils.box.nms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.box.offset_boxes.html">utils.box.offset_boxes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.box.offset_inverse.html">utils.box.offset_inverse</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/utils.datasets.html">utils.datasets</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.datasets.MTPropheseeDataset.html">utils.datasets.MTPropheseeDataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.datasets.PropheseeDataModule.html">utils.datasets.PropheseeDataModule</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.datasets.PropheseeDatasetBase.html">utils.datasets.PropheseeDatasetBase</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.datasets.STPropheseeDataset.html">utils.datasets.STPropheseeDataset</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/utils.plotter.html">utils.plotter</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.plotter.Plotter.html">utils.plotter.Plotter</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/utils.roi.html">utils.roi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/utils.roi.RoI.html">utils.roi.RoI</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/KirillHit/snn_for_object_detection" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/pages/config.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Параметры запуска</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="id1">
+<h1>Параметры запуска<a class="headerlink" href="#id1" title="Link to this heading">#</a></h1>
+<p>Выбор параметров обучения осуществляется в файле <code class="docutils literal notranslate"><span class="pre">config\config.yaml</span></code>. Пример файла конфигурации:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ckpt_path</span><span class="p">:</span> <span class="s2">&quot;nets/tiny_yolo/tiny_yolo_gen1.ckpt&quot;</span>
+
+<span class="n">model</span><span class="p">:</span>
+  <span class="n">class_path</span><span class="p">:</span> <span class="n">models</span><span class="o">.</span><span class="n">TinyYolo</span>
+  <span class="n">init_args</span><span class="p">:</span>
+    <span class="n">num_classes</span><span class="p">:</span> <span class="mi">2</span>
+    <span class="n">loss_ratio</span><span class="p">:</span> <span class="mf">0.04</span>
+    <span class="n">time_window</span><span class="p">:</span> <span class="mi">16</span>
+    <span class="n">iou_threshold</span><span class="p">:</span> <span class="mf">0.4</span>
+    <span class="n">learning_rate</span><span class="p">:</span> <span class="mf">0.001</span>
+    <span class="n">state_storage</span><span class="p">:</span> <span class="n">false</span>
+    <span class="n">init_weights</span><span class="p">:</span> <span class="n">true</span>
+    <span class="n">plotter</span><span class="p">:</span>
+      <span class="n">class_path</span><span class="p">:</span> <span class="n">utils</span><span class="o">.</span><span class="n">Plotter</span>
+      <span class="n">init_args</span><span class="p">:</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="mf">0.8</span>
+        <span class="n">show_video</span><span class="p">:</span> <span class="n">true</span>
+        <span class="n">save_video</span><span class="p">:</span> <span class="n">true</span>
+        <span class="n">file_path</span><span class="p">:</span> <span class="n">log</span>
+        <span class="n">file_name</span><span class="p">:</span> <span class="n">out</span>
+
+<span class="n">data</span><span class="p">:</span>
+  <span class="n">data_dir</span><span class="p">:</span> <span class="o">./</span><span class="n">data</span>
+  <span class="n">dataset</span><span class="p">:</span> <span class="n">gen1</span>
+  <span class="n">batch_size</span><span class="p">:</span> <span class="mi">4</span>
+  <span class="n">num_workers</span><span class="p">:</span> <span class="mi">4</span>
+  <span class="n">num_load_file</span><span class="p">:</span> <span class="mi">8</span>
+  <span class="n">num_steps</span><span class="p">:</span> <span class="mi">42</span>
+  <span class="n">time_step</span><span class="p">:</span> <span class="mi">16</span>
+  <span class="n">time_shift</span><span class="p">:</span> <span class="mi">16</span>
+  <span class="n">one_label</span><span class="p">:</span> <span class="n">true</span>
+
+<span class="n">trainer</span><span class="p">:</span>
+  <span class="n">accelerator</span><span class="p">:</span> <span class="n">gpu</span>
+  <span class="n">strategy</span><span class="p">:</span> <span class="n">ddp</span>
+  <span class="n">devices</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span>
+  <span class="n">num_nodes</span><span class="p">:</span> <span class="mi">1</span>
+  <span class="n">precision</span><span class="p">:</span> <span class="n">null</span>
+  <span class="n">callbacks</span><span class="p">:</span>
+    <span class="o">-</span> <span class="n">class_path</span><span class="p">:</span> <span class="n">lightning</span><span class="o">.</span><span class="n">pytorch</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">early_stopping</span><span class="o">.</span><span class="n">EarlyStopping</span>
+      <span class="n">init_args</span><span class="p">:</span>
+        <span class="n">monitor</span><span class="p">:</span> <span class="nb">map</span>
+        <span class="n">mode</span><span class="p">:</span> <span class="nb">max</span>
+        <span class="n">patience</span><span class="p">:</span> <span class="mi">30</span>
+    <span class="o">-</span> <span class="n">class_path</span><span class="p">:</span> <span class="n">lightning</span><span class="o">.</span><span class="n">pytorch</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">ModelCheckpoint</span>
+      <span class="n">init_args</span><span class="p">:</span>
+        <span class="n">monitor</span><span class="p">:</span> <span class="nb">map</span>
+        <span class="n">save_top_k</span><span class="p">:</span> <span class="mi">4</span>
+        <span class="n">mode</span><span class="p">:</span> <span class="nb">max</span>
+    <span class="o">-</span> <span class="n">class_path</span><span class="p">:</span> <span class="n">lightning</span><span class="o">.</span><span class="n">pytorch</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">ModelSummary</span>
+      <span class="n">init_args</span><span class="p">:</span>
+        <span class="n">max_depth</span><span class="p">:</span> <span class="mi">1</span>
+  <span class="n">fast_dev_run</span><span class="p">:</span> <span class="n">false</span>
+  <span class="n">max_epochs</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span>
+  <span class="n">min_epochs</span><span class="p">:</span> <span class="mi">2500</span>
+  <span class="n">max_steps</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span>
+  <span class="n">min_steps</span><span class="p">:</span> <span class="n">null</span>
+  <span class="n">max_time</span><span class="p">:</span> <span class="n">null</span>
+  <span class="n">limit_train_batches</span><span class="p">:</span> <span class="mi">100</span>
+  <span class="n">limit_val_batches</span><span class="p">:</span> <span class="mi">100</span>
+  <span class="n">limit_test_batches</span><span class="p">:</span> <span class="mi">1000</span>
+  <span class="n">limit_predict_batches</span><span class="p">:</span> <span class="n">null</span>
+  <span class="n">overfit_batches</span><span class="p">:</span> <span class="mf">0.0</span>
+  <span class="n">check_val_every_n_epoch</span><span class="p">:</span> <span class="mi">20</span>
+  <span class="n">num_sanity_val_steps</span><span class="p">:</span> <span class="mi">0</span>
+  <span class="n">log_every_n_steps</span><span class="p">:</span> <span class="mi">20</span>
+  <span class="n">enable_checkpointing</span><span class="p">:</span> <span class="kc">True</span>
+  <span class="n">accumulate_grad_batches</span><span class="p">:</span> <span class="mi">1</span>
+  <span class="n">gradient_clip_algorithm</span><span class="p">:</span> <span class="n">null</span>
+  <span class="n">use_distributed_sampler</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">profiler</span><span class="p">:</span> <span class="n">null</span>
+  <span class="n">detect_anomaly</span><span class="p">:</span> <span class="n">false</span>
+  <span class="n">barebones</span><span class="p">:</span> <span class="n">false</span>
+  <span class="n">plugins</span><span class="p">:</span>
+  <span class="c1">#    class_path: lightning.pytorch.plugins.environments.SLURMEnvironment</span>
+  <span class="n">sync_batchnorm</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">reload_dataloaders_every_n_epochs</span><span class="p">:</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head" colspan="2"><p>Основные параметры</p></th>
+</tr>
+<tr class="row-even"><th class="head"><p>Название</p></th>
+<th class="head"><p>Описание</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Mode</span></code></p></td>
+<td><p>Выбор сценария обучения (1 - interactive, 2 - train, 3 - eval)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></p></td>
+<td><p>Выбор конфигурации сети (yolo)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LossRatio</span></code></p></td>
+<td><p>Весовой коэффициент для настройки влияния на ошибку ложных срабатываний.
+Используется для расчёта ошибки следующим образом <code class="docutils literal notranslate"><span class="pre">loss</span> <span class="pre">=</span> <span class="pre">gt_loss</span> <span class="pre">*</span> <span class="pre">loss_ratio</span> <span class="pre">+</span> <span class="pre">background_loss</span> <span class="pre">*</span> <span class="pre">(1</span> <span class="pre">-</span> <span class="pre">self.loss_ratio)</span> <span class="pre">+</span> <span class="pre">...</span></code>.
+Чем больше этот коэффициент, тем меньше влияние ложных срабатываний. В результате
+сеть делает больше предсказаний, что позволяет повысить активность последнего слоя.
+Рекомендуется начинать с малых значений и постепенно увеличивать его в ходе обучения.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></p></td>
+<td><p>Выбор датасета (gen1, 1mpx)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TimeStep</span></code></p></td>
+<td><p>Временной интервал между кадрами в миллисекундах</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BatchSize</span></code></p></td>
+<td><p>Размер пакета для обучения</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NumSteps</span></code></p></td>
+<td><p>Количество кадров в одном примере</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TimeWindow</span></code></p></td>
+<td><p>Максимальное количество кадров, на которое может уменьшиться последовательность.
+Это используется для создание обучающих примеров разной длинны.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="structure.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Структура проекта</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="generator.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Генерация моделей</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Kirill Hitushkin
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Kirill Hitushkin.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

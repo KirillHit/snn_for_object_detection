@@ -1,0 +1,995 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" data-theme="dark">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Index &#8212; SODa v0.4.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "dark";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=a3416100" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=6d25dc78"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'genindex';</script>
+    <link rel="index" title="Index" href="#" />
+    <link rel="search" title="Search" href="search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="dark">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">SODa v0.4.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Содержание</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="pages/structure.html">Структура проекта</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pages/config.html">Параметры запуска</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pages/generator.html">Генерация моделей</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="_autosummary/models.html">models</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/models.generator.html">models.generator</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/models.generator.BackboneGen.html">models.generator.BackboneGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/models.generator.BlockGen.html">models.generator.BlockGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/models.generator.Head.html">models.generator.Head</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/models.generator.HeadGen.html">models.generator.HeadGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/models.generator.ModelGen.html">models.generator.ModelGen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/models.generator.NeckGen.html">models.generator.NeckGen</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/models.modules.html">models.modules</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/models.modules.common.html">models.modules.common</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/models.modules.conv_lstm.html">models.modules.conv_lstm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/models.modules.layer_gen.html">models.modules.layer_gen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/models.modules.sli.html">models.modules.sli</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/models.modules.synapse.html">models.modules.synapse</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/models.soda.html">models.soda</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/models.soda.SODa.html">models.soda.SODa</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/models.tiny_yolo.html">models.tiny_yolo</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/models.tiny_yolo.TinyYolo.html">models.tiny_yolo.TinyYolo</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="_autosummary/utils.html">utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/utils.anchors.html">utils.anchors</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/utils.anchors.AnchorGenerator.html">utils.anchors.AnchorGenerator</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/utils.box.html">utils.box</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/utils.box.box_center_to_corner.html">utils.box.box_center_to_corner</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/utils.box.box_corner_to_center.html">utils.box.box_corner_to_center</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/utils.box.box_iou.html">utils.box.box_iou</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/utils.box.multibox_detection.html">utils.box.multibox_detection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/utils.box.nms.html">utils.box.nms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/utils.box.offset_boxes.html">utils.box.offset_boxes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/utils.box.offset_inverse.html">utils.box.offset_inverse</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/utils.datasets.html">utils.datasets</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/utils.datasets.MTPropheseeDataset.html">utils.datasets.MTPropheseeDataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/utils.datasets.PropheseeDataModule.html">utils.datasets.PropheseeDataModule</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/utils.datasets.PropheseeDatasetBase.html">utils.datasets.PropheseeDatasetBase</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/utils.datasets.STPropheseeDataset.html">utils.datasets.STPropheseeDataset</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/utils.plotter.html">utils.plotter</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/utils.plotter.Plotter.html">utils.plotter.Plotter</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/utils.roi.html">utils.roi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/utils.roi.RoI.html">utils.roi.RoI</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/KirillHit/snn_for_object_detection" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+
+<h1 id="index">Index</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#_"><strong>_</strong></a>
+ | <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
+ | <a href="#H"><strong>H</strong></a>
+ | <a href="#I"><strong>I</strong></a>
+ | <a href="#L"><strong>L</strong></a>
+ | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
+ | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
+ | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
+ | <a href="#V"><strong>V</strong></a>
+ 
+</div>
+<h2 id="_">_</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/utils.anchors.AnchorGenerator.html#utils.anchors.AnchorGenerator.__call__">__call__() (AnchorGenerator method)</a>
+
+      <ul>
+        <li><a href="_autosummary/utils.plotter.Plotter.html#utils.plotter.Plotter.__call__">(Plotter method)</a>
+</li>
+        <li><a href="_autosummary/utils.roi.RoI.html#utils.roi.RoI.__call__">(RoI method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/utils.datasets.PropheseeDatasetBase.html#utils.datasets.PropheseeDatasetBase.__iter__">__iter__() (PropheseeDatasetBase method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/utils.anchors.AnchorGenerator.html#utils.anchors.AnchorGenerator">AnchorGenerator (class in utils.anchors)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/utils.plotter.Plotter.html#utils.plotter.Plotter.apply">apply() (Plotter method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.soda.SODa.html#models.soda.SODa.backbone_cfgs">backbone_cfgs() (SODa method)</a>
+
+      <ul>
+        <li><a href="_autosummary/models.tiny_yolo.TinyYolo.html#models.tiny_yolo.TinyYolo.backbone_cfgs">(TinyYolo method)</a>
+</li>
+      </ul></li>
+      <li><a href="_autosummary/models.generator.BackboneGen.html#models.generator.BackboneGen">BackboneGen (class in models.generator)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.generator.BlockGen.html#models.generator.BlockGen">BlockGen (class in models.generator)</a>
+</li>
+      <li><a href="_autosummary/utils.box.box_center_to_corner.html#utils.box.box_center_to_corner">box_center_to_corner() (in module utils.box)</a>
+</li>
+      <li><a href="_autosummary/utils.box.box_corner_to_center.html#utils.box.box_corner_to_center">box_corner_to_center() (in module utils.box)</a>
+</li>
+      <li><a href="_autosummary/utils.box.box_iou.html#utils.box.box_iou">box_iou() (in module utils.box)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.soda.SODa.html#models.soda.SODa.configure_optimizers">configure_optimizers() (SODa method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.modules.layer_gen.Conv.html#models.modules.layer_gen.Conv">Conv (class in models.modules.layer_gen)</a>
+</li>
+      <li><a href="_autosummary/models.modules.conv_lstm.ConvLSTM.html#models.modules.conv_lstm.ConvLSTM">ConvLSTM (class in models.modules.conv_lstm)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.modules.layer_gen.Dense.html#models.modules.layer_gen.Dense">Dense (class in models.modules.layer_gen)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.generator.BackboneGen.html#models.generator.BackboneGen.forward">forward() (BackboneGen method)</a>
+
+      <ul>
+        <li><a href="_autosummary/models.generator.BlockGen.html#models.generator.BlockGen.forward">(BlockGen method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.conv_lstm.ConvLSTM.html#models.modules.conv_lstm.ConvLSTM.forward">(ConvLSTM method)</a>
+</li>
+        <li><a href="_autosummary/models.generator.Head.html#models.generator.Head.forward">(Head method)</a>
+</li>
+        <li><a href="_autosummary/models.generator.HeadGen.html#models.generator.HeadGen.forward">(HeadGen method)</a>
+</li>
+        <li><a href="_autosummary/models.generator.ModelGen.html#models.generator.ModelGen.forward">(ModelGen method)</a>
+</li>
+        <li><a href="_autosummary/models.generator.NeckGen.html#models.generator.NeckGen.forward">(NeckGen method)</a>
+</li>
+        <li><a href="_autosummary/models.soda.SODa.html#models.soda.SODa.forward">(SODa method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.common.StateStorage.html#models.modules.common.StateStorage.forward">(StateStorage method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.common.Storage.html#models.modules.common.Storage.forward">(Storage method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.common.SumPool2d.html#models.modules.common.SumPool2d.forward">(SumPool2d method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.modules.layer_gen.Conv.html#models.modules.layer_gen.Conv.get">get() (Conv method)</a>
+
+      <ul>
+        <li><a href="_autosummary/models.modules.layer_gen.LayerGen.html#models.modules.layer_gen.LayerGen.get">(LayerGen method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.layer_gen.LI.html#models.modules.layer_gen.LI.get">(LI method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.layer_gen.LIF.html#models.modules.layer_gen.LIF.get">(LIF method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.layer_gen.LSTM.html#models.modules.layer_gen.LSTM.get">(LSTM method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.layer_gen.Norm.html#models.modules.layer_gen.Norm.get">(Norm method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.layer_gen.Pass.html#models.modules.layer_gen.Pass.get">(Pass method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.layer_gen.Pool.html#models.modules.layer_gen.Pool.get">(Pool method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.layer_gen.ReLU.html#models.modules.layer_gen.ReLU.get">(ReLU method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.layer_gen.Return.html#models.modules.layer_gen.Return.get">(Return method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.layer_gen.SiLU.html#models.modules.layer_gen.SiLU.get">(SiLU method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.layer_gen.SLI.html#models.modules.layer_gen.SLI.get">(SLI method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.layer_gen.Synapse.html#models.modules.layer_gen.Synapse.get">(Synapse method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.layer_gen.Tanh.html#models.modules.layer_gen.Tanh.get">(Tanh method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.layer_gen.Up.html#models.modules.layer_gen.Up.get">(Up method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/utils.datasets.PropheseeDataModule.html#utils.datasets.PropheseeDataModule.get_labels">get_labels() (PropheseeDataModule method)</a>
+</li>
+      <li><a href="_autosummary/models.modules.common.StateStorage.html#models.modules.common.StateStorage.get_spikes">get_spikes() (StateStorage method)</a>
+</li>
+      <li><a href="_autosummary/models.modules.common.StateStorage.html#models.modules.common.StateStorage.get_state">get_state() (StateStorage method)</a>
+</li>
+      <li><a href="_autosummary/models.modules.common.Storage.html#models.modules.common.Storage.get_storage">get_storage() (Storage method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="H">H</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.generator.Head.html#models.generator.Head">Head (class in models.generator)</a>
+</li>
+      <li><a href="_autosummary/models.soda.SODa.html#models.soda.SODa.head_cfgs">head_cfgs() (SODa method)</a>
+
+      <ul>
+        <li><a href="_autosummary/models.tiny_yolo.TinyYolo.html#models.tiny_yolo.TinyYolo.head_cfgs">(TinyYolo method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.generator.HeadGen.html#models.generator.HeadGen">HeadGen (class in models.generator)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.modules.sli.SLIState.html#models.modules.sli.SLIState.i">i (SLIState attribute)</a>
+</li>
+      <li><a href="_autosummary/models.modules.sli.SLI.html#models.modules.sli.SLI.initial_state">initial_state() (SLI method)</a>
+
+      <ul>
+        <li><a href="_autosummary/models.modules.sli.SLICell.html#models.modules.sli.SLICell.initial_state">(SLICell method)</a>
+</li>
+        <li><a href="_autosummary/models.modules.synapse.SynapseCell.html#models.modules.synapse.SynapseCell.initial_state">(SynapseCell method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.modules.layer_gen.LayerGen.html#models.modules.layer_gen.LayerGen">LayerGen (class in models.modules.layer_gen)</a>
+</li>
+      <li><a href="_autosummary/models.modules.layer_gen.LI.html#models.modules.layer_gen.LI">LI (class in models.modules.layer_gen)</a>
+</li>
+      <li><a href="_autosummary/models.modules.layer_gen.LIF.html#models.modules.layer_gen.LIF">LIF (class in models.modules.layer_gen)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.generator.html#models.generator.ListGen">ListGen (in module models.generator)</a>
+</li>
+      <li><a href="_autosummary/models.generator.html#models.generator.ListState">ListState (in module models.generator)</a>
+</li>
+      <li><a href="_autosummary/models.modules.layer_gen.LSTM.html#models.modules.layer_gen.LSTM">LSTM (class in models.modules.layer_gen)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.generator.ModelGen.html#models.generator.ModelGen">ModelGen (class in models.generator)</a>
+</li>
+      <li>
+    models
+
+      <ul>
+        <li><a href="_autosummary/models.html#module-models">module</a>
+</li>
+      </ul></li>
+      <li>
+    models.generator
+
+      <ul>
+        <li><a href="_autosummary/models.generator.html#module-models.generator">module</a>
+</li>
+      </ul></li>
+      <li>
+    models.modules
+
+      <ul>
+        <li><a href="_autosummary/models.modules.html#module-models.modules">module</a>
+</li>
+      </ul></li>
+      <li>
+    models.modules.common
+
+      <ul>
+        <li><a href="_autosummary/models.modules.common.html#module-models.modules.common">module</a>
+</li>
+      </ul></li>
+      <li>
+    models.modules.conv_lstm
+
+      <ul>
+        <li><a href="_autosummary/models.modules.conv_lstm.html#module-models.modules.conv_lstm">module</a>
+</li>
+      </ul></li>
+      <li>
+    models.modules.layer_gen
+
+      <ul>
+        <li><a href="_autosummary/models.modules.layer_gen.html#module-models.modules.layer_gen">module</a>
+</li>
+      </ul></li>
+      <li>
+    models.modules.sli
+
+      <ul>
+        <li><a href="_autosummary/models.modules.sli.html#module-models.modules.sli">module</a>
+</li>
+      </ul></li>
+      <li>
+    models.modules.synapse
+
+      <ul>
+        <li><a href="_autosummary/models.modules.synapse.html#module-models.modules.synapse">module</a>
+</li>
+      </ul></li>
+      <li>
+    models.soda
+
+      <ul>
+        <li><a href="_autosummary/models.soda.html#module-models.soda">module</a>
+</li>
+      </ul></li>
+      <li>
+    models.tiny_yolo
+
+      <ul>
+        <li><a href="_autosummary/models.tiny_yolo.html#module-models.tiny_yolo">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    module
+
+      <ul>
+        <li><a href="_autosummary/models.html#module-models">models</a>
+</li>
+        <li><a href="_autosummary/models.generator.html#module-models.generator">models.generator</a>
+</li>
+        <li><a href="_autosummary/models.modules.html#module-models.modules">models.modules</a>
+</li>
+        <li><a href="_autosummary/models.modules.common.html#module-models.modules.common">models.modules.common</a>
+</li>
+        <li><a href="_autosummary/models.modules.conv_lstm.html#module-models.modules.conv_lstm">models.modules.conv_lstm</a>
+</li>
+        <li><a href="_autosummary/models.modules.layer_gen.html#module-models.modules.layer_gen">models.modules.layer_gen</a>
+</li>
+        <li><a href="_autosummary/models.modules.sli.html#module-models.modules.sli">models.modules.sli</a>
+</li>
+        <li><a href="_autosummary/models.modules.synapse.html#module-models.modules.synapse">models.modules.synapse</a>
+</li>
+        <li><a href="_autosummary/models.soda.html#module-models.soda">models.soda</a>
+</li>
+        <li><a href="_autosummary/models.tiny_yolo.html#module-models.tiny_yolo">models.tiny_yolo</a>
+</li>
+        <li><a href="_autosummary/utils.html#module-utils">utils</a>
+</li>
+        <li><a href="_autosummary/utils.anchors.html#module-utils.anchors">utils.anchors</a>
+</li>
+        <li><a href="_autosummary/utils.box.html#module-utils.box">utils.box</a>
+</li>
+        <li><a href="_autosummary/utils.datasets.html#module-utils.datasets">utils.datasets</a>
+</li>
+        <li><a href="_autosummary/utils.plotter.html#module-utils.plotter">utils.plotter</a>
+</li>
+        <li><a href="_autosummary/utils.roi.html#module-utils.roi">utils.roi</a>
+</li>
+      </ul></li>
+      <li><a href="_autosummary/utils.datasets.MTPropheseeDataset.html#utils.datasets.MTPropheseeDataset">MTPropheseeDataset (class in utils.datasets)</a>
+</li>
+      <li><a href="_autosummary/utils.box.multibox_detection.html#utils.box.multibox_detection">multibox_detection() (in module utils.box)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.soda.SODa.html#models.soda.SODa.neck_cfgs">neck_cfgs() (SODa method)</a>
+
+      <ul>
+        <li><a href="_autosummary/models.tiny_yolo.TinyYolo.html#models.tiny_yolo.TinyYolo.neck_cfgs">(TinyYolo method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.generator.NeckGen.html#models.generator.NeckGen">NeckGen (class in models.generator)</a>
+</li>
+      <li><a href="_autosummary/utils.box.nms.html#utils.box.nms">nms() (in module utils.box)</a>
+</li>
+      <li><a href="_autosummary/models.modules.layer_gen.Norm.html#models.modules.layer_gen.Norm">Norm (class in models.modules.layer_gen)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/utils.box.offset_boxes.html#utils.box.offset_boxes">offset_boxes() (in module utils.box)</a>
+</li>
+      <li><a href="_autosummary/utils.box.offset_inverse.html#utils.box.offset_inverse">offset_inverse() (in module utils.box)</a>
+</li>
+      <li><a href="_autosummary/models.soda.SODa.html#models.soda.SODa.on_predict_epoch_start">on_predict_epoch_start() (SODa method)</a>
+</li>
+      <li><a href="_autosummary/models.soda.SODa.html#models.soda.SODa.on_test_epoch_end">on_test_epoch_end() (SODa method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.soda.SODa.html#models.soda.SODa.on_validation_epoch_end">on_validation_epoch_end() (SODa method)</a>
+</li>
+      <li><a href="_autosummary/models.generator.BlockGen.html#models.generator.BlockGen.out_channels">out_channels (BlockGen attribute)</a>
+
+      <ul>
+        <li><a href="_autosummary/models.generator.ModelGen.html#models.generator.ModelGen.out_channels">(ModelGen attribute)</a>
+</li>
+        <li><a href="_autosummary/models.modules.layer_gen.Return.html#models.modules.layer_gen.Return.out_channels">(Return attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="_autosummary/models.generator.NeckGen.html#models.generator.NeckGen.out_shape">out_shape (NeckGen attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.modules.synapse.SynapseState.html#models.modules.synapse.SynapseState.p">p (SynapseState attribute)</a>
+</li>
+      <li><a href="_autosummary/utils.datasets.MTPropheseeDataset.html#utils.datasets.MTPropheseeDataset.parse_data">parse_data() (MTPropheseeDataset method)</a>
+
+      <ul>
+        <li><a href="_autosummary/utils.datasets.PropheseeDatasetBase.html#utils.datasets.PropheseeDatasetBase.parse_data">(PropheseeDatasetBase method)</a>
+</li>
+        <li><a href="_autosummary/utils.datasets.STPropheseeDataset.html#utils.datasets.STPropheseeDataset.parse_data">(STPropheseeDataset method)</a>
+</li>
+      </ul></li>
+      <li><a href="_autosummary/models.modules.layer_gen.Pass.html#models.modules.layer_gen.Pass">Pass (class in models.modules.layer_gen)</a>
+</li>
+      <li><a href="_autosummary/utils.plotter.Plotter.html#utils.plotter.Plotter">Plotter (class in utils.plotter)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.modules.layer_gen.Pool.html#models.modules.layer_gen.Pool">Pool (class in models.modules.layer_gen)</a>
+</li>
+      <li><a href="_autosummary/models.soda.SODa.html#models.soda.SODa.predict">predict() (SODa method)</a>
+</li>
+      <li><a href="_autosummary/utils.datasets.PropheseeDataModule.html#utils.datasets.PropheseeDataModule.predict_dataloader">predict_dataloader() (PropheseeDataModule method)</a>
+</li>
+      <li><a href="_autosummary/models.soda.SODa.html#models.soda.SODa.predict_step">predict_step() (SODa method)</a>
+</li>
+      <li><a href="_autosummary/utils.datasets.PropheseeDataModule.html#utils.datasets.PropheseeDataModule">PropheseeDataModule (class in utils.datasets)</a>
+</li>
+      <li><a href="_autosummary/utils.datasets.PropheseeDatasetBase.html#utils.datasets.PropheseeDatasetBase">PropheseeDatasetBase (class in utils.datasets)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.modules.layer_gen.ReLU.html#models.modules.layer_gen.ReLU">ReLU (class in models.modules.layer_gen)</a>
+</li>
+      <li><a href="_autosummary/models.modules.layer_gen.Residual.html#models.modules.layer_gen.Residual">Residual (class in models.modules.layer_gen)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.modules.layer_gen.Return.html#models.modules.layer_gen.Return">Return (class in models.modules.layer_gen)</a>
+</li>
+      <li><a href="_autosummary/utils.roi.RoI.html#utils.roi.RoI">RoI (class in utils.roi)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="S">S</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/utils.datasets.MTPropheseeDataset.html#utils.datasets.MTPropheseeDataset.samples_generator">samples_generator() (MTPropheseeDataset method)</a>
+
+      <ul>
+        <li><a href="_autosummary/utils.datasets.PropheseeDatasetBase.html#utils.datasets.PropheseeDatasetBase.samples_generator">(PropheseeDatasetBase method)</a>
+</li>
+        <li><a href="_autosummary/utils.datasets.STPropheseeDataset.html#utils.datasets.STPropheseeDataset.samples_generator">(STPropheseeDataset method)</a>
+</li>
+      </ul></li>
+      <li><a href="_autosummary/utils.datasets.PropheseeDataModule.html#utils.datasets.PropheseeDataModule.setup">setup() (PropheseeDataModule method)</a>
+</li>
+      <li><a href="_autosummary/models.modules.synapse.SynapseParameters.html#models.modules.synapse.SynapseParameters.sigma_inhibition">sigma_inhibition (SynapseParameters attribute)</a>
+</li>
+      <li><a href="_autosummary/models.modules.layer_gen.SiLU.html#models.modules.layer_gen.SiLU">SiLU (class in models.modules.layer_gen)</a>
+</li>
+      <li><a href="_autosummary/models.modules.layer_gen.SLI.html#models.modules.layer_gen.SLI">SLI (class in models.modules.layer_gen)</a>
+
+      <ul>
+        <li><a href="_autosummary/models.modules.sli.SLI.html#models.modules.sli.SLI">(class in models.modules.sli)</a>
+</li>
+      </ul></li>
+      <li><a href="_autosummary/models.modules.sli.sli_feed_forward_step.html#models.modules.sli.sli_feed_forward_step">sli_feed_forward_step() (in module models.modules.sli)</a>
+</li>
+      <li><a href="_autosummary/models.modules.sli.SLICell.html#models.modules.sli.SLICell">SLICell (class in models.modules.sli)</a>
+</li>
+      <li><a href="_autosummary/models.modules.sli.SLIParameters.html#models.modules.sli.SLIParameters">SLIParameters (class in models.modules.sli)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.modules.sli.SLIState.html#models.modules.sli.SLIState">SLIState (class in models.modules.sli)</a>
+</li>
+      <li><a href="_autosummary/models.soda.SODa.html#models.soda.SODa">SODa (class in models.soda)</a>
+</li>
+      <li><a href="_autosummary/models.modules.common.StateStorage.html#models.modules.common.StateStorage">StateStorage (class in models.modules.common)</a>
+</li>
+      <li><a href="_autosummary/models.modules.common.Storage.html#models.modules.common.Storage">Storage (class in models.modules.common)</a>
+</li>
+      <li><a href="_autosummary/utils.datasets.STPropheseeDataset.html#utils.datasets.STPropheseeDataset">STPropheseeDataset (class in utils.datasets)</a>
+</li>
+      <li><a href="_autosummary/models.modules.common.SumPool2d.html#models.modules.common.SumPool2d">SumPool2d (class in models.modules.common)</a>
+</li>
+      <li><a href="_autosummary/models.modules.layer_gen.Synapse.html#models.modules.layer_gen.Synapse">Synapse (class in models.modules.layer_gen)</a>
+</li>
+      <li><a href="_autosummary/models.modules.synapse.synapse_feed_forward_step.html#models.modules.synapse.synapse_feed_forward_step">synapse_feed_forward_step() (in module models.modules.synapse)</a>
+</li>
+      <li><a href="_autosummary/models.modules.synapse.SynapseCell.html#models.modules.synapse.SynapseCell">SynapseCell (class in models.modules.synapse)</a>
+</li>
+      <li><a href="_autosummary/models.modules.synapse.SynapseParameters.html#models.modules.synapse.SynapseParameters">SynapseParameters (class in models.modules.synapse)</a>
+</li>
+      <li><a href="_autosummary/models.modules.synapse.SynapseState.html#models.modules.synapse.SynapseState">SynapseState (class in models.modules.synapse)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.modules.layer_gen.Tanh.html#models.modules.layer_gen.Tanh">Tanh (class in models.modules.layer_gen)</a>
+</li>
+      <li><a href="_autosummary/models.modules.synapse.SynapseParameters.html#models.modules.synapse.SynapseParameters.tau_med_dissociation">tau_med_dissociation (SynapseParameters attribute)</a>
+</li>
+      <li><a href="_autosummary/models.modules.synapse.SynapseParameters.html#models.modules.synapse.SynapseParameters.tau_med_secretion">tau_med_secretion (SynapseParameters attribute)</a>
+</li>
+      <li><a href="_autosummary/models.modules.sli.SLIParameters.html#models.modules.sli.SLIParameters.tau_mem_inv">tau_mem_inv (SLIParameters attribute)</a>
+</li>
+      <li><a href="_autosummary/models.modules.sli.SLIParameters.html#models.modules.sli.SLIParameters.tau_syn_inv">tau_syn_inv (SLIParameters attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/utils.datasets.PropheseeDataModule.html#utils.datasets.PropheseeDataModule.test_dataloader">test_dataloader() (PropheseeDataModule method)</a>
+</li>
+      <li><a href="_autosummary/models.soda.SODa.html#models.soda.SODa.test_step">test_step() (SODa method)</a>
+</li>
+      <li><a href="_autosummary/models.tiny_yolo.TinyYolo.html#models.tiny_yolo.TinyYolo">TinyYolo (class in models.tiny_yolo)</a>
+</li>
+      <li><a href="_autosummary/utils.datasets.PropheseeDataModule.html#utils.datasets.PropheseeDataModule.train_dataloader">train_dataloader() (PropheseeDataModule method)</a>
+</li>
+      <li><a href="_autosummary/models.soda.SODa.html#models.soda.SODa.training_step">training_step() (SODa method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.modules.layer_gen.Up.html#models.modules.layer_gen.Up">Up (class in models.modules.layer_gen)</a>
+</li>
+      <li>
+    utils
+
+      <ul>
+        <li><a href="_autosummary/utils.html#module-utils">module</a>
+</li>
+      </ul></li>
+      <li>
+    utils.anchors
+
+      <ul>
+        <li><a href="_autosummary/utils.anchors.html#module-utils.anchors">module</a>
+</li>
+      </ul></li>
+      <li>
+    utils.box
+
+      <ul>
+        <li><a href="_autosummary/utils.box.html#module-utils.box">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    utils.datasets
+
+      <ul>
+        <li><a href="_autosummary/utils.datasets.html#module-utils.datasets">module</a>
+</li>
+      </ul></li>
+      <li>
+    utils.plotter
+
+      <ul>
+        <li><a href="_autosummary/utils.plotter.html#module-utils.plotter">module</a>
+</li>
+      </ul></li>
+      <li>
+    utils.roi
+
+      <ul>
+        <li><a href="_autosummary/utils.roi.html#module-utils.roi">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.modules.sli.SLIState.html#models.modules.sli.SLIState.v">v (SLIState attribute)</a>
+</li>
+      <li><a href="_autosummary/models.modules.sli.SLIParameters.html#models.modules.sli.SLIParameters.v_leak">v_leak (SLIParameters attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_autosummary/models.modules.sli.SLIParameters.html#models.modules.sli.SLIParameters.v_st">v_st (SLIParameters attribute)</a>
+</li>
+      <li><a href="_autosummary/utils.datasets.PropheseeDataModule.html#utils.datasets.PropheseeDataModule.val_dataloader">val_dataloader() (PropheseeDataModule method)</a>
+</li>
+      <li><a href="_autosummary/models.soda.SODa.html#models.soda.SODa.validation_step">validation_step() (SODa method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Kirill Hitushkin
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Kirill Hitushkin.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
