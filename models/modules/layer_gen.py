@@ -1,16 +1,19 @@
 """
-Custom modules and layer generators
+Layer Generators
 """
 
-import torch
 from torch import nn
-import torch.nn.functional as F
 from typing import Tuple, Optional
 import norse.torch as snn
+from norse.torch.module.snn import SNNCell
+from models.modules.synapse import SynapseCell
+from models.modules.conv_lstm import ConvLSTM
+from models.modules.sli import SLICell
+from models.modules.common import *
 
-__all__ = (
-    "SumPool2d",
-    "Storage",
+layers_list = (
+    "Residual",
+    "Dense",
     "LayerGen",
     "Pass",
     "Conv",
@@ -24,156 +27,47 @@ __all__ = (
     "Pool",
     "Up",
     "Return",
-    "Residual",
-    "Dense",
+    "Synapse",
+    "SLI",
 )
 
 
-#####################################################################
-#                          Custom modules                           #
-#####################################################################
+class Residual(list):
+    """Class inherited from :external:class:`list` type without changes
 
+    Needed to mark a network in the configuration as residual.
 
-class SumPool2d(nn.Module):
-    """Applies a 2D average pooling over an input signal composed of several input planes
+    .. code-block::
+        :caption: Example
 
-    Summarizes the values of the cells of a kernel. To do this, it calls
-    :external:func:`torch.nn.functional.avg_pool2d` and multiplies the result by the kernel area.
+        Residual(
+            [
+                [*conv(out_channels, kernel)],
+                [Conv(out_channels, 1)],
+            ]
+        )
     """
 
-    def __init__(self, kernel_size: int, stride: int = 1, padding: int = 0):
-        """
-        :param kernel_size: The size of the window.
-        :type kernel_size: int
-        :param stride: The stride of the window. Defaults to 1
-        :type stride: int, optional
-        :param padding: Implicit zero padding to be added on both sides. Defaults to 0
-        :type padding: int, optional
-        """
-        super().__init__()
-        self.kernel_size, self.stride, self.padding = kernel_size, stride, padding
+    pass
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
-        """Direct Module pass
 
-        :param X: Input tensor.
-        :type X: torch.Tensor
-        :return: Result of summing pool.
-        :rtype: torch.Tensor
-        """
-        return (
-            F.avg_pool2d(X, self.kernel_size, self.stride, self.padding)
-            * self.kernel_size
-            * self.kernel_size
+class Dense(list):
+    """Class inherited from :external:class:`list` type without changes
+
+    Needed to mark the network in the configuration as densely connected.
+
+    .. code-block::
+        :caption: Example
+
+        Dense(
+            [
+                [*conv(out_channels, kernel)],
+                [Conv(out_channels, 1)],
+            ]
         )
-
-
-class Storage(nn.Module):
-    """
-    Stores the forward pass values
-
-    It is intended for use in feature pyramids, where you need to get multiple
-    matrices from different places in the network.
     """
 
-    _storage: torch.Tensor
-
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
-        """Store the input tensor and returns it back
-
-        :param X: Input tensor.
-        :type X: torch.Tensor
-        :return: Input tensor.
-        :rtype: torch.Tensor
-        """
-        self._storage = X
-        return X
-
-    def get_storage(self) -> torch.Tensor:
-        """Returns the stored tensor
-
-        :return: Stored tensor.
-        :rtype: torch.Tensor
-        """
-        temp = self._storage
-        self._storage = None
-        return temp
-
-
-class ConvLSTM(nn.Module):
-    """Convolutional LSTM
-
-    For more details, see https://github.com/ndrplz/ConvLSTM_pytorch/tree/master.
-    """
-
-    def __init__(
-        self,
-        in_channels: int,
-        hidden_channels: int,
-        kernel_size: int = 1,
-        bias: bool = False,
-    ):
-        """
-        :param in_channels: Number of input channels.
-        :type in_channels: int
-        :param hidden_channels: Number of hidden channels.
-        :type hidden_channels: int
-        :param kernel_size: Size of the convolving kernel. Defaults to 1.
-        :type kernel_size: int, optional
-        :param bias: If ``True``, adds a learnable bias to the output. Defaults to False.
-        :type bias: bool, optional
-        """
-        super().__init__()
-        self.in_channels = in_channels
-        self.hidden_channels = hidden_channels
-
-        self.conv = nn.Conv2d(
-            in_channels=self.in_channels + self.hidden_channels,
-            out_channels=4 * self.hidden_channels,
-            kernel_size=kernel_size,
-            bias=bias,
-        )
-
-    def _init_hidden(self, target: torch.Tensor):
-        batch, _, h, w = target.shape
-        return (
-            torch.zeros((batch, self.hidden_channels, h, w), device=target.device),
-            torch.zeros((batch, self.hidden_channels, h, w), device=target.device),
-        )
-
-    def forward(
-        self, X: torch.Tensor, state: Optional[Tuple[torch.Tensor, torch.Tensor]] = None
-    ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-        """
-        :param X: Input tensor.  Shape [batch, channel, h, w].
-        :type X: torch.Tensor
-        :param state: Past state of the cell. Defaults to None.
-            It is a list of the form: (hidden state, cell state).
-        :type state: Optional[Tuple[torch.Tensor, torch.Tensor]], optional
-        :return: List of form: (next hidden state, (next hidden state, next cell state)).
-        :rtype: Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]
-        """
-        hidden_state, cell_state = self._init_hidden(X) if state is None else state
-        combined = torch.cat([X, hidden_state], dim=1)
-        combined = self.conv(combined)
-        input_gate, forget_gate, out_gate, in_node = torch.split(
-            combined, self.hidden_channels, dim=1
-        )
-        I = torch.sigmoid(input_gate)
-        F = torch.sigmoid(forget_gate)
-        O = torch.sigmoid(out_gate)
-        C = torch.tanh(in_node)
-
-        cell_next = F * cell_state + I * C
-        hidden_next = O * torch.tanh(cell_next)
-
-        # This form is needed for the model generator to work
-        return hidden_next, (hidden_next, cell_next)
-
-
-#####################################################################
-#                         Layer Generators                          #
-#####################################################################
+    pass
 
 
 class LayerGen:
@@ -326,8 +220,19 @@ class LIF(LayerGen):
     Uses :external:class:`norse.torch.module.lif.LIFCell` module.
     """
 
-    def get(self, in_channels: int) -> Tuple[nn.Module, int]:
-        return snn.LIFCell(), in_channels
+    def __init__(self, state_storage: bool = False):
+        """
+        :param state_storage: If the truth, wraps the module into the :class:`StateStorage` class,
+            in which the intermediate states of the neuron are preserved for analysis, defaults to False
+        :type state_storage: bool, optional
+        """
+        self.state_storage = state_storage
+
+    def get(self, in_channels: int) -> Tuple[SNNCell, int]:
+        module = (
+            snn.LIFCell() if not self.state_storage else StateStorage(snn.LIFCell())
+        )
+        return module, in_channels
 
 
 class LI(LayerGen):
@@ -336,8 +241,17 @@ class LI(LayerGen):
     Uses :external:class:`norse.torch.module.leaky_integrator.LICell` module.
     """
 
-    def get(self, in_channels: int) -> Tuple[snn.LICell, int]:
-        return snn.LICell(), in_channels
+    def __init__(self, state_storage: bool = False):
+        """
+        :param state_storage: If the truth, wraps the module into the :class:`StateStorage` class,
+            in which the intermediate states of the neuron are preserved for analysis, defaults to False
+        :type state_storage: bool, optional
+        """
+        self.state_storage = state_storage
+
+    def get(self, in_channels: int) -> Tuple[SNNCell, int]:
+        module = snn.LICell() if not self.state_storage else StateStorage(snn.LICell())
+        return module, in_channels
 
 
 class ReLU(LayerGen):
@@ -358,8 +272,8 @@ class SiLU(LayerGen):
 
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
         return nn.SiLU(), in_channels
-    
-    
+
+
 class Tanh(LayerGen):
     """SiLU layer generator
 
@@ -373,7 +287,7 @@ class Tanh(LayerGen):
 class LSTM(LayerGen):
     """LSTM layer generator
 
-    Uses :class:`ConvLSTM` module.
+    Uses :class:`ConvLSTM <models.module.conv_lstm.ConvLSTM>` module.
     """
 
     def __init__(self, hidden_size: Optional[int] = None):
@@ -404,39 +318,30 @@ class Return(LayerGen):
         return Storage(), in_channels
 
 
-class Residual(list):
-    """Class inherited from :external:class:`list` type without changes
+class Synapse(LayerGen):
+    """Generator of the layer of synapse
 
-    Needed to mark a network in the configuration as residual.
-
-    .. code-block::
-        :caption: Example
-
-        Residual(
-            [
-                [*conv(out_channels, kernel)],
-                [Conv(out_channels, 1)],
-            ]
-        )
+    Uses :class:`SynapseCell <models.module.synapse.SynapseCell>` module.
     """
 
-    pass
+    def get(self, in_channels: int) -> Tuple[snn.LICell, int]:
+        return SynapseCell(), in_channels
 
 
-class Dense(list):
-    """Class inherited from :external:class:`list` type without changes
+class SLI(LayerGen):
+    """Generator of the layer of Saturable LI neurons
 
-    Needed to mark the network in the configuration as densely connected.
-
-    .. code-block::
-        :caption: Example
-
-        Dense(
-            [
-                [*conv(out_channels, kernel)],
-                [Conv(out_channels, 1)],
-            ]
-        )
+    Uses :class:`SLICell <models.module.sli.SLICell>` module.
     """
 
-    pass
+    def __init__(self, state_storage: bool = False):
+        """
+        :param state_storage: If the truth, wraps the module into the :class:`StateStorage` class,
+            in which the intermediate states of the neuron are preserved for analysis, defaults to False
+        :type state_storage: bool, optional
+        """
+        self.state_storage = state_storage
+
+    def get(self, in_channels: int) -> Tuple[SNNCell, int]:
+        module = SLICell() if not self.state_storage else StateStorage(SLICell())
+        return module, in_channels

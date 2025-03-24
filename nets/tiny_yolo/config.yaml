@@ -1,0 +1,31 @@
+ckpt_path: "nets/tiny_yolo/tiny_yolo_gen1.ckpt"
+
+model:
+  class_path: models.TinyYolo
+  init_args:
+    num_classes: 2
+    loss_ratio: 0.04
+    time_window: 16
+    iou_threshold: 0.4
+    learning_rate: 0.001
+    state_storage: false
+    init_weights: true
+    plotter:
+      class_path: utils.Plotter
+      init_args:
+        threshold: 0.8
+        show_video: true
+        save_video: true
+        file_path: log
+        file_name: out
+
+data:
+  data_dir: ./data
+  dataset: gen1
+  batch_size: 4
+  num_workers: 4
+  num_load_file: 8
+  num_steps: 42
+  time_step: 16
+  time_shift: 16
+  one_label: true

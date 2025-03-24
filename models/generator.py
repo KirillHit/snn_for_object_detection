@@ -17,10 +17,10 @@ List for storing the state of the model
 
 import torch
 from torch import nn
-from typing import List, Tuple, Dict
+from typing import List, Tuple
 from norse.torch.utils.state import _is_module_stateful
 from utils.anchors import AnchorGenerator
-from .modules import *
+from models.modules import *
 
 
 #####################################################################
@@ -40,7 +40,7 @@ class BlockGen(nn.Module):
     Lists can include blocks from other two-dimensional lists.
     They will be considered recursively.
 
-    .. code-block::
+    .. code-block:: python
         :caption: Simple configuration list example
 
         def vgg_block(out_channels: int, kernel: int = 3):
@@ -50,7 +50,7 @@ class BlockGen(nn.Module):
             *vgg_block(8), Pool("S"), *vgg_block(32), Pool("S"), *vgg_block(64), Pool("S")
         ]
 
-    .. code-block::
+    .. code-block:: python
         :caption: Example of a configuration list with residual links
 
         def conv(out_channels: int, kernel: int = 3, stride: int = 1):
@@ -79,10 +79,6 @@ class BlockGen(nn.Module):
 
     """
 
-    out_channels: int = 0
-    """The number of channels that will be after applying this block to 
-    a tensor with ``in_channels`` channels."""
-
     def __init__(self, in_channels: int, cfgs: ListGen):
         """
         :param in_channels: Number of input channels.
@@ -93,6 +89,10 @@ class BlockGen(nn.Module):
         super().__init__()
         branch_list: List[nn.ModuleList] = []
         self.branch_state: List[List[bool]] = []
+
+        self.out_channels = 0
+        """The number of channels that will be after applying this block to 
+        a tensor with ``in_channels`` channels."""
 
         if isinstance(cfgs, Residual):
             self.out_type = self._residual_out
@@ -199,44 +199,7 @@ class BlockGen(nn.Module):
 
 
 #####################################################################
-#                        Backbone Generator                         #
-#####################################################################
-
-
-class BaseConfig:
-    """Base class for model configuration generators"""
-
-    def backbone_cfgs(self) -> ListGen:
-        """Generates and returns a network backbone configuration
-
-        :return: Backbone configuration.
-        :rtype: ListGen
-        """
-        raise NotImplementedError
-
-    def neck_cfgs(self) -> ListGen:
-        """Generates and returns a network neck configuration
-
-        :return: Neck configuration.
-        :rtype: ListGen
-        """
-        raise NotImplementedError
-
-    def head_cfgs(self, box_out: int, cls_out: int) -> ListGen:
-        """Generates and returns a network head configuration
-
-        :param box_out: Number of output channels for box predictions.
-        :type box_out: int
-        :param cls_out: Number of output channels for class predictions.
-        :type cls_out: int
-        :return: Head configuration.
-        :rtype: ListGen
-        """
-        raise NotImplementedError
-
-
-#####################################################################
-#                        Backbone Generator                         #
+#                         Model Generator                           #
 #####################################################################
 
 
@@ -254,16 +217,9 @@ class ModelGen(nn.Module):
         This class can only be used as a base class for inheritance.
     """
 
-    out_channels: int = 0
-    """The number of channels that will be after applying this block to 
-    a tensor with ``in_channels`` channels."""
-
-    default_cfgs: Dict[str, ListGen] = {}
-    """List of configurations provided by default."""
-
     def __init__(
         self,
-        cfg: BaseConfig,
+        cfg,
         in_channels: int = 2,
         init_weights: bool = True,
     ) -> None:
@@ -277,6 +233,10 @@ class ModelGen(nn.Module):
         :type init_weights: bool, optional
         """
         super().__init__()
+
+        self.out_channels = 0
+        """The number of channels that will be after applying this block to 
+        a tensor with ``in_channels`` channels."""
 
         self.net_cfg = self._load_cfg(cfg)
 
@@ -299,10 +259,10 @@ class ModelGen(nn.Module):
         self.net = BlockGen(in_channels, self.net_cfg)
         self.out_channels = self.net.out_channels
 
-    def _load_cfg(self, cfg: BaseConfig) -> ListGen:
+    def _load_cfg(self, cfg) -> ListGen:
         raise NotImplementedError
 
-    def forward_impl(self, X: torch.Tensor, state: ListState | None = None):
+    def forward(self, X: torch.Tensor, state: ListState | None = None):
         """State-based network pass
 
         :param X: Input tensor. Shape is Shape [batch, channel, h, w].
@@ -314,16 +274,6 @@ class ModelGen(nn.Module):
         """
         raise NotImplementedError
 
-    def forward(self, X: torch.Tensor):
-        """Network pass for data containing time resolution
-
-        :param X: Input tensor. Shape is Shape [ts, batch, channel, h, w].
-        :type X: torch.Tensor
-        :return: The resulting tensor and the list of new states.
-        :rtype: torch.Tensor,
-        """
-        raise NotImplementedError
-
 
 #####################################################################
 #                        Backbone Generator                         #
@@ -331,26 +281,18 @@ class ModelGen(nn.Module):
 
 
 class BackboneGen(ModelGen):
-    """Model base generator
+    """Model backbone generator
 
     Returns the tensor from the last layer of the network.
     """
 
-    def _load_cfg(self, cfg: BaseConfig) -> ListGen:
-        return cfg.backbone_cfgs()
+    def _load_cfg(self, cfg) -> ListGen:
+        return cfg()
 
-    def forward_impl(
+    def forward(
         self, X: torch.Tensor, state: ListState | None
     ) -> Tuple[torch.Tensor, ListState]:
         return self.net(X, state)
-
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
-        out = []
-        state = None
-        for time_step_x in X:
-            Y, state = self.forward_impl(time_step_x, state)
-            out.append(Y)
-        return torch.stack(out)
 
 
 #####################################################################
@@ -365,20 +307,19 @@ class NeckGen(ModelGen):
     :class:`models.modules.Return` layers.
     """
 
-    out_shape: List[int]
-    """Stores the format of the output data 
-    
-    - The number of elements is equal to the number of tensors in the output list.
-    - The numeric value is equal to the number of channels of the corresponding tensor.
-    
-    This data is required to initialize :class:`models.head.Head`.
-    """
-
     def __init__(
         self, cfg: str | ListGen, in_channels: int = 2, init_weights: bool = False
     ):
         super().__init__(cfg, in_channels, init_weights)
+
         self.out_shape = self._search_out(self.net_cfg)
+        """Stores the format of the output data 
+        
+        - The number of elements is equal to the number of tensors in the output list.
+        - The numeric value is equal to the number of channels of the corresponding tensor.
+        
+        This data is required to initialize :class:`models.head.Head`.
+        """
 
     def _search_out(self, cfg: str | ListGen) -> List[int]:
         """Finds the indices of the layers from which it is necessary to obtain tensors
@@ -396,10 +337,10 @@ class NeckGen(ModelGen):
                 out += self._search_out(module)
         return out
 
-    def _load_cfg(self, cfg: BaseConfig) -> ListGen:
-        return cfg.neck_cfgs()
+    def _load_cfg(self, cfg) -> ListGen:
+        return cfg()
 
-    def forward_impl(
+    def forward(
         self, X: List[torch.Tensor], state: ListState | None
     ) -> Tuple[torch.Tensor, ListState]:
         out = []
@@ -408,18 +349,6 @@ class NeckGen(ModelGen):
             if isinstance(module, Storage):
                 out.append(module.get_storage())
         return out, state
-
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
-        storage: List[List[torch.Tensor]] = [[] for _ in self.out_shape]
-        state = None
-        for time_step_x in X:
-            Y, state = self.forward_impl(time_step_x, state)
-            for idx, res in enumerate(Y):
-                storage[idx].append(res)
-        out: List[torch.Tensor] = []
-        for ret_layer in storage:
-            out.append(torch.stack(ret_layer))
-        return out
 
 
 #####################################################################
@@ -484,45 +413,48 @@ class Head(nn.Module):
             )
 
     def forward(
-        self, X: List[torch.Tensor]
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        self, X: List[torch.Tensor], state: ListState | None
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, ListState]:
         """Direct network pass
 
-        :param X: Feature map list. One map shape [ts, batch, channel, h, w].
+        :param X: Feature map list. One map shape [batch, channel, h, w].
         :type X: List[torch.Tensor]
+        :param state: List of block layer states.
+        :type state: ListState | None
         :return: Predictions made by a neural network.
             Contains three tensors:
 
             1. anchors: Shape [anchor, 4]
-            2. cls_preds: Shape [ts, batch, anchor, num_classes + 1]
-            3. bbox_preds: Shape [ts, batch, anchor, 4]
-        :rtype: tuple[torch.Tensor, torch.Tensor, torch.Tensor]
+            2. cls_preds: Shape [batch, anchor, num_classes + 1]
+            3. bbox_preds: Shape [batch, anchor, 4]
+            4. state: New state for head
+        :rtype: tuple[torch.Tensor, torch.Tensor, torch.Tensor, ListState]
         """
-
+        state = [None] * len(X) if state is None else state
         anchors, cls_preds, bbox_preds = [], [], []
 
         for idx, map in enumerate(X):
             anchors.append(getattr(self, f"anchor_gen_{idx}")(map))
-            boxes, classes = getattr(self, f"model_{idx}")(map)
+            boxes, classes, state[idx] = getattr(self, f"model_{idx}")(map, state[idx])
             bbox_preds.append(boxes)
             cls_preds.append(classes)
 
-        anchors = torch.cat(anchors, dim=0)
+        anchors = torch.cat(anchors)
         cls_preds = self._concat_preds(cls_preds)
         cls_preds = cls_preds.reshape(
-            cls_preds.shape[0], cls_preds.shape[1], -1, self.num_classes + 1
+            cls_preds.shape[0], -1, self.num_classes + 1
         )
         bbox_preds = self._concat_preds(bbox_preds)
-        bbox_preds = bbox_preds.reshape(bbox_preds.shape[0], bbox_preds.shape[1], -1, 4)
-        return anchors, cls_preds, bbox_preds
+        bbox_preds = bbox_preds.reshape(bbox_preds.shape[0], -1, 4)
+        return anchors, cls_preds, bbox_preds, state
 
     def _flatten_pred(self, pred: torch.Tensor) -> torch.Tensor:
         """Transforms the tensor so that each pixel retains channels values and smooths each batch"""
-        return torch.flatten(torch.permute(pred, (0, 1, 3, 4, 2)), start_dim=2)
+        return torch.flatten(torch.permute(pred, (0, 2, 3, 1)), start_dim=1)
 
     def _concat_preds(self, preds: list[torch.Tensor]) -> torch.Tensor:
         """Concatenating Predictions for Multiple Scales"""
-        return torch.cat([self._flatten_pred(p) for p in preds], dim=2)
+        return torch.cat([self._flatten_pred(p) for p in preds], dim=1)
 
 
 #####################################################################
@@ -535,7 +467,7 @@ class HeadGen(ModelGen):
 
     The configuration lists for this module look different.
 
-    .. code-block::
+    .. code-block:: python
         :caption: Configuration list example
 
         cfgs: ListGen = [
@@ -592,24 +524,15 @@ class HeadGen(ModelGen):
         self.box_net = BlockGen(self.base_net.out_channels, [self.net_cfg[1]])
         self.cls_net = BlockGen(self.base_net.out_channels, [self.net_cfg[2]])
 
-    def _load_cfg(self, cfg: BaseConfig) -> ListGen:
-        return cfg.head_cfgs(self.box_out, self.cls_out)
+    def _load_cfg(self, cfg) -> ListGen:
+        return cfg(self.box_out, self.cls_out)
 
-    def forward_impl(
+    def forward(
         self, X: torch.Tensor, state: ListState | None
-    ) -> Tuple[torch.Tensor, ListState]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, ListState]:
         state = [None] * 3 if state is None else state
         Y, state[0] = self.base_net(X, state[0])
         box, state[1] = self.box_net(Y, state[1])
         cls, state[2] = self.cls_net(Y, state[2])
 
         return box, cls, state
-
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
-        boxes, clses = [], []
-        state = None
-        for time_step_x in X:
-            box, cls, state = self.forward_impl(time_step_x, state)
-            boxes.append(box)
-            clses.append(cls)
-        return torch.stack(boxes), torch.stack(clses)

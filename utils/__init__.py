@@ -2,15 +2,10 @@
 Utilities
 """
 
-from .datasets import MTProphesee, STProphesee
-from .progress_board import ProgressBoard
+from .datasets import PropheseeDataModule
 from .plotter import Plotter
-from .evaluate import SODAeval
 
 __all__ = (
-    "ProgressBoard",
+    "PropheseeDataModule",
     "Plotter",
-    "MTProphesee",
-    "STProphesee",
-    "SODAeval",
 )

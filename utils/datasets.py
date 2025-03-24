@@ -4,61 +4,68 @@ import glob
 import os
 import numpy as np
 import torch
-from torch.utils.data import IterableDataset, get_worker_info
-from engine.data import DataModule
+from torch.utils.data import IterableDataset, get_worker_info, DataLoader
 from prophesee_toolbox.src.io.psee_loader import PSEELoader
 from random import shuffle
 from typing import Generator, Iterator, List, Optional, Tuple
-from tqdm import tqdm
 import itertools
+from torch.nn.utils.rnn import pad_sequence
+import lightning as L
 
 
-class PropheseeDataModule(DataModule):
-    """Base class for Prophesee dataset data modules
-
-    .. warning::
-
-        This class can only be used as a base class for inheritance.
-
-    The create_dataset method must be overridden in the child class.
-    """
+class PropheseeDataModule(L.LightningDataModule):
+    """Prophesee gen1 and 1mpx datasets"""
 
     def __init__(
         self,
-        name: str,
-        root="./data",
+        data_dir="./data",
+        dataset="gen1",
         batch_size=4,
-        num_steps=128,
-        time_step=16,
-        num_load_file=8,
         num_workers=4,
+        num_load_file=8,
+        num_steps=42,
+        time_step=16,
+        time_shift=16,
+        one_label=True,
     ):
         """
-        :param name: The name of the dataset to download. Supported ``gen1`` and ``1mpx``.
-        :type name: str
-        :param root: The directory where datasets are stored. Defaults to "./data".
-        :type root: str, optional
+        :param data_dir: The directory where datasets are stored. Defaults to "./data".
+        :type data_dir: str, optional
+        :param dataset: The name of the dataset. Supported ``gen1`` and ``1mpx``.
+        :type dataset: str, optional
         :param batch_size: Number of elements in a batch. Defaults to 4.
         :type batch_size: int, optional
+        :param num_workers: A positive integer will turn on multi-process data loading with the
+            specified number of loader worker processes. Defaults to 4.
+        :type num_workers: int, optional
+        :param num_load_file: Number of concurrently open files in each thread. Defaults to 8.
+        :type num_load_file: int, optional
         :param num_steps: Number of frames. Defaults to 16.
         :type num_steps: int, optional
         :param time_step: Time between frames. Defaults to 16.
         :type time_step: int, optional
-        :param num_load_file: Number of concurrently open files in each thread. Defaults to 8.
-        :type num_load_file: int, optional
-        :param num_workers: A positive integer will turn on multi-process data loading with the
-            specified number of loader worker processes. Defaults to 4.
-        :type num_workers: int, optional
+        :param time_shift: The number of time steps that labels are moved forward relative to their
+            frame. Defaults to 8.
+        :type time_shift: int, optional
+        :param one_label: If true labeling is provided for the last time step only. Intended for training. Defaults to True.
+        :type one_label: bool, optional
         :raises ValueError: Invalid dataset name.
         """
-        super().__init__(root, num_workers=num_workers, batch_size=batch_size)
-        self.name, self.num_steps = name, num_steps
-        self.time_step, self.num_load_file = time_step, num_load_file
-        match self.name:
+        super().__init__()
+        self.save_hyperparameters()
+
+        if self.hparams.dataset not in ("gen1", "1mpx"):
+            raise ValueError(
+                f'The dataset parameter cannot be "{self.hparams.dataset}"!'
+            )
+
+    def get_labels(self) -> List[str]:
+        """Returns a list of class names"""
+        match self.hparams.dataset:
             case "gen1":
-                self.labels_name = ("car", "person")
+                return ["car", "person"]
             case "1mpx":
-                self.labels_name = (
+                return [
                     "pedestrians",
                     "two wheelers",
                     "cars",
@@ -66,52 +73,68 @@ class PropheseeDataModule(DataModule):
                     "buses",
                     "signs",
                     "traffic lights",
-                )
+                ]
             case _:
-                raise ValueError(f'[ERROR]: The name parameter cannot be "{name}"!')
+                raise ValueError(
+                    f'The dataset parameter cannot be "{self.hparams.dataset}"!'
+                )
 
-    def get_labels(self):
-        return self.labels_name
+    def setup(self, stage: str) -> None:
+        if stage == "fit":
+            self.train_dataset = self._create_dataset(*self._get_files_list("train"))
+        if stage in ("fit", "validate"):
+            self.val_dataset = self._create_dataset(*self._get_files_list("val"))
+        if stage in ("test", "predict"):
+            self.test_dataset = self._create_dataset(*self._get_files_list("test"))
 
-    def read_data(self, split: str):
+    def _get_files_list(self, split: str) -> Tuple[List[str], List[str]]:
         # Data dir: ./data/<gen1, 1mpx>/<test, train, val>
-        data_dir = os.path.join(self._root, self.name, split)
+        data_dir = os.path.join(self.hparams.data_dir, self.hparams.dataset, split)
         # Get files name
         gt_files = glob.glob(data_dir + "/*_bbox.npy")
         data_files = [p.replace("_bbox.npy", "_td.dat") for p in gt_files]
-
         if not data_files or not gt_files or len(data_files) != len(gt_files):
-            tqdm.write(
-                f"[WARN]: Directory '{data_dir}' does not contain data or data is invalid! I'm expecting: "
+            raise RuntimeError(
+                f"Directory '{data_dir}' does not contain data or data is invalid! I'm expecting: "
                 f"./data/{data_dir}/*_bbox.npy (and *_td.dat). "
                 "The dataset can be downloaded from this link: "
-                "https://www.prophesee.ai/2020/01/24/prophesee-gen1-automotive-detection-dataset/ or"
+                "https://www.prophesee.ai/2020/01/24/prophesee-gen1-automotive-detection-dataset/ or "
                 "https://www.prophesee.ai/2020/11/24/automotive-megapixel-event-based-dataset/"
             )
+        return gt_files, data_files
 
-        dataset = self.create_dataset(gt_files, data_files)
+    def train_dataloader(self):
+        return self._get_dataloader(self.train_dataset)
 
-        match split:
-            case "train":
-                self._train_dataset = dataset
-            case "test":
-                self._test_dataset = dataset
-            case "val":
-                self._val_dataset = dataset
-            case _:
-                raise ValueError(f'[ERROR]: The split parameter cannot be "{split}"!')
+    def val_dataloader(self):
+        return self._get_dataloader(self.val_dataset)
 
-        print(
-            "[INFO]: "
-            + str(len(data_files))
-            + " "
-            + split
-            + " samples loaded from "
-            + self.name
-            + " dataset..."
+    def test_dataloader(self):
+        return self._get_dataloader(self.test_dataset)
+
+    def predict_dataloader(self):
+        return self._get_dataloader(self.test_dataset)
+
+    def _get_dataloader(self, dataset: IterableDataset) -> DataLoader:
+        return DataLoader(
+            dataset,
+            batch_size=self.hparams.batch_size,
+            num_workers=self.hparams.num_workers,
+            collate_fn=self._stack_data,
+            persistent_workers=True,
         )
 
-    def create_dataset(
+    def _stack_data(self, batch):
+        """Combines samples into a batch taking into account the time dimension"""
+        features = torch.stack([sample[0] for sample in batch], dim=1)
+        targets = pad_sequence(
+            [sample[1] for sample in batch],
+            batch_first=True,
+            padding_value=-1,
+        )
+        return features, targets
+
+    def _create_dataset(
         self, gt_files: List[str], data_files: List[str]
     ) -> IterableDataset:
         """Initializes dataset
@@ -123,48 +146,25 @@ class PropheseeDataModule(DataModule):
         :return: Ready dataset
         :rtype: IterableDataset
         """
-        raise NotImplementedError
-
-
-class MTProphesee(PropheseeDataModule):
-    """Multi-target Prophesee's gen1 and 1mpx datasets.
-
-    The packages are provided in a multi-target form,
-    meaning that one example can contain target labels at multiple time steps.
-    Records are split into fixed-step chunks that are returned sequentially.
-    Intended for testing. There is single-target dataset for training.
-    """
-
-    def create_dataset(
-        self, gt_files: List[str], data_files: List[str]
-    ) -> IterableDataset:
-        return MTPropheseeDataset(
-            gt_files,
-            data_files,
-            self.time_step,
-            self.num_steps,
-            self.num_load_file,
-            self.name,
-        )
-
-
-class STProphesee(PropheseeDataModule):
-    """Single-target Prophesee gen1 and 1mpx datasets.
-
-    Labeling is provided for the last time step only. Intended for training.
-    """
-
-    def create_dataset(
-        self, gt_files: List[str], data_files: List[str]
-    ) -> IterableDataset:
-        return STPropheseeDataset(
-            gt_files,
-            data_files,
-            self.time_step,
-            self.num_steps,
-            self.num_load_file,
-            self.name,
-        )
+        if self.hparams.one_label:
+            return STPropheseeDataset(
+                num_steps=self.hparams.num_steps,
+                time_shift=self.hparams.time_shift,
+                gt_files=gt_files,
+                data_files=data_files,
+                time_step=self.hparams.time_step,
+                num_load_file=self.hparams.num_load_file,
+                name=self.hparams.dataset,
+            )
+        else:
+            return MTPropheseeDataset(
+                num_steps=self.hparams.num_steps,
+                gt_files=gt_files,
+                data_files=data_files,
+                time_step=self.hparams.time_step,
+                num_load_file=self.hparams.num_load_file,
+                name=self.hparams.dataset,
+            )
 
 
 class PropheseeDatasetBase(IterableDataset):
@@ -176,11 +176,6 @@ class PropheseeDatasetBase(IterableDataset):
 
     The samples_generator and parse_data method must be overridden in the child class.
     """
-
-    _record_time = 60000000  # us
-    _width: int
-    _height: int
-    _time_step_name: str
 
     def __init__(
         self,
@@ -209,6 +204,7 @@ class PropheseeDatasetBase(IterableDataset):
         self.num_load_file = num_load_file
         self.time_step = time_step
         self.time_step_us = self.time_step * 1000
+        self.record_time = 60000000  # us
 
         match name:
             case "gen1":
@@ -220,7 +216,7 @@ class PropheseeDatasetBase(IterableDataset):
                 self._height = 720
                 self._time_step_name = "t"
             case _:
-                raise ValueError(f'[ERROR]: The dataset parameter cannot be "{name}"!')
+                raise ValueError(f'The dataset parameter cannot be "{name}"!')
 
     def __iter__(self) -> Iterator[Tuple[torch.Tensor, torch.Tensor]]:
         """Returns an iterator for the dataset"""
@@ -256,20 +252,10 @@ class PropheseeDatasetBase(IterableDataset):
     def _labels_prepare(self, labels: List[np.ndarray]) -> List[torch.Tensor]:
         """Converts labels from numpy.ndarray format to torch
 
-        :param labels: Labels in numpy format
-
-            - Numpy format ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
-            Tensor format (ts [ms], class id, xlu, ylu, xrd, yrd)
+        :param labels: Labels in numpy format ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
         :type labels: List[np.ndarray]
-        :return: _description_
+        :return: Labels in torch format (ts [ms], class id, xlu, ylu, xrd, yrd)
         :rtype: List[torch.Tensor]
-        """
-        """Converts labels from numpy.ndarray format to torch.
-        Args:
-            labels (List[np.ndarray]): Labels in numpy format
-                
-        Returns:
-            List[torch.Tensor]: Labels in torch format
         """
         return [
             torch.from_numpy(
@@ -302,20 +288,11 @@ class PropheseeDatasetBase(IterableDataset):
 
 
 class MTPropheseeDataset(PropheseeDatasetBase):
-    def __init__(
-        self,
-        gt_files: List[str],
-        data_files: List[str],
-        time_step: int,
-        num_steps: int,
-        num_load_file: int,
-        name: str,
-    ):
-        assert num_load_file > 0, "The number of loaded files must be more than zero"
-        super().__init__(gt_files, data_files, time_step, num_load_file, name)
+    def __init__(self, num_steps: int, **kwargs):
+        super().__init__(**kwargs)
         self.num_steps = num_steps
         self.duration_us = self.time_step_us * self.num_steps
-        self.record_steps = self._record_time // self.duration_us
+        self.record_steps = self.record_time // self.duration_us
 
     def samples_generator(
         self,
@@ -368,26 +345,15 @@ class MTPropheseeDataset(PropheseeDatasetBase):
 
 
 class STPropheseeDataset(PropheseeDatasetBase):
-    """Single-target Prophesee gen1 and 1mpx iterable datasets"""
+    r"""Single-target Prophesee gen1 and 1mpx iterable datasets"""
 
-    events_threshold: int = 4000
-    """Minimum average number of events in a sample to use it"""
-
-    box_size_threshold: float = 0.01
-    """Minimum acceptable box size relative to frame area"""
-
-    def __init__(
-        self,
-        gt_files: List[str],
-        data_files: List[str],
-        time_step: int,
-        num_steps: int,
-        num_load_file: int,
-        name: str,
-    ):
-        assert num_load_file > 0, "The number of loaded files must be more than zero"
-        super().__init__(gt_files, data_files, time_step, num_load_file, name)
-        self.num_steps = num_steps
+    def __init__(self, num_steps: int, time_shift: int, **kwargs):
+        super().__init__(**kwargs)
+        self.num_steps, self.time_shift = num_steps, time_shift
+        # Minimum average number of events in a sample to use it
+        self.events_threshold: int = 4000
+        # Minimum acceptable box size relative to frame area
+        self.box_size_threshold: float = 0.01
 
     def samples_generator(
         self,
@@ -441,8 +407,12 @@ class STPropheseeDataset(PropheseeDatasetBase):
         )
         # Events format ('t' [us], 'x', 'y', 'p' [1-positive/0-negative])
         first_label_time_us = labels[0, 0].item() * self.time_step_us
-        first_event_time_us = first_label_time_us - (self.time_step_us * self.num_steps)
-        events = events_loader.load_delta_t(first_label_time_us - start_time_us)
+        first_event_time_us = first_label_time_us - (
+            self.time_step_us * (self.num_steps - self.time_shift)
+        )
+        events = events_loader.load_delta_t(
+            first_label_time_us + self.time_step_us * self.time_shift - start_time_us
+        )
         events = events[events[:]["t"] >= first_event_time_us]
         if (events.shape[0] // self.num_steps) < self.events_threshold:
             return None, True
