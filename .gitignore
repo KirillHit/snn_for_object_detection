@@ -1,12 +1,13 @@
 data/*
 .vscode/
-.conda
-arc
 log
 test.py
 _autosummary
 TODO.md
 archive
+.neptune
+logger.yaml
+lightning_logs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

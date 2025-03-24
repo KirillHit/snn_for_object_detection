@@ -1,41 +1,77 @@
-### Basic
-Mode: 1               # 1 - interactive, 2 - train, 3 - eval, 4 - activity test
-gpu_index: 0
-SaveFolder: timeshift_8
+ckpt_path: "nets/tiny_yolo/tiny_yolo_gen1.ckpt"
 
-### Train mode
-LoadParameters: true
-NumTrainRounds: -1    # -1 - infinite
-NumRoundEpoch: 30
-### Eval mode
-NumEvalRounds: 300
+model:
+  class_path: models.TinyYolo
+  init_args:
+    num_classes: 2
+    loss_ratio: 0.04
+    time_window: 16
+    iou_threshold: 0.4
+    learning_rate: 0.001
+    state_storage: false
+    init_weights: true
+    plotter:
+      class_path: utils.Plotter
+      init_args:
+        threshold: 0.8
+        show_video: true
+        save_video: true
+        file_path: log
+        file_name: out
 
-### Model parameters
-Model: yolo           # yolo
-InitWeights: true
-LossRatio: 0.04
+data:
+  data_dir: ./data
+  dataset: gen1
+  batch_size: 4
+  num_workers: 4
+  num_load_file: 8
+  num_steps: 42
+  time_step: 16
+  time_shift: 16
+  one_label: true
 
-### Dataset parameters
-Dataset: gen1
-TimeStep: 16
-NumLoadFile: 8
-NumWorkers: 4
-# Train dataset
-BatchSize: 4
-NumSteps: 42
-TimeWindow: 16
-TimeShift: 16
-# Test dataset
-TestBatchSize: 64
-TestNumSteps: 32
-
-### Progress board parameters
-Display: True
-EveryN: 4
-
-### Plotter parameters
-PlotterThreshold: 0.1
-PlotterColumns: 4
-
-### Trainer board parameters
-EpochSize: 60
+trainer:
+  accelerator: gpu
+  strategy: ddp
+  devices: -1
+  num_nodes: 1
+  precision: null
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.early_stopping.EarlyStopping
+      init_args:
+        monitor: map
+        mode: max
+        patience: 30
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        monitor: map
+        save_top_k: 4
+        mode: max
+    - class_path: lightning.pytorch.callbacks.ModelSummary
+      init_args:
+        max_depth: 1
+  fast_dev_run: false
+  max_epochs: -1
+  min_epochs: 2500
+  max_steps: -1
+  min_steps: null
+  max_time: null
+  limit_train_batches: 100
+  limit_val_batches: 100
+  limit_test_batches: 1000
+  limit_predict_batches: null
+  overfit_batches: 0.0
+  check_val_every_n_epoch: 20
+  num_sanity_val_steps: 0
+  log_every_n_steps: 20
+  enable_checkpointing: True
+  accumulate_grad_batches: 1
+  gradient_clip_algorithm: null
+  use_distributed_sampler: true
+  profiler: null
+  detect_anomaly: false
+  barebones: false
+  plugins:
+  #    class_path: lightning.pytorch.plugins.environments.SLURMEnvironment
+  sync_batchnorm: true
+  reload_dataloaders_every_n_epochs: 0

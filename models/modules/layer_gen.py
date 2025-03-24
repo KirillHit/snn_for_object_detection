@@ -6,12 +6,12 @@ from torch import nn
 from typing import Tuple, Optional
 import norse.torch as snn
 from norse.torch.module.snn import SNNCell
-from models.module.synapse import SynapseCell
-from models.module.conv_lstm import ConvLSTM
-from models.module.sli import SLICell
-from models.module.modules import *
+from models.modules.synapse import SynapseCell
+from models.modules.conv_lstm import ConvLSTM
+from models.modules.sli import SLICell
+from models.modules.common import *
 
-__all__ = (
+layers_list = (
     "Residual",
     "Dense",
     "LayerGen",
@@ -229,7 +229,9 @@ class LIF(LayerGen):
         self.state_storage = state_storage
 
     def get(self, in_channels: int) -> Tuple[SNNCell, int]:
-        module = snn.LIFCell() if not self.state_storage else StateStorage(snn.LIFCell())
+        module = (
+            snn.LIFCell() if not self.state_storage else StateStorage(snn.LIFCell())
+        )
         return module, in_channels
 
 

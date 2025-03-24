@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from typing import Optional, List, Any, NamedTuple
 from norse.torch.module.snn import SNNCell, _merge_states
 
-__all__ = (
+common_list = (
     "SumPool2d",
     "Storage",
     "StateStorage"
