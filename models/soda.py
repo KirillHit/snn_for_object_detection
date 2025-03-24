@@ -218,7 +218,7 @@ class SODa(L.LightningModule):
         :type state: ListState | None
         :return: Returns a list of two elements:
 
-            1. **Predictions**: A tensor of size [number of predictions, 4], 
+            1. **Predictions**: A tensor of size [number of predictions, 4],
                 where each prediction contains a vector (class id, confidence, lux, luy, rdx, rdy).
             2. **State**: New state of the detector
         :rtype: Tuple[torch.Tensor, ListState]

@@ -7,10 +7,11 @@ import torch
 from torch.utils.data import IterableDataset, get_worker_info, DataLoader
 from prophesee_toolbox.src.io.psee_loader import PSEELoader
 from random import shuffle
-from typing import Generator, Iterator, List, Optional, Tuple
+from typing import Generator, Iterator, List, Optional, Tuple, Union
 import itertools
 from torch.nn.utils.rnn import pad_sequence
 import lightning as L
+import torchvision.transforms as transforms
 
 
 class PropheseeDataModule(L.LightningDataModule):
@@ -27,6 +28,7 @@ class PropheseeDataModule(L.LightningDataModule):
         time_step=16,
         time_shift=16,
         one_label=True,
+        resize: Optional[Union[List[int], int]] = None,
     ):
         """
         :param data_dir: The directory where datasets are stored. Defaults to "./data".
@@ -47,8 +49,12 @@ class PropheseeDataModule(L.LightningDataModule):
         :param time_shift: The number of time steps that labels are moved forward relative to their
             frame. Defaults to 8.
         :type time_shift: int, optional
-        :param one_label: If true labeling is provided for the last time step only. Intended for training. Defaults to True.
+        :param one_label: If true labeling is provided for the last time step only. 
+            Intended for training. Defaults to True.
         :type one_label: bool, optional
+        :param resize: Desired output size. See :external:class:`torchvision.transforms.Resize`.
+            Defaults to None.
+        :type resize: Optional[Union[List[int], int]], optional
         :raises ValueError: Invalid dataset name.
         """
         super().__init__()
@@ -155,6 +161,7 @@ class PropheseeDataModule(L.LightningDataModule):
                 time_step=self.hparams.time_step,
                 num_load_file=self.hparams.num_load_file,
                 name=self.hparams.dataset,
+                resize=self.hparams.resize,
             )
         else:
             return MTPropheseeDataset(
@@ -164,6 +171,7 @@ class PropheseeDataModule(L.LightningDataModule):
                 time_step=self.hparams.time_step,
                 num_load_file=self.hparams.num_load_file,
                 name=self.hparams.dataset,
+                resize=self.hparams.resize,
             )
 
 
@@ -184,6 +192,7 @@ class PropheseeDatasetBase(IterableDataset):
         time_step: int,
         num_load_file: int,
         name: str,
+        resize: Optional[Union[List[int], int]] = None,
     ):
         """
         :param gt_files: List of ground truth file paths.
@@ -196,6 +205,9 @@ class PropheseeDatasetBase(IterableDataset):
         :type num_load_file: int
         :param name: The name of the dataset to download. Supported ``gen1`` and ``1mpx``.
         :type name: str
+        :param resize: Desired output size. See :external:class:`torchvision.transforms.Resize`.
+            Defaults to None.
+        :type resize: Optional[Union[List[int], int]], optional
         :raises ValueError: Invalid dataset name.
         """
         assert num_load_file > 0, "The number of loaded files must be more than zero"
@@ -205,6 +217,12 @@ class PropheseeDatasetBase(IterableDataset):
         self.time_step = time_step
         self.time_step_us = self.time_step * 1000
         self.record_time = 60000000  # us
+
+        self.resize = (
+            None
+            if resize is None
+            else transforms.Resize(resize, transforms.InterpolationMode.NEAREST)
+        )
 
         match name:
             case "gen1":
@@ -288,6 +306,8 @@ class PropheseeDatasetBase(IterableDataset):
 
 
 class MTPropheseeDataset(PropheseeDatasetBase):
+    """Multi-target Prophesee gen1 and 1mpx iterable datasets"""
+
     def __init__(self, num_steps: int, **kwargs):
         super().__init__(**kwargs)
         self.num_steps = num_steps
@@ -335,6 +355,12 @@ class MTPropheseeDataset(PropheseeDatasetBase):
             events[:]["x"].astype(np.uint32),
         ] = 1
 
+        features = (
+            torch.stack([self.resize(img) for img in features])
+            if self.resize is not None
+            else features
+        )
+
         ############ Labels preparing ############
         # Return labels format (ts, class id, xlu, ylu, xrd, yrd)
         # Box update frequency 1-4 Hz
@@ -345,15 +371,13 @@ class MTPropheseeDataset(PropheseeDatasetBase):
 
 
 class STPropheseeDataset(PropheseeDatasetBase):
-    r"""Single-target Prophesee gen1 and 1mpx iterable datasets"""
+    """Single-target Prophesee gen1 and 1mpx iterable datasets"""
 
     def __init__(self, num_steps: int, time_shift: int, **kwargs):
         super().__init__(**kwargs)
         self.num_steps, self.time_shift = num_steps, time_shift
         # Minimum average number of events in a sample to use it
         self.events_threshold: int = 4000
-        # Minimum acceptable box size relative to frame area
-        self.box_size_threshold: float = 0.01
 
     def samples_generator(
         self,
@@ -391,14 +415,6 @@ class STPropheseeDataset(PropheseeDatasetBase):
             return None, False
         labels = gt_boxes[gt_boxes[:, 0] == gt_boxes[0, 0]]
 
-        # Removing boxes that are smaller than a specified size
-        lab_mask = (
-            (labels[:, 4] - labels[:, 2]) * (labels[:, 5] - labels[:, 3])
-        ) > self.box_size_threshold
-        labels = labels[lab_mask]
-        if not labels.numel():
-            return None, False
-
         ############ Features preparing ############
         # Return features format (ts, c [0-negative, 1-positive], h, w)
         features = torch.zeros(
@@ -431,5 +447,11 @@ class STPropheseeDataset(PropheseeDatasetBase):
             events[:]["y"].astype(np.uint32),
             events[:]["x"].astype(np.uint32),
         ] = 1
+
+        features = (
+            torch.stack([self.resize(img) for img in features])
+            if self.resize is not None
+            else features
+        )
 
         return (features, labels[:, 1:]), True

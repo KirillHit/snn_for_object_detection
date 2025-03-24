@@ -82,8 +82,8 @@ class Plotter:
         _, h, w = image.shape
         plt_image = image.permute(1, 2, 0).cpu()
         res_img = np.zeros((h, w, 3), dtype=np.uint8)
-        res_img[plt_image[..., 0] > 0, 2] = 255
-        res_img[plt_image[..., 1] > 0, 0] = 255
+        res_img[plt_image[..., 0] > 0] = [255, 150, 0]
+        res_img[plt_image[..., 1] > 0, 2] = 255
         target = self._prepare_targets(target, h, w)
         predictions = self._prepare_preds(predictions, h, w)
         self._draw_target_boxes(res_img, target)

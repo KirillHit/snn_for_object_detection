@@ -1,4 +1,4 @@
-ckpt_path: "nets/tiny_yolo/tiny_yolo_gen1.ckpt"
+# ckpt_path: "nets/tiny_yolo/tiny_yolo_gen1.ckpt"
 
 model:
   class_path: models.TinyYolo
@@ -15,20 +15,21 @@ model:
       init_args:
         threshold: 0.8
         show_video: true
-        save_video: true
+        save_video: false
         file_path: log
         file_name: out
 
 data:
   data_dir: ./data
-  dataset: gen1
-  batch_size: 4
+  dataset: 1mpx
+  batch_size: 1
   num_workers: 4
   num_load_file: 8
   num_steps: 42
   time_step: 16
-  time_shift: 16
+  time_shift: 0
   one_label: true
+  resize: 340
 
 trainer:
   accelerator: gpu
@@ -61,7 +62,7 @@ trainer:
   limit_test_batches: 1000
   limit_predict_batches: null
   overfit_batches: 0.0
-  check_val_every_n_epoch: 20
+  check_val_every_n_epoch: 1
   num_sanity_val_steps: 0
   log_every_n_steps: 20
   enable_checkpointing: True

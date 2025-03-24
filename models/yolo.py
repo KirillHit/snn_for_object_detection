@@ -1,5 +1,5 @@
 """
-Simplified yolo model without feature pyramid
+Network configuration similar to yolo8
 """
 
 from models.soda import SODa
@@ -7,8 +7,15 @@ from models.generator import ListGen
 from models.modules import *
 
 
-class TinyYolo(SODa):
-    """Simplified yolo model without feature pyramid"""
+class Yolo(SODa):
+    """Generates a model similar to yolo8
+
+    See https://github.com/ultralytics/ultralytics/issues/189.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """#TODO"""
+        super().__init__(*args, **kwargs)
 
     def backbone_cfgs(self) -> ListGen:
         return [
