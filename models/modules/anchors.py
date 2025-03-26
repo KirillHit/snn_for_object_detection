@@ -2,6 +2,7 @@
 
 import torch
 from torch import nn
+from models.generator import Storage
 
 
 class AnchorGenerator(nn.Module):
@@ -9,11 +10,14 @@ class AnchorGenerator(nn.Module):
 
     def __init__(
         self,
+        storage: Storage,
         sizes: torch.Tensor,
         ratios: torch.Tensor,
         step: int = 1,
     ) -> None:
         """
+        :param storage: Storage in which the anchors will be stored.
+        :type storage: Storage
         :param sizes: Box scales (0,1] = S'/S.
         :type sizes: torch.Tensor
         :param ratios: Ratio of width to height of boxes (w/h).
@@ -22,26 +26,23 @@ class AnchorGenerator(nn.Module):
         :type step: int, optional
         """
         super().__init__()
-        self.step = step
-        self.sizes = nn.Parameter(sizes, requires_grad=False)
-        self.ratios = nn.Parameter(ratios, requires_grad=False)
+        self.storage, self.step, self.sizes, self.ratios = storage, step, sizes, ratios
 
-    def __call__(self, X: torch.Tensor) -> torch.Tensor:
-        """Generate anchor boxes with different shapes centered on each pixel.
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        """Generate reference blocks with different shapes,
+        centered on each pixel and save them in storage
 
-        :param X: Feature map.
+        Returns the input tensor back
+
+        :param X: Feature map
         :type X: torch.Tensor
-        :return: Tensor with hypotheses.
-
-            Shape: [anchor, 4].
-
-            Data: (xlu, ylu, xrd, yrd).
+        :return: Input tensor
         :rtype: torch.Tensor
         """
         if not hasattr(self, "anchors"):
             self._cal_anchors(X)
-
-        return self.anchors
+            self.storage.forward(self.anchors)
+        return X
 
     def _cal_anchors(self, X: torch.Tensor) -> None:
         in_height, in_width = X.shape[-2:]
@@ -74,7 +75,7 @@ class AnchorGenerator(nn.Module):
         # Divide by 2 to get half height and half width
         anchor_manipulations = (
             torch.stack((-w, -h, w, h)).T.repeat(in_height * in_width, 1) / 2
-        )
+        ).to(device)
 
         # Each center point will have `boxes_per_pixel` number of anchor boxes, so
         # generate a grid of all anchor box centers with `boxes_per_pixel` repeats

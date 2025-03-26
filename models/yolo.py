@@ -3,8 +3,7 @@ Network configuration similar to yolo8
 """
 
 from models.soda import SODa
-from models.generator import ListGen
-from models.modules import *
+from models.layer_gen import *
 
 
 class Yolo(SODa):
@@ -29,13 +28,30 @@ class Yolo(SODa):
         }
         # d: depth_multiple, w: width_multiple, r: ratio
         self.d, self.w, self.r = model_types[model]
+        self._out_configure()
+        self._prepare_net()
 
-    def base_cfgs(self) -> ListGen:
+    def _out_configure(self):
+        max = 0.75
+        min = 0.08
+        size_per_pix = 3
+
+        sizes = torch.arange(
+            min, max, (max - min) / (3 * size_per_pix), dtype=torch.float32
+        )
+        self.sizes = sizes.reshape((-1, size_per_pix))
+        self.ratios = torch.tensor((0.5, 1.0, 2), dtype=torch.float32)
+
+        self.num_anchors = size_per_pix * len(self.ratios)
+        self.num_class_out = self.num_anchors * (self.hparams.num_classes + 1)
+        self.num_box_out = self.num_anchors * 4
+
+    def get_cfgs(self) -> List[LayerGen]:
         storage_4 = Storage()
         storage_6 = Storage()
         storage_9 = Storage()
         storage_12 = Storage()
-        storage_return = Storage()
+        storage_detect = Storage()
         return [
             *self._conv(int(64 * self.w), 3, 2),
             *self._conv(int(128 * self.w), 3, 2),
@@ -59,41 +75,43 @@ class Yolo(SODa):
             Store(storage_4),
             Dense(storage_4),
             *self._c2f(int(256 * self.w), int(3 / self.d), False),
-            Store(storage_return),
+            Store(storage_detect),
             *self._conv(int(256 * self.w), 3, 2),
             Store(storage_12),
             Dense(storage_12),
             *self._c2f(int(512 * self.w), int(3 / self.d), False),
-            Store(storage_return),
+            Store(storage_detect),
             *self._conv(int(512 * self.w), 3, 2),
             Store(storage_9),
             Dense(storage_9),
             *self._c2f(int(512 * self.w * self.r), int(3 / self.d), False),
-            Store(storage_return),
+            Store(storage_detect),
+            *self._detect(storage_detect, 0),
+            *self._detect(storage_detect, 1),
+            *self._detect(storage_detect, 2),
         ]
 
-    def head_cfgs(self, box_out: int, cls_out: int) -> ListGen:
-        storage = Storage()
+    def _detect(
+        self,
+        storage_detect: Storage,
+        idx: int,
+    ) -> List[LayerGen]:
         return [
-            [
-                Store(storage),
-            ],
-            [
-                Get(storage),
-                *self._conv(),
-                *self._conv(),
-                LI(state_storage=self.hparams.state_storage),
-                Tanh(),
-                Conv(box_out, 1),
-            ],
-            [
-                Get(storage),
-                *self._conv(),
-                *self._conv(),
-                LI(state_storage=self.hparams.state_storage),
-                Tanh(),
-                Conv(cls_out, 1),
-            ],
+            Get(storage_detect, idx),
+            Anchors(self.storage_anchor, self.sizes[idx], self.ratios),
+            *self._conv(),
+            *self._conv(),
+            LI(state_storage=self.hparams.state_storage),
+            Tanh(),
+            Conv(self.num_box_out, 1),
+            Store(self.storage_box),
+            Get(storage_detect, idx),
+            *self._conv(),
+            *self._conv(),
+            LI(state_storage=self.hparams.state_storage),
+            Tanh(),
+            Conv(self.num_class_out, 1),
+            Store(self.storage_cls),
         ]
 
     def _conv(self, out_channels: int = None, kernel: int = 3, stride: int = 1):

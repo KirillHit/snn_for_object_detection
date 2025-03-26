@@ -1,11 +1,12 @@
 # ckpt_path: "nets/tiny_yolo/tiny_yolo_gen1.ckpt"
 
 model:
-  class_path: models.TinyYolo
+  class_path: models.Yolo
   init_args:
+    model: n
     num_classes: 2
     loss_ratio: 0.04
-    time_window: 16
+    time_window: 32
     iou_threshold: 0.4
     learning_rate: 0.001
     state_storage: false
@@ -21,15 +22,16 @@ model:
 
 data:
   data_dir: ./data
-  dataset: 1mpx
-  batch_size: 1
+  dataset: gen1
+  batch_size: 10
   num_workers: 4
   num_load_file: 8
-  num_steps: 42
-  time_step: 16
+  num_steps: 64
+  time_step: 8
   time_shift: 0
   one_label: true
-  resize: 340
+  # Must be a multiple of 32 for yolo
+  resize: [256, 320]
 
 trainer:
   accelerator: gpu
@@ -50,7 +52,7 @@ trainer:
         mode: max
     - class_path: lightning.pytorch.callbacks.ModelSummary
       init_args:
-        max_depth: 1
+        max_depth: 3
   fast_dev_run: false
   max_epochs: -1
   min_epochs: 2500
@@ -62,7 +64,7 @@ trainer:
   limit_test_batches: 1000
   limit_predict_batches: null
   overfit_batches: 0.0
-  check_val_every_n_epoch: 1
+  check_val_every_n_epoch: 10
   num_sanity_val_steps: 0
   log_every_n_steps: 20
   enable_checkpointing: True

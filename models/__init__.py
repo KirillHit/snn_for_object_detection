@@ -3,6 +3,6 @@ SODa Model
 """
 
 from .soda import SODa
-from .tiny_yolo import TinyYolo
+from .yolo import Yolo
 
-__all__ = "SODa", "TinyYolo"
+__all__ = "SODa", "Yolo"

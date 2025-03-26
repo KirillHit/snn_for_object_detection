@@ -7,16 +7,19 @@ from typing import Tuple, Optional
 import norse.torch as snn
 from norse.torch.module.snn import SNNCell
 from models.modules.synapse import SynapseCell
-from models.modules.conv_lstm import ConvLSTM
+from models.modules.sum_pool import SumPool2d
+from models.modules.lstm import ConvLSTM
 from models.modules.sli import SLICell
-from models.modules.common import *
+from models.modules.anchors import AnchorGenerator
+from models.generator import *
+
 
 layers_list = (
-    "LayerGen",
     "Store",
     "Get",
     "Residual",
     "Dense",
+    "Anchors",
     "Pass",
     "Conv",
     "Norm",
@@ -32,29 +35,6 @@ layers_list = (
     "Synapse",
     "SLI",
 )
-
-
-class LayerGen:
-    """Base class for model layer generators
-
-    The ``get`` method must initialize the network module and pass it to the generator
-    (See :class:`BlockGen`).
-
-    .. warning::
-
-        This class can only be used as a base class for inheritance.
-    """
-
-    def get(self, in_channels: int) -> Tuple[nn.Module, int]:
-        """Initializes and returns the network layer
-
-        :param in_channels: Number of input channels.
-        :type in_channels: int
-        :return: The generated module and the number of channels that will be after applying
-            this layer to a tensor with ``in_channels`` channels.
-        :rtype: Tuple[nn.Module, int]
-        """
-        raise NotImplementedError
 
 
 class Store(LayerGen):
@@ -76,9 +56,10 @@ class Get(LayerGen):
         self.storage.add_requests()
 
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
-        if len(self.storage.shape()) <= self.idx:
+        shape = self.storage.shape()
+        if len(shape) <= self.idx:
             raise RuntimeError("Attempt to access a non-existent tensor in storage")
-        return StorageGetter(self.storage, self.idx), in_channels
+        return StorageGetter(self.storage, self.idx), shape[self.idx]
 
 
 class Residual(LayerGen):
@@ -103,6 +84,18 @@ class Dense(LayerGen):
 
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
         return ResidualModule("dense", self.storage), sum(self.storage.shape())
+
+
+class Anchors(LayerGen):
+    def __init__(
+        self, storage: Storage, sizes: List[int], ratios: List[int], step: int = 1
+    ):
+        self.storage, self.sizes, self.ratios, self.step = storage, sizes, ratios, step
+
+    def get(self, in_channels: int) -> Tuple[nn.Module, int]:
+        return AnchorGenerator(
+            self.storage, self.sizes, self.ratios, self.step
+        ), in_channels
 
 
 class Pass(LayerGen):

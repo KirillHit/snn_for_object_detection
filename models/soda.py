@@ -7,12 +7,12 @@ from torch import nn
 from torch.nn import functional as F
 import lightning as L
 import torchmetrics.detection
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 
 from utils.roi import RoI
 from utils.plotter import Plotter
 import utils.box as box
-from models.generator import ListGen, BackboneGen, NeckGen, Head, ListState
+from models.generator import *
 
 
 class SODa(L.LightningModule):
@@ -36,6 +36,7 @@ class SODa(L.LightningModule):
         learning_rate: float = 0.001,
         state_storage: bool = False,
         init_weights: bool = True,
+        in_channels:int = 2,
         plotter: Optional[Plotter] = None,
     ):
         """
@@ -59,6 +60,8 @@ class SODa(L.LightningModule):
         :type state_storage: bool, optional
         :param init_weights: If true, apply the weight initialization function. Defaults to True.
         :type init_weights: bool, optional
+        :param in_channels: Number of input channels
+        :type in_channels: int, optional
         :param plotter: Class for displaying results. Needed for the prediction step.
             Expects to receive a utils.Plotter object. Defaults to None.
         :type plotter: Plotter, optional
@@ -66,23 +69,6 @@ class SODa(L.LightningModule):
         super().__init__()
         self.save_hyperparameters(ignore=["plotter"])
         self.plotter = plotter
-
-        self.base_net = BackboneGen(
-            self.backbone_cfgs,
-            in_channels=2,
-            init_weights=self.hparams.init_weights,
-        )
-        self.neck_net = NeckGen(
-            self.neck_cfgs,
-            self.base_net.out_channels,
-            init_weights=self.hparams.init_weights,
-        )
-        self.head_net = Head(
-            self.head_cfgs,
-            self.hparams.num_classes,
-            self.neck_net.out_shape,
-            init_weights=self.hparams.init_weights,
-        )
         self.roi_blk = RoI(self.hparams.iou_threshold)
         self.cls_loss = nn.CrossEntropyLoss(reduction="none")
         self.box_loss = nn.L1Loss(reduction="none")
@@ -95,40 +81,25 @@ class SODa(L.LightningModule):
             dist_sync_on_step=True,
         )
 
-    def backbone_cfgs(self) -> ListGen:
-        """Generates and returns a network backbone configuration
-
-        .. note::
-            This method must be overridden in a child class.
-
-        :return: Backbone configuration.
-        :rtype: ListGen
         """
-        raise NotImplementedError
-
-    def neck_cfgs(self) -> ListGen:
-        """Generates and returns a network neck configuration
-
-        .. note::
-            This method must be overridden in a child class.
-
-        :return: Neck configuration.
-        :rtype: ListGen
+        The class expects the storage below to store the network results. 
+        This should be defined in the child class configuration.
         """
-        raise NotImplementedError
+        self.storage_box = Storage()
+        self.storage_cls = Storage()
+        self.storage_anchor = Storage()
+        
+    def _prepare_net(self):
+        self.net = ModelGen(self.get_cfgs(), self.hparams.in_channels, self.hparams.init_weights)
 
-    def head_cfgs(self, box_out: int, cls_out: int) -> ListGen:
-        """Generates and returns a network head configuration
+    def get_cfgs(self) -> List[LayerGen]:
+        """Generates and returns a network configuration
 
         .. note::
             This method must be overridden in a child class.
 
-        :param box_out: Number of output channels for box predictions.
-        :type box_out: int
-        :param cls_out: Number of output channels for class predictions.
-        :type cls_out: int
-        :return: Head configuration.
-        :rtype: ListGen
+        :return: Net configuration.
+        :rtype: List[LayerGen]
         """
         raise NotImplementedError
 
@@ -235,13 +206,29 @@ class SODa(L.LightningModule):
     def _forward_impl(
         self, X: torch.Tensor, state: ListState | None
     ) -> Tuple[Tuple[torch.Tensor, torch.Tensor, torch.Tensor], ListState]:
-        state = [None] * 3 if state is None else state
-        base_out, state[0] = self.base_net.forward(X, state[0])
-        neck_out, state[1] = self.neck_net.forward(base_out, state[1])
-        anchors, cls_preds, bbox_preds, state[2] = self.head_net.forward(
-            neck_out, state[2]
-        )
+        _, state = self.net.forward(X, state)
+
+        anchors = self.storage_anchor.get()
+        cls_preds = self.storage_cls.get()
+        bbox_preds = self.storage_box.get()
+        self.storage_box.reset()
+        self.storage_cls.reset()
+
+        anchors = torch.cat(anchors)
+        cls_preds = self._concat_preds(cls_preds)
+        cls_preds = cls_preds.reshape(cls_preds.shape[0], -1, self.hparams.num_classes + 1)
+        bbox_preds = self._concat_preds(bbox_preds)
+        bbox_preds = bbox_preds.reshape(bbox_preds.shape[0], -1, 4)
+
         return (anchors, cls_preds, bbox_preds), state
+
+    def _flatten_pred(self, pred: torch.Tensor) -> torch.Tensor:
+        """Transforms the tensor so that each pixel retains channels values and smooths each batch"""
+        return torch.flatten(torch.permute(pred, (0, 2, 3, 1)), start_dim=1)
+
+    def _concat_preds(self, preds: list[torch.Tensor]) -> torch.Tensor:
+        """Concatenating Predictions for Multiple Scales"""
+        return torch.cat([self._flatten_pred(p) for p in preds], dim=1)
 
     def _rand_start_time(self) -> int:
         return (
