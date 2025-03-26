@@ -160,15 +160,14 @@ class Plotter:
     def _show_video(
         self, video: List[np.ndarray], interval: int, batch_idx: str = ""
     ) -> None:
-        while True:
+        key = ord("r")
+        while key == ord("r") or (key != ord("q") and cv2.waitKey() != ord("q")):
             for img in video:
                 cv2.imshow("Res", img)
-                if cv2.waitKey(interval) == ord("q"):
-                    cv2.destroyWindow("Res " + batch_idx)
-                    return
-            if cv2.waitKey() == ord("q"):
-                cv2.destroyWindow("Res " + batch_idx)
-                return
+                key = cv2.waitKey(interval)
+                if key != -1:
+                    break
+        cv2.destroyWindow("Res " + batch_idx)
 
     def _save_video(
         self, video: List[np.ndarray], interval: int, batch_idx: str = ""

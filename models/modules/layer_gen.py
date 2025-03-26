@@ -12,9 +12,11 @@ from models.modules.sli import SLICell
 from models.modules.common import *
 
 layers_list = (
+    "LayerGen",
+    "Store",
+    "Get",
     "Residual",
     "Dense",
-    "LayerGen",
     "Pass",
     "Conv",
     "Norm",
@@ -30,44 +32,6 @@ layers_list = (
     "Synapse",
     "SLI",
 )
-
-
-class Residual(list):
-    """Class inherited from :external:class:`list` type without changes
-
-    Needed to mark a network in the configuration as residual.
-
-    .. code-block::
-        :caption: Example
-
-        Residual(
-            [
-                [*conv(out_channels, kernel)],
-                [Conv(out_channels, 1)],
-            ]
-        )
-    """
-
-    pass
-
-
-class Dense(list):
-    """Class inherited from :external:class:`list` type without changes
-
-    Needed to mark the network in the configuration as densely connected.
-
-    .. code-block::
-        :caption: Example
-
-        Dense(
-            [
-                [*conv(out_channels, kernel)],
-                [Conv(out_channels, 1)],
-            ]
-        )
-    """
-
-    pass
 
 
 class LayerGen:
@@ -91,6 +55,54 @@ class LayerGen:
         :rtype: Tuple[nn.Module, int]
         """
         raise NotImplementedError
+
+
+class Store(LayerGen):
+    """Stores a tensor in the specified storage and passes it on"""
+
+    def __init__(self, storage: Storage):
+        self.storage = storage
+
+    def get(self, in_channels: int) -> Tuple[nn.Module, int]:
+        self.storage.add_input(in_channels)
+        return self.storage, in_channels
+
+
+class Get(LayerGen):
+    """Get tensor from storage"""
+
+    def __init__(self, storage: Storage, idx: int = 0):
+        self.storage, self.idx = storage, idx
+        self.storage.add_requests()
+
+    def get(self, in_channels: int) -> Tuple[nn.Module, int]:
+        if len(self.storage.shape()) <= self.idx:
+            raise RuntimeError("Attempt to access a non-existent tensor in storage")
+        return StorageGetter(self.storage, self.idx), in_channels
+
+
+class Residual(LayerGen):
+    def __init__(self, storage: Storage):
+        self.storage = storage
+        self.storage.add_requests()
+
+    def get(self, in_channels: int) -> Tuple[nn.Module, int]:
+        shape = self.storage.shape()
+        if shape.count(shape[0]) == len(shape):
+            raise RuntimeError(
+                "The residual network received tensors of different shapes: "
+                + str(shape)
+            )
+        return ResidualModule("residual", self.storage), shape[0]
+
+
+class Dense(LayerGen):
+    def __init__(self, storage: Storage):
+        self.storage = storage
+        self.storage.add_requests()
+
+    def get(self, in_channels: int) -> Tuple[nn.Module, int]:
+        return ResidualModule("dense", self.storage), sum(self.storage.shape())
 
 
 class Pass(LayerGen):
@@ -170,7 +182,9 @@ class Pool(LayerGen):
                 raise ValueError(f'[ERROR]: Non-existent pool type "{type}"!')
 
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
-        return self.pool(self.kernel_size, self.stride), in_channels
+        return self.pool(
+            self.kernel_size, stride=self.stride, padding=int(self.kernel_size / 2)
+        ), in_channels
 
 
 class Up(LayerGen):
