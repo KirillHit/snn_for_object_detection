@@ -2,6 +2,7 @@
 Layer Generators
 """
 
+import torch
 from torch import nn
 from typing import Tuple, Optional
 import norse.torch as snn
@@ -14,7 +15,7 @@ from models.modules.anchors import AnchorGenerator
 from models.generator import *
 
 
-layers_list = (
+__all__ = (
     "Store",
     "Get",
     "Residual",
@@ -63,6 +64,11 @@ class Get(LayerGen):
 
 
 class Residual(LayerGen):
+    """Summarizes data in storage
+
+    Needed to create residual networks.
+    """
+
     def __init__(self, storage: Storage):
         self.storage = storage
         self.storage.add_requests()
@@ -71,13 +77,17 @@ class Residual(LayerGen):
         shape = self.storage.shape()
         if shape.count(shape[0]) == len(shape):
             raise RuntimeError(
-                "The residual network received tensors of different shapes: "
-                + str(shape)
+                "The residual network received tensors of different shapes: " + str(shape)
             )
         return ResidualModule("residual", self.storage), shape[0]
 
 
 class Dense(LayerGen):
+    """Combines data across channels
+
+    Needed to create dense networks.
+    """
+
     def __init__(self, storage: Storage):
         self.storage = storage
         self.storage.add_requests()
@@ -87,15 +97,24 @@ class Dense(LayerGen):
 
 
 class Anchors(LayerGen):
-    def __init__(
-        self, storage: Storage, sizes: List[int], ratios: List[int], step: int = 1
-    ):
-        self.storage, self.sizes, self.ratios, self.step = storage, sizes, ratios, step
+    """Generates prediction anchors based on the received tensor and stores them in storage
+    
+    Stores anchor boxes in storage only once on first pass
+    """
+
+    def __init__(self, storage: Storage, sizes: torch.Tensor, ratios: torch.Tensor):
+        """
+        :param storage: Storage for anchor boxes
+        :type storage: Storage
+        :param sizes: Box scales (0,1] = S'/S.
+        :type sizes: torch.Tensor
+        :param ratios: Ratio of width to height of boxes (w/h).
+        :type ratios: torch.Tensor
+        """
+        self.storage, self.sizes, self.ratios = storage, sizes, ratios
 
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
-        return AnchorGenerator(
-            self.storage, self.sizes, self.ratios, self.step
-        ), in_channels
+        return AnchorGenerator(self.storage, self.sizes, self.ratios), in_channels
 
 
 class Pass(LayerGen):
@@ -236,9 +255,7 @@ class LIF(LayerGen):
         self.state_storage = state_storage
 
     def get(self, in_channels: int) -> Tuple[SNNCell, int]:
-        module = (
-            snn.LIFCell() if not self.state_storage else StateStorage(snn.LIFCell())
-        )
+        module = snn.LIFCell() if not self.state_storage else StateStorage(snn.LIFCell())
         return module, in_channels
 
 

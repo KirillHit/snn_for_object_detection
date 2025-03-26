@@ -146,8 +146,6 @@ def multibox_detection(
         below_min_idx = conf < pos_threshold
         class_id[below_min_idx] = -1
         conf[below_min_idx] = 1 - conf[below_min_idx]
-        pred_info = torch.cat(
-            (class_id.unsqueeze(1), conf.unsqueeze(1), predicted_bb), dim=1
-        )
+        pred_info = torch.cat((class_id.unsqueeze(1), conf.unsqueeze(1), predicted_bb), dim=1)
         out.append(pred_info)
     return torch.stack(out)

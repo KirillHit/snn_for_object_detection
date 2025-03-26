@@ -17,10 +17,10 @@ from norse.torch.module.snn import SNNCell, _merge_states
 from norse.torch.utils.state import _is_module_stateful
 
 
-common_list = (
+__all__ = (
     "ListState",
     "LayerGen",
-    "ModelGen",
+    "ModelGenerator",
     "Storage",
     "StorageGetter",
     "ResidualModule",
@@ -37,7 +37,6 @@ class LayerGen:
     The ``get`` method must initialize the network module and pass it to the generator.
 
     .. warning::
-
         This class can only be used as a base class for inheritance.
     """
 
@@ -53,12 +52,10 @@ class LayerGen:
         raise NotImplementedError
 
 
-class ModelGen(nn.Module):
-    """Model generator for the network"""
+class ModelGenerator(nn.Module):
+    """Tool for generating and processing a model from a list of layer generators"""
 
-    def __init__(
-        self, cfg: List[LayerGen], in_channels: int, init_weights: bool = True
-    ):
+    def __init__(self, cfg: List[LayerGen], in_channels: int, init_weights: bool = True):
         """
         :param cfg: Description of the network configuration.
         :type cfg: List[LayerGen]
@@ -71,16 +68,11 @@ class ModelGen(nn.Module):
         super().__init__()
         self.net = nn.ModuleList()
         self.state_layers: List[bool] = []
-
-        channels = in_channels
+        self.out_channels = in_channels
         for layer_gen in cfg:
-            layer, channels = layer_gen.get(channels)
+            layer, self.out_channels = layer_gen.get(self.out_channels)
             self.net.append(layer)
             self.state_layers.append(_is_module_stateful(layer))
-
-        self.out_channels = channels
-        """The number of channels that will be after applying this block to 
-        a tensor with ``in_channels`` channels."""
 
         if init_weights:
             self._init_weights()
@@ -99,15 +91,6 @@ class ModelGen(nn.Module):
     def forward(
         self, X: torch.Tensor, state: ListState | None = None
     ) -> Tuple[torch.Tensor, ListState]:
-        """Direct block pass
-
-        :param X: Input tensor. Shape is Shape [batch, channel, h, w].
-        :type X: torch.Tensor
-        :param state: List of block layer states. Defaults to None.
-        :type state: ListState | None, optional
-        :return: The resulting tensor and the list of new states.
-        :rtype: Tuple[torch.Tensor, ListState]
-        """
         state = [None] * len(self.net) if state is None else state
         for idx, (layer, is_state) in enumerate(zip(self.net, self.state_layers)):
             if is_state:
@@ -118,12 +101,7 @@ class ModelGen(nn.Module):
 
 
 class Storage(nn.Module):
-    """
-    Stores the forward pass values
-
-    It is intended for use in feature pyramids, where you need to get multiple
-    matrices from different places in the network.
-    """
+    """Stores the forward pass values"""
 
     def __init__(self):
         super().__init__()
@@ -159,7 +137,8 @@ class Storage(nn.Module):
     def shape(self) -> List[int]:
         """Returns a list of channel values for the expected data
 
-        The method does not analyze the current data, but relies on the data received via the add_input method.
+        The method does not analyze the current data, but relies on the data received
+        via the add_input method.
         """
         return self.channels
 
@@ -186,12 +165,25 @@ class StorageGetter(nn.Module):
         self.storage, self.idx = storage, idx
 
     def forward(self, X=None) -> torch.Tensor:
-        """Store the input tensor and returns it back"""
         return self.storage.get()[self.idx]
 
 
 class ResidualModule(nn.Module):
+    """The class combines data stored in the storage by summing or concatenating
+
+    It is used to create dense or residual networks.
+    """
+
     def __init__(self, type: str, storage: Storage):
+        """
+        :param type: Method of combining:
+            
+            * "residual" - summarizes data
+            * "dense" - combines data across channels
+        :type type: str
+        :param storage: Storage to merge
+        :type storage: Storage
+        """
         super().__init__()
         self.storage = storage
         types = {"residual": self._residual, "dense": self._dense}

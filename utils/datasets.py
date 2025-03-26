@@ -49,7 +49,7 @@ class PropheseeDataModule(L.LightningDataModule):
         :param time_shift: The number of time steps that labels are moved forward relative to their
             frame. Defaults to 8.
         :type time_shift: int, optional
-        :param one_label: If true labeling is provided for the last time step only. 
+        :param one_label: If true labeling is provided for the last time step only.
             Intended for training. Defaults to True.
         :type one_label: bool, optional
         :param resize: Desired output size. See :external:class:`torchvision.transforms.Resize`.
@@ -61,9 +61,7 @@ class PropheseeDataModule(L.LightningDataModule):
         self.save_hyperparameters()
 
         if self.hparams.dataset not in ("gen1", "1mpx"):
-            raise ValueError(
-                f'The dataset parameter cannot be "{self.hparams.dataset}"!'
-            )
+            raise ValueError(f'The dataset parameter cannot be "{self.hparams.dataset}"!')
 
     def get_labels(self) -> List[str]:
         """Returns a list of class names"""
@@ -81,9 +79,7 @@ class PropheseeDataModule(L.LightningDataModule):
                     "traffic lights",
                 ]
             case _:
-                raise ValueError(
-                    f'The dataset parameter cannot be "{self.hparams.dataset}"!'
-                )
+                raise ValueError(f'The dataset parameter cannot be "{self.hparams.dataset}"!')
 
     def setup(self, stage: str) -> None:
         if stage == "fit":
@@ -140,9 +136,7 @@ class PropheseeDataModule(L.LightningDataModule):
         )
         return features, targets
 
-    def _create_dataset(
-        self, gt_files: List[str], data_files: List[str]
-    ) -> IterableDataset:
+    def _create_dataset(self, gt_files: List[str], data_files: List[str]) -> IterableDataset:
         """Initializes dataset
 
         :param gt_files: List of files with targets
@@ -270,7 +264,8 @@ class PropheseeDatasetBase(IterableDataset):
     def _labels_prepare(self, labels: List[np.ndarray]) -> List[torch.Tensor]:
         """Converts labels from numpy.ndarray format to torch
 
-        :param labels: Labels in numpy format ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
+        :param labels: Labels in numpy format 
+            ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
         :type labels: List[np.ndarray]
         :return: Labels in torch format (ts [ms], class id, xlu, ylu, xrd, yrd)
         :rtype: List[torch.Tensor]

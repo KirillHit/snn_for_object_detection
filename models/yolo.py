@@ -2,8 +2,11 @@
 Network configuration similar to yolo8
 """
 
+import torch
+from typing import List
 from models.soda import SODa
-from models.layer_gen import *
+from models.generator import *
+from models.layers import *
 
 
 class Yolo(SODa):
@@ -36,11 +39,9 @@ class Yolo(SODa):
         min = 0.08
         size_per_pix = 3
 
-        sizes = torch.arange(
-            min, max, (max - min) / (3 * size_per_pix), dtype=torch.float32
-        )
+        sizes = torch.arange(min, max, (max - min) / (3 * size_per_pix))
         self.sizes = sizes.reshape((-1, size_per_pix))
-        self.ratios = torch.tensor((0.5, 1.0, 2), dtype=torch.float32)
+        self.ratios = torch.tensor((0.5, 1.0, 2))
 
         self.num_anchors = size_per_pix * len(self.ratios)
         self.num_class_out = self.num_anchors * (self.hparams.num_classes + 1)
@@ -149,7 +150,7 @@ class Yolo(SODa):
         dense_storage = Storage()
         net = []
         for _ in range(n):
-            net + [self._bottleneck(shortcut), Store(dense_storage)]
+            net + [*self._bottleneck(shortcut), Store(dense_storage)]
         return (
             Store(in_storage),
             Conv(int(out_channels / 2), 1),

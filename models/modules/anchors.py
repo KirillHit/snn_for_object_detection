@@ -1,4 +1,4 @@
-"""Extracts multiple region proposals on the input image"""
+"""Tool for generating prediction anchors"""
 
 import torch
 from torch import nn
@@ -6,14 +6,13 @@ from models.generator import Storage
 
 
 class AnchorGenerator(nn.Module):
-    """Extracts multiple region proposals on the input image"""
+    """Tool for generating prediction anchors"""
 
     def __init__(
         self,
         storage: Storage,
         sizes: torch.Tensor,
         ratios: torch.Tensor,
-        step: int = 1,
     ) -> None:
         """
         :param storage: Storage in which the anchors will be stored.
@@ -22,17 +21,15 @@ class AnchorGenerator(nn.Module):
         :type sizes: torch.Tensor
         :param ratios: Ratio of width to height of boxes (w/h).
         :type ratios: torch.Tensor
-        :param step: Box per pixel. Defaults to 1.
-        :type step: int, optional
         """
         super().__init__()
-        self.storage, self.step, self.sizes, self.ratios = storage, step, sizes, ratios
+        self.storage, self.sizes, self.ratios = storage, sizes, ratios
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Generate reference blocks with different shapes,
         centered on each pixel and save them in storage
 
-        Returns the input tensor back
+        Returns input tensor back
 
         :param X: Feature map
         :type X: torch.Tensor
@@ -62,16 +59,8 @@ class AnchorGenerator(nn.Module):
 
         # Generate `boxes_per_pixel` number of heights and widths that are later
         # used to create anchor box corner coordinates (xmin, xmax, ymin, ymax)
-        w = (
-            torch.cat([self.sizes * ratio for ratio in self.ratios])
-            * in_height
-            / in_width
-        )
-        h = (
-            torch.cat([self.sizes / ratio for ratio in self.ratios])
-            * in_width
-            / in_height
-        )
+        w = torch.cat([self.sizes * ratio for ratio in self.ratios]) * in_height / in_width
+        h = torch.cat([self.sizes / ratio for ratio in self.ratios]) * in_width / in_height
         # Divide by 2 to get half height and half width
         anchor_manipulations = (
             torch.stack((-w, -h, w, h)).T.repeat(in_height * in_width, 1) / 2
@@ -79,8 +68,8 @@ class AnchorGenerator(nn.Module):
 
         # Each center point will have `boxes_per_pixel` number of anchor boxes, so
         # generate a grid of all anchor box centers with `boxes_per_pixel` repeats
-        out_grid = torch.stack(
-            [shift_x, shift_y, shift_x, shift_y], dim=1
-        ).repeat_interleave(boxes_per_pixel, dim=0)
+        out_grid = torch.stack([shift_x, shift_y, shift_x, shift_y], dim=1).repeat_interleave(
+            boxes_per_pixel, dim=0
+        )
 
         self.anchors = out_grid + anchor_manipulations

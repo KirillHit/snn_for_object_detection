@@ -36,7 +36,7 @@ class SODa(L.LightningModule):
         learning_rate: float = 0.001,
         state_storage: bool = False,
         init_weights: bool = True,
-        in_channels:int = 2,
+        in_channels: int = 2,
         plotter: Optional[Plotter] = None,
     ):
         """
@@ -88,9 +88,11 @@ class SODa(L.LightningModule):
         self.storage_box = Storage()
         self.storage_cls = Storage()
         self.storage_anchor = Storage()
-        
+
     def _prepare_net(self):
-        self.net = ModelGen(self.get_cfgs(), self.hparams.in_channels, self.hparams.init_weights)
+        self.net = ModelGenerator(
+            self.get_cfgs(), self.hparams.in_channels, self.hparams.init_weights
+        )
 
     def get_cfgs(self) -> List[LayerGen]:
         """Generates and returns a network configuration
@@ -106,9 +108,7 @@ class SODa(L.LightningModule):
     def configure_optimizers(self) -> torch.optim.Optimizer:
         return torch.optim.Adamax(self.parameters(), lr=self.hparams.learning_rate)
 
-    def forward(
-        self, X: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, X: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         state = None
         for ts in X:
             preds, state = self._forward_impl(ts, state)
@@ -128,9 +128,7 @@ class SODa(L.LightningModule):
         )
         return loss
 
-    def test_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
-    ) -> torch.Tensor:
+    def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         preds = self.forward(batch[0][self._rand_start_time() :])
         loss = self._loss(preds, batch[1])
         self.log("test_loss", loss, batch_size=batch[0].shape[1], sync_dist=True)
@@ -170,9 +168,7 @@ class SODa(L.LightningModule):
         video.append(self.plotter.apply(ts, preds, batch[1][0]))
         self.plotter(video, self.trainer.datamodule.hparams.time_step, str(batch_idx))
 
-    def predict(
-        self, X: torch.Tensor, state: ListState | None
-    ) -> Tuple[torch.Tensor, ListState]:
+    def predict(self, X: torch.Tensor, state: ListState | None) -> Tuple[torch.Tensor, ListState]:
         """Prediction method for inference
 
         .. code-block:: python
@@ -196,9 +192,7 @@ class SODa(L.LightningModule):
         """
         preds, state = self._forward_impl(X.unsqueeze(0), state)
         anchors, cls, bbox = preds
-        prep_pred = box.multibox_detection(
-            F.softmax(cls, dim=2), bbox, anchors
-        ).squeeze(0)
+        prep_pred = box.multibox_detection(F.softmax(cls, dim=2), bbox, anchors).squeeze(0)
         prep_pred = prep_pred[prep_pred[:, 0] >= 0]
         prep_pred[:, 2:] = torch.clamp(prep_pred[:, 2:], min=0.0, max=1.0)
         return prep_pred, state
@@ -252,9 +246,7 @@ class SODa(L.LightningModule):
         bbox_offset, bbox_mask, class_labels = self.roi_blk(anchors, labels)
         _, _, num_classes = cls_preds.shape
 
-        cls = self.cls_loss.forward(
-            cls_preds.reshape(-1, num_classes), class_labels.reshape(-1)
-        )
+        cls = self.cls_loss.forward(cls_preds.reshape(-1, num_classes), class_labels.reshape(-1))
         bbox = self.box_loss.forward(bbox_preds * bbox_mask, bbox_offset * bbox_mask)
 
         mask = class_labels.reshape(-1) > 0
@@ -284,9 +276,7 @@ class SODa(L.LightningModule):
         labels: torch.Tensor,
     ):
         anchors, cls_preds, bbox_preds = preds
-        prep_pred = box.multibox_detection(
-            F.softmax(cls_preds, dim=2), bbox_preds, anchors
-        )
+        prep_pred = box.multibox_detection(F.softmax(cls_preds, dim=2), bbox_preds, anchors)
         map_preds = []
         map_target = []
         for batch, label in zip(prep_pred, labels):

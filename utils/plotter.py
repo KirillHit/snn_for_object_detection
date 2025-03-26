@@ -42,9 +42,7 @@ class Plotter:
         ]
         self.labels = None
 
-    def __call__(
-        self, video: List[np.ndarray], interval: int, batch_idx: str = ""
-    ) -> None:
+    def __call__(self, video: List[np.ndarray], interval: int, batch_idx: str = "") -> None:
         """Displays frames obtained by the apply method and saves them
 
         :param video: List of frames
@@ -140,9 +138,7 @@ class Plotter:
                 lineType=cv2.LINE_AA,
             )
 
-    def _draw_target_boxes(
-        self, image: np.ndarray, target: Optional[torch.Tensor]
-    ) -> None:
+    def _draw_target_boxes(self, image: np.ndarray, target: Optional[torch.Tensor]) -> None:
         if target is None:
             return
         for box in target:
@@ -157,9 +153,7 @@ class Plotter:
                 lineType=cv2.LINE_AA,
             )
 
-    def _show_video(
-        self, video: List[np.ndarray], interval: int, batch_idx: str = ""
-    ) -> None:
+    def _show_video(self, video: List[np.ndarray], interval: int, batch_idx: str = "") -> None:
         key = ord("r")
         while key == ord("r") or (key != ord("q") and cv2.waitKey() != ord("q")):
             for img in video:
@@ -169,9 +163,7 @@ class Plotter:
                     break
         cv2.destroyWindow("Res " + batch_idx)
 
-    def _save_video(
-        self, video: List[np.ndarray], interval: int, batch_idx: str = ""
-    ) -> None:
+    def _save_video(self, video: List[np.ndarray], interval: int, batch_idx: str = "") -> None:
         h, w, _ = video[0].shape
         os.makedirs(self.file_path, exist_ok=True)
         out = cv2.VideoWriter(
