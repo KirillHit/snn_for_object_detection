@@ -185,7 +185,7 @@ class SODa(L.LightningModule):
         :type state: ListState | None
         :return: Returns a list of two elements:
 
-            1. **Predictions**: A tensor of size [number of predictions, 4],
+            1. **Predictions**: A tensor of size [number of predictions, 6],
                 where each prediction contains a vector (class id, confidence, lux, luy, rdx, rdy).
             2. **State**: New state of the detector
         :rtype: Tuple[torch.Tensor, ListState]
@@ -265,7 +265,17 @@ class SODa(L.LightningModule):
             {
                 k: result[k]
                 for k in result.keys()
-                if k in ["map", "map_50", "mar_1", "mar_10", "mar_100"]
+                if k
+                in [
+                    "map",
+                    "map_50",
+                    "map_small",
+                    "map_medium",
+                    "map_large",
+                    "mar_1",
+                    "mar_10",
+                    "mar_100",
+                ]
             },
         )
         self.map_metric.reset()

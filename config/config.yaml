@@ -22,16 +22,16 @@ model:
 
 data:
   data_dir: ./data
-  dataset: gen1
-  batch_size: 10
-  num_workers: 4
+  dataset: 1mpx
+  batch_size: 8
+  num_workers: 12
   num_load_file: 8
   num_steps: 64
-  time_step: 8
+  time_step: 16
   time_shift: 0
   one_label: true
   # Must be a multiple of 32 for yolo
-  resize: [256, 320]
+  resize: [352, 640]
 
 trainer:
   accelerator: gpu
@@ -48,7 +48,7 @@ trainer:
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
       init_args:
         monitor: map
-        save_top_k: 4
+        save_top_k: 2
         mode: max
     - class_path: lightning.pytorch.callbacks.ModelSummary
       init_args:
