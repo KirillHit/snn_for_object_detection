@@ -40,7 +40,7 @@ autoclass_content = "both"  # Add __init__ doc (ie. params) to class summaries
 autodoc_inherit_docstrings = True  # If no docstring, inherit from base class
 add_module_names = False  # Remove namespaces from class/method signatures
 
-html_static_path = ["../../_static"]
+html_static_path = ["_static"]
 templates_path = ["_templates"]
 exclude_patterns = []
 

@@ -35,6 +35,7 @@ class Yolo(SODa):
         self._prepare_net()
 
     def _out_configure(self):
+        # TODO
         max = 0.75
         min = 0.08
         size_per_pix = 3
