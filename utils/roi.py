@@ -1,7 +1,6 @@
 """Label anchor boxes using ground-truth bounding boxes"""
 
 import torch
-from tqdm import tqdm
 import utils.box as box
 
 
@@ -37,7 +36,7 @@ class RoI:
         device, num_anchors = anchors.device, anchors.shape[0]
         batch_offset, batch_mask, batch_class_labels = [], [], []
         for i in range(batch_size):
-            label = labels[i, :, :]
+            label = labels[i][labels[i, :, 0] >= 0]
             anchors_bbox_map = self._assign_anchor_to_box(label[:, 1:], anchors)
             bbox_mask = ((anchors_bbox_map >= 0).float().unsqueeze(-1)).repeat(1, 4)
             # Initialize class labels and assigned bounding box coordinates with zeros
@@ -87,7 +86,22 @@ class RoI:
         mask = max_ious >= self.iou_threshold
         anc_i = torch.nonzero(mask).reshape(-1)
         if len(anc_i) == 0:
-            tqdm.write("[WARN]: There is no suitable anchor")
+            print("[WARN]: There is no suitable anchor")
+            print(ground_truth)
+            print("Sizes:")
+            print(
+                (ground_truth[:, 2] - ground_truth[:, 0])
+                * (ground_truth[:, 3] - ground_truth[:, 1])
+            )
+            print("Ratios:")
+            print(
+                (ground_truth[:, 2] - ground_truth[:, 0])
+                / (ground_truth[:, 3] - ground_truth[:, 1])
+            )
+            print("Coord X:")
+            print((ground_truth[:, 2] - ground_truth[:, 0]) / 2)
+            print("Coord Y:")
+            print((ground_truth[:, 3] - ground_truth[:, 1]) / 2)
         box_j = indices[mask]
         # Each anchor is assigned a gt_box with the highest iou if it is greater than the threshold
         anchors_box_map[anc_i] = box_j
