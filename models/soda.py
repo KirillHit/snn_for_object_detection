@@ -269,9 +269,6 @@ class SODa(L.LightningModule):
                 in [
                     "map",
                     "map_50",
-                    "map_small",
-                    "map_medium",
-                    "map_large",
                     "mar_1",
                     "mar_10",
                     "mar_100",

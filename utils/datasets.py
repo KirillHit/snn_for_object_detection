@@ -14,6 +14,17 @@ import lightning as L
 import torchvision.transforms as transforms
 
 
+def _stack_data(batch):
+    """Combines samples into a batch taking into account the time dimension"""
+    features = torch.stack([sample[0] for sample in batch], dim=1)
+    targets = pad_sequence(
+        [sample[1] for sample in batch],
+        batch_first=True,
+        padding_value=-1,
+    )
+    return features, targets
+
+
 class PropheseeDataModule(L.LightningDataModule):
     """Prophesee gen1 and 1mpx datasets"""
 
@@ -122,19 +133,9 @@ class PropheseeDataModule(L.LightningDataModule):
             dataset,
             batch_size=self.hparams.batch_size,
             num_workers=self.hparams.num_workers,
-            collate_fn=self._stack_data,
+            collate_fn=_stack_data,
             persistent_workers=True,
         )
-
-    def _stack_data(self, batch):
-        """Combines samples into a batch taking into account the time dimension"""
-        features = torch.stack([sample[0] for sample in batch], dim=1)
-        targets = pad_sequence(
-            [sample[1] for sample in batch],
-            batch_first=True,
-            padding_value=-1,
-        )
-        return features, targets
 
     def _create_dataset(self, gt_files: List[str], data_files: List[str]) -> IterableDataset:
         """Initializes dataset
@@ -264,7 +265,7 @@ class PropheseeDatasetBase(IterableDataset):
     def _labels_prepare(self, labels: List[np.ndarray]) -> List[torch.Tensor]:
         """Converts labels from numpy.ndarray format to torch
 
-        :param labels: Labels in numpy format 
+        :param labels: Labels in numpy format
             ('ts [us]', 'x', 'y', 'w', 'h', 'class_id', 'confidence', 'track_id')
         :type labels: List[np.ndarray]
         :return: Labels in torch format (ts [ms], class id, xlu, ylu, xrd, yrd)

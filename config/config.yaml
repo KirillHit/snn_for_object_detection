@@ -1,12 +1,12 @@
 # ckpt_path: "nets/tiny_yolo/tiny_yolo_gen1.ckpt"
 
 model:
-  class_path: models.Yolo
+  class_path: models.TinyYolo
   init_args:
-    model: n
+    model: l
     num_classes: 2
     loss_ratio: 0.04
-    time_window: 32
+    time_window: 8
     iou_threshold: 0.4
     learning_rate: 0.001
     state_storage: false
@@ -22,16 +22,17 @@ model:
 
 data:
   data_dir: ./data
-  dataset: 1mpx
+  dataset: gen1
   batch_size: 8
-  num_workers: 12
+  num_workers: 8
   num_load_file: 8
-  num_steps: 64
+  num_steps: 32
   time_step: 16
   time_shift: 0
   one_label: true
   # Must be a multiple of 32 for yolo
-  resize: [352, 640]
+  #resize: [352, 640] # for 1mpx
+  resize: [256, 320] # for gen1
 
 trainer:
   accelerator: gpu
@@ -40,14 +41,9 @@ trainer:
   num_nodes: 1
   precision: null
   callbacks:
-    - class_path: lightning.pytorch.callbacks.early_stopping.EarlyStopping
-      init_args:
-        monitor: map
-        mode: max
-        patience: 30
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
       init_args:
-        monitor: map
+        monitor: map_50
         save_top_k: 2
         mode: max
     - class_path: lightning.pytorch.callbacks.ModelSummary
@@ -59,18 +55,18 @@ trainer:
   max_steps: -1
   min_steps: null
   max_time: null
-  limit_train_batches: 100
+  limit_train_batches: 1000
   limit_val_batches: 100
   limit_test_batches: 1000
   limit_predict_batches: null
   overfit_batches: 0.0
-  check_val_every_n_epoch: 10
+  check_val_every_n_epoch: 1
   num_sanity_val_steps: 0
   log_every_n_steps: 20
-  enable_checkpointing: True
+  enable_checkpointing: true
   accumulate_grad_batches: 1
   gradient_clip_algorithm: null
-  use_distributed_sampler: true
+  use_distributed_sampler: false
   profiler: null
   detect_anomaly: false
   barebones: false

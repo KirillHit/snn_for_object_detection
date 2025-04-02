@@ -35,7 +35,6 @@ class TinyYolo(SODa):
         self._prepare_net()
 
     def _out_configure(self):
-        # TODO
         max = 0.75
         min = 0.08
         size_per_pix = 3
@@ -51,17 +50,18 @@ class TinyYolo(SODa):
     def get_cfgs(self) -> List[LayerGen]:
         storage_detect = Storage()
         return [
+            *self._conv(int(64 * self.w), 3, 2),
+            *self._c2f(int(64 * self.w), int(2 * self.d)),
             *self._conv(int(128 * self.w), 3, 2),
             *self._c2f(int(128 * self.w), int(3 * self.d)),
             *self._conv(int(256 * self.w), 3, 2),
-            *self._c2f(int(256 * self.w), int(6 * self.d)),
+            *self._c2f(int(256 * self.w), int(4 * self.d)),
             Store(storage_detect),
-            *self._conv(int(512 * self.w), 3, 2),
-            *self._c2f(int(512 * self.w), int(6 * self.d)),
+            *self._conv(int(256 * self.w), 3, 2),
+            *self._c2f(int(256 * self.w), int(3 * self.d)),
             Store(storage_detect),
-            *self._conv(int(512 * self.w * self.r), 3, 2),
-            *self._c2f(int(512 * self.w * self.r), int(3 * self.d)),
-            *self._sppf(),
+            *self._conv(int(256 * self.w * self.r), 3, 2),
+            *self._c2f(int(256 * self.w * self.r), int(2 * self.d)),
             Store(storage_detect),
             *self._detect(storage_detect, 0),
             *self._detect(storage_detect, 1),
@@ -77,6 +77,8 @@ class TinyYolo(SODa):
         return [
             Get(storage_detect, idx),
             Anchors(self.storage_anchor, self.sizes[idx], self.ratios),
+            Conv(kernel_size=1),
+            Norm(),
             LI(state_storage=self.hparams.state_storage),
             Tanh(),
             Store(storage),
@@ -101,21 +103,6 @@ class TinyYolo(SODa):
             return [Store(storage), *net, Store(storage), Residual(storage)]
         else:
             return net
-
-    def _sppf(self, out_channels: int = None):
-        storage = Storage()
-        return (
-            Conv(out_channels, kernel_size=1, stride=1),
-            Store(storage),
-            Pool("M", kernel_size=5, stride=1),
-            Store(storage),
-            Pool("M", kernel_size=5, stride=1),
-            Store(storage),
-            Pool("M", kernel_size=5, stride=1),
-            Store(storage),
-            Dense(storage),
-            Conv(out_channels, kernel_size=1, stride=1),
-        )
 
     def _c2f(self, out_channels: int, n: int, shortcut: bool = True):
         in_storage = Storage()
