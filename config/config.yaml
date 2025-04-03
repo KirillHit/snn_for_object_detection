@@ -1,9 +1,9 @@
-# ckpt_path: "nets/tiny_yolo/tiny_yolo_gen1.ckpt"
+#ckpt_path: "lightning_logs/version_129/checkpoints/epoch=1-step=200.ckpt"
 
 model:
-  class_path: models.TinyYolo
+  class_path: models.Yolo
   init_args:
-    model: l
+    model: m
     num_classes: 2
     loss_ratio: 0.04
     time_window: 8
@@ -14,7 +14,7 @@ model:
     plotter:
       class_path: utils.Plotter
       init_args:
-        threshold: 0.8
+        threshold: 0.01
         show_video: true
         save_video: false
         file_path: log
@@ -23,11 +23,11 @@ model:
 data:
   data_dir: ./data
   dataset: gen1
-  batch_size: 8
-  num_workers: 8
+  batch_size: 6
+  num_workers: 6
   num_load_file: 8
   num_steps: 32
-  time_step: 16
+  time_step: 8
   time_shift: 0
   one_label: true
   # Must be a multiple of 32 for yolo

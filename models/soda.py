@@ -8,6 +8,7 @@ from torch.nn import functional as F
 import lightning as L
 import torchmetrics.detection
 from typing import Tuple, Optional, List
+from torchvision.transforms.functional import to_pil_image
 
 from utils.roi import RoI
 from utils.plotter import Plotter
@@ -138,6 +139,9 @@ class SODa(L.LightningModule):
     def on_test_epoch_end(self):
         self._map_compute()
 
+    def on_validation_epoch_start(self):
+        self.plotter.labels = self.trainer.datamodule.get_labels()
+
     def validation_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> torch.Tensor:
@@ -145,16 +149,27 @@ class SODa(L.LightningModule):
         loss = self._loss(preds, batch[1])
         self.log("val_loss", loss, batch_size=batch[0].shape[1], sync_dist=True)
         self._map_estimate(preds, batch[1])
+        if not batch_idx % 20:
+            self._log_image(batch[0], preds, batch[1], batch_idx)
         return loss
+
+    def _log_image(self, img, preds, labels, idx):
+        anchors, cls_preds, bbox_preds = preds
+        prep_pred = box.multibox_detection(
+            F.softmax(cls_preds[0], dim=1).unsqueeze(0), bbox_preds[0].unsqueeze(0), anchors
+        ).squeeze(0)
+        # img = torch.from_numpy(self.plotter.apply(img[-1, 0], prep_pred, labels[0])).permute((2, 0, 1)).flip(0)
+        self.logger.experiment["training/images"].append(
+            to_pil_image(
+                self.plotter.apply(img[-1, 0], prep_pred, labels[0]),
+                description=f"Prediction: {idx}",
+            )
+        )
 
     def on_validation_epoch_end(self):
         self._map_compute()
 
     def on_predict_epoch_start(self):
-        if self.plotter is None:
-            raise RuntimeError(
-                "To display predictions, you must initialize the plotter for the model"
-            )
         self.plotter.labels = self.trainer.datamodule.get_labels()
 
     def predict_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int):
@@ -163,7 +178,11 @@ class SODa(L.LightningModule):
         input = batch[0][:, 0].squeeze(1)
         for idx, ts in enumerate(input):
             preds, state = self.predict(ts, state)
-            preds = None if idx < self.hparams.time_window else preds
+            preds = (
+                None
+                if idx < (self.trainer.datamodule.hparams.num_steps - self.hparams.time_window)
+                else preds
+            )
             video.append(self.plotter.apply(ts, preds, None))
         video.append(self.plotter.apply(ts, preds, batch[1][0]))
         self.plotter(video, self.trainer.datamodule.hparams.time_step, str(batch_idx))

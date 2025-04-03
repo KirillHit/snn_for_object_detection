@@ -1,5 +1,5 @@
 from lightning.pytorch.cli import LightningCLI
-from models import SODa, Yolo
+from models import *
 from utils import PropheseeDataModule
 
 

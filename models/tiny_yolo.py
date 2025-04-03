@@ -74,7 +74,7 @@ class TinyYolo(SODa):
         idx: int,
     ) -> List[LayerGen]:
         storage = Storage()
-        return [
+        return (
             Get(storage_detect, idx),
             Anchors(self.storage_anchor, self.sizes[idx], self.ratios),
             Conv(kernel_size=1),
@@ -87,7 +87,7 @@ class TinyYolo(SODa):
             Get(storage),
             Conv(self.num_class_out, 1),
             Store(self.storage_cls),
-        ]
+        )
 
     def _conv(self, out_channels: int = None, kernel: int = 3, stride: int = 1):
         return (
