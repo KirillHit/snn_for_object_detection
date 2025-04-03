@@ -102,6 +102,7 @@ class Yolo(SODa):
             Anchors(self.storage_anchor, self.sizes[idx], self.ratios),
             *self._conv(),
             *self._conv(),
+            Norm(),
             LI(state_storage=self.hparams.state_storage),
             Tanh(),
             Conv(self.num_box_out, 1),
@@ -109,6 +110,7 @@ class Yolo(SODa):
             Get(storage_detect, idx),
             *self._conv(),
             *self._conv(),
+            Norm(),
             LI(state_storage=self.hparams.state_storage),
             Tanh(),
             Conv(self.num_class_out, 1),
@@ -135,11 +137,11 @@ class Yolo(SODa):
         return (
             Conv(out_channels, kernel_size=1, stride=1),
             Store(storage),
-            Pool("M", kernel_size=5, stride=1),
+            Pool("S", kernel_size=5, stride=1),
             Store(storage),
-            Pool("M", kernel_size=5, stride=1),
+            Pool("S", kernel_size=5, stride=1),
             Store(storage),
-            Pool("M", kernel_size=5, stride=1),
+            Pool("S", kernel_size=5, stride=1),
             Store(storage),
             Dense(storage),
             Conv(out_channels, kernel_size=1, stride=1),
@@ -150,7 +152,7 @@ class Yolo(SODa):
         dense_storage = Storage()
         net = []
         for _ in range(n):
-            net + [*self._bottleneck(shortcut), Store(dense_storage)]
+            net += [*self._bottleneck(shortcut), Store(dense_storage)]
         return (
             Store(in_storage),
             Conv(int(out_channels / 2), 1),

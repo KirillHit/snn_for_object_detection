@@ -6,6 +6,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 import lightning as L
+from lightning.pytorch.loggers import NeptuneLogger
 import torchmetrics.detection
 from typing import Tuple, Optional, List
 from torchvision.transforms.functional import to_pil_image
@@ -158,13 +159,21 @@ class SODa(L.LightningModule):
         prep_pred = box.multibox_detection(
             F.softmax(cls_preds[0], dim=1).unsqueeze(0), bbox_preds[0].unsqueeze(0), anchors
         ).squeeze(0)
-        # img = torch.from_numpy(self.plotter.apply(img[-1, 0], prep_pred, labels[0])).permute((2, 0, 1)).flip(0)
-        self.logger.experiment["training/images"].append(
-            to_pil_image(
-                self.plotter.apply(img[-1, 0], prep_pred, labels[0]),
-                description=f"Prediction: {idx}",
+        if isinstance(self.logger, NeptuneLogger):
+            self.logger.experiment["training/images"].append(
+                to_pil_image(
+                    self.plotter.apply(img[-1, 0], prep_pred, labels[0]),
+                ),
+                description=f"Epoch: {self.trainer.current_epoch}",
             )
-        )
+        else:
+            self.logger.experiment.add_image(
+                "images",
+                torch.from_numpy(self.plotter.apply(img[-1, 0], prep_pred, labels[0]))
+                .permute((2, 0, 1))
+                .flip(0),
+                idx,
+            )
 
     def on_validation_epoch_end(self):
         self._map_compute()

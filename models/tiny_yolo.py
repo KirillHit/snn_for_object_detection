@@ -17,20 +17,11 @@ class TinyYolo(SODa):
 
     def __init__(self, model: str, *args, **kwargs):
         """
-        :param model: model type - n, s, m, l, x
+        :param model: model type - #TODO
         :type model: str
         :raises KeyError: Invalid model type.
         """
         super().__init__(*args, **kwargs)
-        model_types = {
-            "n": (1 / 3, 0.25, 2.0),
-            "s": (1 / 3, 0.50, 2.0),
-            "m": (2 / 3, 0.75, 1.5),
-            "l": (1.0, 1.00, 1.0),
-            "x": (1.0, 1.25, 1.0),
-        }
-        # d: depth_multiple, w: width_multiple, r: ratio
-        self.d, self.w, self.r = model_types[model]
         self._out_configure()
         self._prepare_net()
 
@@ -50,18 +41,18 @@ class TinyYolo(SODa):
     def get_cfgs(self) -> List[LayerGen]:
         storage_detect = Storage()
         return [
-            *self._conv(int(64 * self.w), 3, 2),
-            *self._c2f(int(64 * self.w), int(2 * self.d)),
-            *self._conv(int(128 * self.w), 3, 2),
-            *self._c2f(int(128 * self.w), int(3 * self.d)),
-            *self._conv(int(256 * self.w), 3, 2),
-            *self._c2f(int(256 * self.w), int(4 * self.d)),
+            *self._conv(64, 3, 2),
+            *self._c2f(64, 2),
+            *self._conv(128, 3, 2),
+            *self._c2f(128, 3),
+            *self._conv(256, 3, 2),
+            *self._c2f(256, 4),
             Store(storage_detect),
-            *self._conv(int(256 * self.w), 3, 2),
-            *self._c2f(int(256 * self.w), int(3 * self.d)),
+            *self._conv(256, 3, 2),
+            *self._c2f(256, 3),
             Store(storage_detect),
-            *self._conv(int(256 * self.w * self.r), 3, 2),
-            *self._c2f(int(256 * self.w * self.r), int(2 * self.d)),
+            *self._conv(256, 3, 2),
+            *self._c2f(256, 2),
             Store(storage_detect),
             *self._detect(storage_detect, 0),
             *self._detect(storage_detect, 1),
@@ -109,7 +100,7 @@ class TinyYolo(SODa):
         dense_storage = Storage()
         net = []
         for _ in range(n):
-            net + [*self._bottleneck(shortcut), Store(dense_storage)]
+            net += [*self._bottleneck(shortcut), Store(dense_storage)]
         return (
             Store(in_storage),
             Conv(int(out_channels / 2), 1),

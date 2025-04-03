@@ -75,7 +75,7 @@ class Residual(LayerGen):
 
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
         shape = self.storage.shape()
-        if shape.count(shape[0]) == len(shape):
+        if shape.count(shape[0]) != len(shape):
             raise RuntimeError(
                 "The residual network received tensors of different shapes: " + str(shape)
             )
