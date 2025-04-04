@@ -80,8 +80,7 @@ class ModelGenerator(nn.Module):
     def _init_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight)
-                m.weight.data *= 1.5
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.BatchNorm2d):
@@ -178,7 +177,7 @@ class ResidualModule(nn.Module):
     def __init__(self, type: str, storage: Storage):
         """
         :param type: Method of combining:
-            
+
             * "residual" - summarizes data
             * "dense" - combines data across channels
         :type type: str
