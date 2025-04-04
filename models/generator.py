@@ -80,7 +80,8 @@ class ModelGenerator(nn.Module):
     def _init_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.trunc_normal_(m.weight, mean=0.0, std=0.3, a=-1.0, b=1.0)
+                nn.init.kaiming_normal_(m.weight)
+                m.weight.data *= 1.5
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.BatchNorm2d):

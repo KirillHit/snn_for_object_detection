@@ -1,9 +1,11 @@
-#ckpt_path: "lightning_logs/version_129/checkpoints/epoch=1-step=200.ckpt"
+#ckpt_path: "lightning_logs/epoch=3-step=400.ckpt"
+
+seed_everything: 42
 
 model:
   class_path: models.Yolo
   init_args:
-    model: m
+    model: n
     num_classes: 2
     loss_ratio: 0.04
     time_window: 8
@@ -14,7 +16,7 @@ model:
     plotter:
       class_path: utils.Plotter
       init_args:
-        threshold: 0.01
+        threshold: 0.0
         show_video: true
         save_video: false
         file_path: log
@@ -23,10 +25,10 @@ model:
 data:
   data_dir: ./data
   dataset: gen1
-  batch_size: 6
-  num_workers: 6
+  batch_size: 8
+  num_workers: 4
   num_load_file: 8
-  num_steps: 32
+  num_steps: 42
   time_step: 8
   time_shift: 0
   one_label: true
@@ -53,6 +55,7 @@ trainer:
   max_epochs: -1
   min_epochs: 2500
   max_steps: -1
+  deterministic: true
   min_steps: null
   max_time: null
   limit_train_batches: 1000

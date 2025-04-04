@@ -15,12 +15,7 @@ class TinyYolo(SODa):
     See https://github.com/ultralytics/ultralytics/issues/189.
     """
 
-    def __init__(self, model: str, *args, **kwargs):
-        """
-        :param model: model type - #TODO
-        :type model: str
-        :raises KeyError: Invalid model type.
-        """
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._out_configure()
         self._prepare_net()

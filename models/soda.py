@@ -9,6 +9,7 @@ import lightning as L
 from lightning.pytorch.loggers import NeptuneLogger
 import torchmetrics.detection
 from typing import Tuple, Optional, List
+from torchvision.utils import make_grid
 from torchvision.transforms.functional import to_pil_image
 
 from utils.roi import RoI
@@ -150,29 +151,33 @@ class SODa(L.LightningModule):
         loss = self._loss(preds, batch[1])
         self.log("val_loss", loss, batch_size=batch[0].shape[1], sync_dist=True)
         self._map_estimate(preds, batch[1])
-        if not batch_idx % 20:
-            self._log_image(batch[0], preds, batch[1], batch_idx)
+        if not batch_idx:
+            self._log_image(batch[0], preds, batch[1])
         return loss
 
-    def _log_image(self, img, preds, labels, idx):
+    def _log_image(self, img, preds, labels):
         anchors, cls_preds, bbox_preds = preds
-        prep_pred = box.multibox_detection(
-            F.softmax(cls_preds[0], dim=1).unsqueeze(0), bbox_preds[0].unsqueeze(0), anchors
-        ).squeeze(0)
+        prep_pred = box.multibox_detection(F.softmax(cls_preds, dim=2), bbox_preds, anchors)
+        out = []
+        for one_img, one_pred, one_labels in zip(img[-1], prep_pred, labels):
+            out.append(
+                torch.from_numpy(self.plotter.apply(one_img, one_pred, one_labels))
+                .permute((2, 0, 1))
+                .flip(0)
+            )
+        res_img = make_grid(out, pad_value=255)
         if isinstance(self.logger, NeptuneLogger):
             self.logger.experiment["training/images"].append(
                 to_pil_image(
-                    self.plotter.apply(img[-1, 0], prep_pred, labels[0]),
+                    res_img,
                 ),
-                description=f"Epoch: {self.trainer.current_epoch}",
+                description=f"Epoch: {self.current_epoch}",
             )
         else:
             self.logger.experiment.add_image(
                 "images",
-                torch.from_numpy(self.plotter.apply(img[-1, 0], prep_pred, labels[0]))
-                .permute((2, 0, 1))
-                .flip(0),
-                idx,
+                res_img,
+                self.current_epoch,
             )
 
     def on_validation_epoch_end(self):
