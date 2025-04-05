@@ -2,7 +2,6 @@
 Layer Generators
 """
 
-import torch
 from torch import nn
 from typing import Tuple, Optional
 import norse.torch as snn
@@ -11,7 +10,6 @@ from models.modules.synapse import SynapseCell
 from models.modules.sum_pool import SumPool2d
 from models.modules.lstm import ConvLSTM
 from models.modules.sli import SLICell
-from models.modules.anchors import AnchorGenerator
 from models.generator import *
 
 
@@ -20,7 +18,6 @@ __all__ = (
     "Get",
     "Residual",
     "Dense",
-    "Anchors",
     "Pass",
     "Conv",
     "Norm",
@@ -94,28 +91,6 @@ class Dense(LayerGen):
 
     def get(self, in_channels: int) -> Tuple[nn.Module, int]:
         return ResidualModule("dense", self.storage), sum(self.storage.shape())
-
-
-class Anchors(LayerGen):
-    """Generates prediction anchors based on the received tensor and stores them in storage
-    
-    Stores anchor boxes in storage only once on first pass
-    """
-
-    def __init__(self, storage: Storage, sizes: torch.Tensor, ratios: torch.Tensor):
-        """
-        :param storage: Storage for anchor boxes
-        :type storage: Storage
-        :param sizes: Box scales (0,1] = S'/S.
-        :type sizes: torch.Tensor
-        :param ratios: Ratio of width to height of boxes (w/h).
-        :type ratios: torch.Tensor
-        """
-        self.storage, self.sizes, self.ratios = storage, sizes, ratios
-
-    def get(self, in_channels: int) -> Tuple[nn.Module, int]:
-        return AnchorGenerator(self.storage, self.sizes, self.ratios), in_channels
-
 
 class Pass(LayerGen):
     """A placeholder layer generator that does nothing

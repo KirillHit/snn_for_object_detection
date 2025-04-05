@@ -103,12 +103,19 @@ class ModelGenerator(nn.Module):
 class Storage(nn.Module):
     """Stores the forward pass values"""
 
-    def __init__(self):
+    def __init__(self, auto_reset: bool = True):
+        """
+        :param auto_reset: If true, automatically clears the storage after the last call of 
+            the model generator. Set to False if you want the value to persist after a forward 
+            pass of the model. Defaults to False
+        :type auto_reset: bool, optional
+        """
         super().__init__()
         self.storage = []
         self.channels = []
         self.requests_threshold = 0
         self.requests_idx = 0
+        self.auto_reset = auto_reset
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Store the input tensor and returns it back"""
@@ -149,7 +156,7 @@ class Storage(nn.Module):
     def get(self) -> List[torch.Tensor]:
         """Returns a list of saved tensors"""
         temp = self.storage
-        if self.requests_threshold:
+        if self.auto_reset and self.requests_threshold:
             self.requests_idx += 1
             if self.requests_idx == self.requests_threshold:
                 self.requests_idx = 0

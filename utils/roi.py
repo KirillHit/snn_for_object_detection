@@ -86,22 +86,18 @@ class RoI:
         mask = max_ious >= self.iou_threshold
         anc_i = torch.nonzero(mask).reshape(-1)
         if len(anc_i) == 0:
-            print("[WARN]: There is no suitable anchor")
-            print(ground_truth)
-            print("Sizes:")
+            w = ground_truth[:, 2] - ground_truth[:, 0]
+            h = ground_truth[:, 2] - ground_truth[:, 0]
             print(
-                (ground_truth[:, 2] - ground_truth[:, 0])
-                * (ground_truth[:, 3] - ground_truth[:, 1])
+                f"[WARN]: There is no suitable anchor \
+                \n\tSizes: \
+                \n\t\tW: {w} \
+                \n\t\tH: {h} \
+                \n\tRatios: {h / w} \
+                \n\tCoordinates: \
+                \n\t\tX: {(ground_truth[:, 2] + ground_truth[:, 0]) / 2} \
+                \n\t\tY: {(ground_truth[:, 3] + ground_truth[:, 1]) / 2}",
             )
-            print("Ratios:")
-            print(
-                (ground_truth[:, 2] - ground_truth[:, 0])
-                / (ground_truth[:, 3] - ground_truth[:, 1])
-            )
-            print("Coord X:")
-            print((ground_truth[:, 2] - ground_truth[:, 0]) / 2)
-            print("Coord Y:")
-            print((ground_truth[:, 3] - ground_truth[:, 1]) / 2)
         box_j = indices[mask]
         # Each anchor is assigned a gt_box with the highest iou if it is greater than the threshold
         anchors_box_map[anc_i] = box_j

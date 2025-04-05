@@ -11,6 +11,8 @@ import torchmetrics.detection
 from typing import Tuple, Optional, List
 from torchvision.utils import make_grid
 from torchvision.transforms.functional import to_pil_image
+from torchvision.models.detection.anchor_utils import AnchorGenerator
+from torchvision.models.detection.image_list import ImageList
 
 from utils.roi import RoI
 from utils.plotter import Plotter
@@ -40,6 +42,8 @@ class SODa(L.LightningModule):
         state_storage: bool = False,
         init_weights: bool = True,
         in_channels: int = 2,
+        sizes: List[List[int]] = [[20, 30, 40], [60, 90, 120], [150, 200, 250]],
+        aspect_ratios: List[List[float]] = [[0.5, 1.0, 2.0], [0.5, 1.0, 2.0], [0.5, 1.0, 2.0]],
         plotter: Optional[Plotter] = None,
     ):
         """
@@ -68,10 +72,22 @@ class SODa(L.LightningModule):
         :param plotter: Class for displaying results. Needed for the prediction step.
             Expects to receive a utils.Plotter object. Defaults to None.
         :type plotter: Plotter, optional
+        :param sizes: List of anchor box sizes. Must contain three nested lists, each containing any
+            number of sizes. The first list corresponds to the feature map with the highest resolution.
+        :type sizes: List[List[int]], optional
+        :param aspect_ratios: List of aspect ratios of anchor boxes. ratio = height / width.
+            Same format as sizes.
+        :type aspect_ratios: List[List[float]], optional
         """
         super().__init__()
         self.save_hyperparameters(ignore=["plotter"])
         self.plotter = plotter
+
+        self.anchor_generator = AnchorGenerator(self.hparams.sizes, self.hparams.aspect_ratios)
+        self.num_anchors = self.anchor_generator.num_anchors_per_location()
+        self.num_class_out = [n * (self.hparams.num_classes + 1) for n in self.num_anchors]
+        self.num_box_out = [n * 4 for n in self.num_anchors]
+
         self.roi_blk = RoI(self.hparams.iou_threshold)
         self.cls_loss = nn.CrossEntropyLoss(reduction="none")
         self.box_loss = nn.L1Loss(reduction="none")
@@ -88,25 +104,12 @@ class SODa(L.LightningModule):
         The class expects the storage below to store the network results. 
         This should be defined in the child class configuration.
         """
-        self.storage_box = Storage()
-        self.storage_cls = Storage()
-        self.storage_anchor = Storage()
+        self.storage_box = Storage(auto_reset=False)
+        self.storage_cls = Storage(auto_reset=False)
+        self.storage_feature = Storage(auto_reset=False)
 
-    def _prepare_net(self):
-        self.net = ModelGenerator(
-            self.get_cfgs(), self.hparams.in_channels, self.hparams.init_weights
-        )
-
-    def get_cfgs(self) -> List[LayerGen]:
-        """Generates and returns a network configuration
-
-        .. note::
-            This method must be overridden in a child class.
-
-        :return: Net configuration.
-        :rtype: List[LayerGen]
-        """
-        raise NotImplementedError
+    def prepare_net(self, cfg: List[LayerGen]) -> None:
+        self.net = ModelGenerator(cfg, self.hparams.in_channels, self.hparams.init_weights)
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
         return torch.optim.Adamax(self.parameters(), lr=self.hparams.learning_rate)
@@ -235,19 +238,30 @@ class SODa(L.LightningModule):
     ) -> Tuple[Tuple[torch.Tensor, torch.Tensor, torch.Tensor], ListState]:
         _, state = self.net.forward(X, state)
 
-        anchors = self.storage_anchor.get()
+        if not hasattr(self, "anchors"):
+            self._anchors_calculate(X, self.storage_feature.get())
+            self.storage_feature.reset()
+            self.storage_feature.auto_reset = True
+
         cls_preds = self.storage_cls.get()
         bbox_preds = self.storage_box.get()
         self.storage_box.reset()
         self.storage_cls.reset()
 
-        anchors = torch.cat(anchors)
         cls_preds = self._concat_preds(cls_preds)
         cls_preds = cls_preds.reshape(cls_preds.shape[0], -1, self.hparams.num_classes + 1)
         bbox_preds = self._concat_preds(bbox_preds)
         bbox_preds = bbox_preds.reshape(bbox_preds.shape[0], -1, 4)
 
-        return (anchors, cls_preds, bbox_preds), state
+        return (self.anchors, cls_preds, bbox_preds), state
+
+    def _anchors_calculate(self, img: torch.Tensor, features_map: List[torch.Tensor]):
+        h, w = img.shape[-2:]
+        self.anchors = self.anchor_generator(ImageList(img, [img.shape[-2:]]), features_map)[0]
+        self.anchors[:, 0] = self.anchors[:, 0] / w
+        self.anchors[:, 1] = self.anchors[:, 1] / h
+        self.anchors[:, 2] = self.anchors[:, 2] / w
+        self.anchors[:, 3] = self.anchors[:, 3] / h
 
     def _flatten_pred(self, pred: torch.Tensor) -> torch.Tensor:
         """Transforms the tensor so that each pixel retains channels values and smooths each batch"""

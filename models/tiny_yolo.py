@@ -17,24 +17,9 @@ class TinyYolo(SODa):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._out_configure()
-        self._prepare_net()
-
-    def _out_configure(self):
-        max = 0.75
-        min = 0.08
-        size_per_pix = 3
-
-        sizes = torch.arange(min, max, (max - min) / (3 * size_per_pix))
-        self.sizes = sizes.reshape((-1, size_per_pix))
-        self.ratios = torch.tensor((0.5, 1.0, 2))
-
-        self.num_anchors = size_per_pix * len(self.ratios)
-        self.num_class_out = self.num_anchors * (self.hparams.num_classes + 1)
-        self.num_box_out = self.num_anchors * 4
+        self.prepare_net(self.get_cfgs())
 
     def get_cfgs(self) -> List[LayerGen]:
-        storage_detect = Storage()
         return [
             *self._conv(64, 3, 2),
             *self._c2f(64, 2),
@@ -42,16 +27,16 @@ class TinyYolo(SODa):
             *self._c2f(128, 3),
             *self._conv(256, 3, 2),
             *self._c2f(256, 4),
-            Store(storage_detect),
+            Store(self.storage_feature),
             *self._conv(256, 3, 2),
             *self._c2f(256, 3),
-            Store(storage_detect),
+            Store(self.storage_feature),
             *self._conv(256, 3, 2),
             *self._c2f(256, 2),
-            Store(storage_detect),
-            *self._detect(storage_detect, 0),
-            *self._detect(storage_detect, 1),
-            *self._detect(storage_detect, 2),
+            Store(self.storage_feature),
+            *self._detect(self.storage_feature, 0),
+            *self._detect(self.storage_feature, 1),
+            *self._detect(self.storage_feature, 2),
         ]
 
     def _detect(
@@ -62,16 +47,15 @@ class TinyYolo(SODa):
         storage = Storage()
         return (
             Get(storage_detect, idx),
-            Anchors(self.storage_anchor, self.sizes[idx], self.ratios),
             Conv(kernel_size=1),
             Norm(),
             LI(state_storage=self.hparams.state_storage),
             Tanh(),
             Store(storage),
-            Conv(self.num_box_out, 1),
+            Conv(self.num_box_out[idx], 1),
             Store(self.storage_box),
             Get(storage),
-            Conv(self.num_class_out, 1),
+            Conv(self.num_class_out[idx], 1),
             Store(self.storage_cls),
         )
 

@@ -3,16 +3,18 @@
 seed_everything: 42
 
 model:
-  class_path: models.Yolo
+  class_path: models.TinyYolo
   init_args:
-    model: n
+    #model: n
     num_classes: 2
     loss_ratio: 0.04
     time_window: 8
-    iou_threshold: 0.4
+    iou_threshold: 0.5
     learning_rate: 0.001
     state_storage: false
     init_weights: true
+    sizes: [[20, 30, 40], [60, 90, 120], [150, 200, 250]]
+    aspect_ratios: [[0.5, 1.0, 2.0], [0.5, 1.0, 2.0], [0.5, 1.0, 2.0]]
     plotter:
       class_path: utils.Plotter
       init_args:
@@ -28,7 +30,7 @@ data:
   batch_size: 8
   num_workers: 4
   num_load_file: 8
-  num_steps: 42
+  num_steps: 32
   time_step: 8
   time_shift: 0
   one_label: true
